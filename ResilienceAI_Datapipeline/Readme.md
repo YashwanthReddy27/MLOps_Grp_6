@@ -36,7 +36,7 @@ http://localhost:8080
 
 You can log in using the credentials configured in your environment variables or the default Airflow credentials if provided.
 
-### 🧹 Stop and Clean Up
+### Stop and Clean Up
 
 To stop the running containers:
 

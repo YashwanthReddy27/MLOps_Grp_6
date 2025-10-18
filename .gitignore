@@ -1,6 +1,3 @@
-# Environment variables
-.env
-
 # Airflow logs
 logs/
 *.log

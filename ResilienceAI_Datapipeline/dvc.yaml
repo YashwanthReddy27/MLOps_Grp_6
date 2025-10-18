@@ -1,0 +1,30 @@
+stages:
+  fetch_arxiv:
+    cmd: python -m dags.arxiv_pipeline
+    deps:
+      - dags/arxiv_pipeline.py
+      - dags/common/
+    outs:
+      - data/raw/arxiv/:
+          cache: true
+          persist: true
+    metrics:
+      - reports/arxiv_metrics.json:
+          cache: false
+      - reports/arxiv_processing_metrics.json:
+          cache: false
+
+  fetch_news:
+    cmd: python -m dags.news_api_pipeline
+    deps:
+      - dags/news_api_pipeline.py
+      - dags/common/
+    outs:
+      - data/raw/news/:
+          cache: true
+          persist: true
+    metrics:
+      - reports/news_metrics.json:
+          cache: false
+      - reports/news_processing_metrics.json:
+          cache: false

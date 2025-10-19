@@ -1,0 +1,1243 @@
+baseline {
+  feature {
+    name: "author"
+    type: BYTES
+    domain: "author"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "url"
+    type: BYTES
+    domain: "url"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "article_id"
+    type: BYTES
+    domain: "article_id"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "title"
+    type: BYTES
+    domain: "title"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "description"
+    type: BYTES
+    domain: "description"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "source_name"
+    type: BYTES
+    domain: "source_name"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "published_at"
+    type: BYTES
+    domain: "published_at"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "image_url"
+    value_count {
+      min: 1
+      max: 1
+    }
+    type: BYTES
+    domain: "image_url"
+    presence {
+      min_count: 1
+    }
+  }
+  feature {
+    name: "primary_category"
+    type: BYTES
+    domain: "primary_category"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "all_categories"
+    type: BYTES
+    domain: "all_categories"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "category_scores"
+    type: BYTES
+    domain: "category_scores"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "overall_relevance"
+    type: FLOAT
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  feature {
+    name: "processed_at"
+    type: BYTES
+    domain: "processed_at"
+    presence {
+      min_fraction: 1.0
+      min_count: 1
+    }
+    shape {
+      dim {
+        size: 1
+      }
+    }
+  }
+  string_domain {
+    name: "author"
+    value: "Aarian Marshall"
+    value: "Artie Beaty"
+    value: "Ax Sharma"
+    value: "Bill Toulas"
+    value: "Brandt Ranj"
+    value: "Cesar Cadenas"
+    value: "Connie Loizos"
+    value: "David Gewirtz"
+    value: "David Pierce"
+    value: "Dominic Preston"
+    value: "Elissa Welle"
+    value: "Emma Roth"
+    value: "Ivan Mehta"
+    value: "Jack Wallen"
+    value: "Jacob Roach"
+    value: "Jada Jones"
+    value: "Jason Howell"
+    value: "Jay Peters"
+    value: "Jess Weatherbed"
+    value: "Jude Doyle"
+    value: "Julian Chokkattu"
+    value: "Kerry Wan"
+    value: "Kirsten Korosec"
+    value: "Kyle Kucharski"
+    value: "Lance Whitney"
+    value: "Lauren Forristal"
+    value: "Lawrence Abrams"
+    value: "Maria Diaz"
+    value: "Marina Temkin"
+    value: "Matt Burgess"
+    value: "Mayank Parmar"
+    value: "Nina Raemont"
+    value: "Prakhar Khanna"
+    value: "Rebecca Szkutak"
+    value: "Robert Hart"
+    value: "Russell Brandom"
+    value: "Sabrina Ortiz"
+    value: "Sarah Perez"
+    value: "Sean Hollister"
+    value: "Sergiu Gatlan"
+    value: "Sheena Vasani"
+    value: "Sponsored by Corelight"
+    value: "Techcrunch Events"
+    value: "Tim De Chant"
+    value: "Tina Nguyen"
+    value: "Unknown"
+    value: "Webb Wright"
+    value: "Will Knight"
+    value: "Zo\303\253 Schiffer, Louise Matsakis"
+    value: "info@thehackernews.com (The Hacker News)"
+    value: "s.e. smith"
+  }
+  string_domain {
+    name: "url"
+    value: "https://techcrunch.com/2025/10/14/coco-robotics-taps-ucla-professor-to-lead-new-physical-ai-research-lab/"
+    value: "https://techcrunch.com/2025/10/14/google-meet-launches-an-ai-powered-makeup-feature/"
+    value: "https://techcrunch.com/2025/10/14/google-updates-search-and-discover-with-collapsible-ads-ai-features-and-more/"
+    value: "https://techcrunch.com/2025/10/14/googles-gemini-can-now-help-you-schedule-google-calendar-meetings/"
+    value: "https://techcrunch.com/2025/10/14/mozillas-firefox-adds-perplexitys-ai-answer-engine-as-a-new-search-option/"
+    value: "https://techcrunch.com/2025/10/14/openai-and-broadcom-partner-on-ai-hardware/"
+    value: "https://techcrunch.com/2025/10/14/openai-has-five-years-to-turn-13-billion-into-1-trillion/"
+    value: "https://techcrunch.com/2025/10/14/sheryl-sandberg-backed-flint-wants-to-use-ai-to-autonomously-build-and-update-websites/"
+    value: "https://techcrunch.com/2025/10/14/youll-soon-be-able-to-shop-walmart-from-chatgpt/"
+    value: "https://techcrunch.com/2025/10/15/anthropic-launches-new-version-of-scaled-down-haiku-model/"
+    value: "https://techcrunch.com/2025/10/15/apple-adds-650-megawatts-of-renewables-in-europe-with-more-coming-in-china/"
+    value: "https://techcrunch.com/2025/10/15/apple-upgrades-ipad-pro-macbook-pro-and-vision-pro-with-new-m5-chip/"
+    value: "https://techcrunch.com/2025/10/15/arm-partners-with-meta-to-scale-ai-efforts/"
+    value: "https://techcrunch.com/2025/10/15/eightfold-co-founders-raise-35m-for-viven-an-ai-digital-twin-startup-for-querying-unavailable-coworkers/"
+    value: "https://techcrunch.com/2025/10/15/google-releases-veo-3-1-adds-it-to-flow-video-editor/"
+    value: "https://techcrunch.com/2025/10/15/nscale-inks-massive-ai-infrastructure-deal-with-microsoft/"
+    value: "https://techcrunch.com/2025/10/15/the-full-space-stage-at-techcrunch-disrupt-2025-the-future-of-tech-launches-here/"
+    value: "https://techcrunch.com/2025/10/15/vsco-gets-ai-editing-chops-support-for-raw-files/"
+    value: "https://techcrunch.com/2025/10/15/waymo-plans-to-launch-a-robotaxi-service-in-london-in-2026/"
+    value: "https://techcrunch.com/2025/10/15/x-plans-to-show-more-information-about-user-profiles-to-help-improve-trust/"
+    value: "https://techcrunch.com/2025/10/15/you-can-now-text-spotifys-ai-dj/"
+    value: "https://thehackernews.com/2025/10/over-100-vs-code-extensions-exposed.html"
+    value: "https://www.bleepingcomputer.com/forums/t/811317/could-have-downloaded-malware/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/final-windows-10-patch-tuesday-update-rolls-out-as-support-ends/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/microsoft-exchange-2016-and-2019-have-reached-end-of-support/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/microsoft-october-2025-patch-tuesday-fixes-6-zero-days-172-flaws/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/microsoft-september-2025-windows-server-updates-cause-active-directory-issues/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/microsoft-warns-that-windows-10-reaches-end-of-support-today/"
+    value: "https://www.bleepingcomputer.com/news/microsoft/windows-11-kb5066835-and-kb5066793-updates-released/"
+    value: "https://www.bleepingcomputer.com/news/security/capita-to-pay-14-million-for-data-breach-impacting-66-million-people/"
+    value: "https://www.bleepingcomputer.com/news/security/clothing-giant-mango-discloses-data-breach-exposing-customer-info/"
+    value: "https://www.bleepingcomputer.com/news/security/f5-releases-big-ip-patches-for-stolen-security-vulnerabilities/"
+    value: "https://www.bleepingcomputer.com/news/security/fake-lastpass-bitwarden-breach-alerts-lead-to-pc-hijacks/"
+    value: "https://www.bleepingcomputer.com/news/security/hackers-breach-f5-to-steal-undisclosed-big-ip-flaws-source-code/"
+    value: "https://www.bleepingcomputer.com/news/security/how-to-spot-dark-web-threats-on-your-network-using-ndr/"
+    value: "https://www.bleepingcomputer.com/news/security/malicious-crypto-stealing-vscode-extensions-resurface-on-openvsx/"
+    value: "https://www.bleepingcomputer.com/news/security/new-android-pixnapping-attack-steals-mfa-codes-pixel-by-pixel/"
+    value: "https://www.bleepingcomputer.com/news/security/oracle-silently-fixes-zero-day-exploit-leaked-by-shinyhunters/"
+    value: "https://www.bleepingcomputer.com/news/security/oracles-silently-fixes-zero-day-exploit-leaked-by-shinyhunters/"
+    value: "https://www.bleepingcomputer.com/news/security/powerschool-hacker-gets-sentenced-to-four-years-in-prison/"
+    value: "https://www.bleepingcomputer.com/news/security/security-firms-debate-cve-credit-in-overlapping-vulnerability-reports/"
+    value: "https://www.bleepingcomputer.com/news/security/security-firms-dispute-credit-for-overlapping-cve-reports/"
+    value: "https://www.bleepingcomputer.com/news/security/us-seizes-15-billion-in-crypto-from-pig-butchering-kingpin/"
+    value: "https://www.theverge.com/ai-artificial-intelligence/799850/afl-cio-workers-first-initiative-ai"
+    value: "https://www.theverge.com/column/799904/new-media-is-just-right-wing-media"
+    value: "https://www.theverge.com/cs/features/798638/trans-resources-online-sharing"
+    value: "https://www.theverge.com/cs/features/799045/trans-identity-online-anonymous"
+    value: "https://www.theverge.com/games/799698/xbox-ally-x-review-asus-microsoft-full-screen-experience"
+    value: "https://www.theverge.com/news/799160/google-gmail-gemini-ai-help-me-schedule"
+    value: "https://www.theverge.com/news/799312/openai-chatgpt-erotica-sam-altman-verified-adults"
+    value: "https://www.theverge.com/news/799352/apple-ipad-pro-m5-price-release-date"
+    value: "https://www.theverge.com/news/799564/roku-voice-assistant-ai-update"
+    value: "https://www.theverge.com/news/799607/samsung-galaxy-event-project-moohan-android-xr-event-date-worlds-wide-open"
+    value: "https://www.theverge.com/news/799792/apple-smart-home-display-hub-price-rumors"
+    value: "https://www.theverge.com/news/799808/honor-magic-8-pro-launch-china-specs-release-date"
+    value: "https://www.theverge.com/news/799938/japan-government-openai-sora"
+    value: "https://www.theverge.com/news/799944/honor-robot-phone-tease-announcement"
+    value: "https://www.theverge.com/news/800371/google-veo-3-1-flow-audio"
+    value: "https://www.theverge.com/tech/799096/motorola-razr-ultra-2025-anker-nano-charging-station-deal-sale"
+    value: "https://www.theverge.com/tech/800000/insta360-x5-action-cam-marshall-emberton-ii-speaker-deal-sale"
+    value: "https://www.theverge.com/tech/800056/m5-macbook-pro-14-inch-ipad-pro-preorder-price-release-date-availability"
+    value: "https://www.wired.com/gallery/best-resume-builders/"
+    value: "https://www.wired.com/story/apple-m5-powered-ipad-pro-macbook-pro-vision-pro-october-2025/"
+    value: "https://www.wired.com/story/openai-sovereign-ai-us-china-tech-war/"
+    value: "https://www.wired.com/story/road-safety-group-save-us-targets-self-driving-cars/"
+    value: "https://www.wired.com/story/the-ai-industrys-scaling-obsession-is-headed-for-a-cliff/"
+    value: "https://www.wired.com/story/when-face-recognition-doesnt-know-your-face-is-a-face/"
+    value: "https://www.zdnet.com/article/9-essential-mac-apps-i-cant-live-without-and-why/"
+    value: "https://www.zdnet.com/article/a-minority-of-businesses-have-won-big-with-ai-what-are-they-doing-right/"
+    value: "https://www.zdnet.com/article/apple-just-launched-an-m5-macbook-ipad-and-vision-pro-specs-prices-and-availability/"
+    value: "https://www.zdnet.com/article/claudes-latest-model-is-cheaper-and-faster-than-sonnet-4-and-free/"
+    value: "https://www.zdnet.com/article/everything-apple-announced-with-the-m5-chipset-macbook-pro-ipad-pro-and-vision-pro/"
+    value: "https://www.zdnet.com/article/googles-veo-3-1-can-turn-separate-images-into-a-single-video/"
+    value: "https://www.zdnet.com/article/i-abandoned-google-for-a-search-tool-that-doesnt-track-me-or-push-ai-and-it-gets-better/"
+    value: "https://www.zdnet.com/article/i-put-airtags-on-everything-and-this-65-deal-makes-the-4-pack-too-good-to-skip/"
+    value: "https://www.zdnet.com/article/i-tested-this-windows-11-tablet-built-for-the-medical-industry-and-it-made-my-android-look-boring/"
+    value: "https://www.zdnet.com/article/i-thought-bose-had-perfected-noise-canceling-then-i-tried-these-headphones/"
+    value: "https://www.zdnet.com/article/immutable-linux-delivers-serious-security-here-are-your-5-best-options/"
+    value: "https://www.zdnet.com/article/ive-tested-dozens-of-noise-cancelling-headphones-on-flights-this-one-is-the-audio-king/"
+    value: "https://www.zdnet.com/article/ive-tested-free-vs-paid-ai-coding-tools-heres-which-one-id-actually-use/"
+    value: "https://www.zdnet.com/article/looking-for-a-windows-11-laptop-this-dell-checks-all-the-right-boxes-for-me/"
+    value: "https://www.zdnet.com/article/my-favorite-ios-26-productivity-feature-is-highly-useful-but-hidden-heres-how-to-find-it/"
+    value: "https://www.zdnet.com/article/own-a-google-pixel-8-settings-i-changed-to-extend-the-battery-life-by-hours/"
+    value: "https://www.zdnet.com/article/ready-to-ditch-your-windows-pc-i-highly-recommend-this-mini-pc-thats-optimized-for-linux/"
+    value: "https://www.zdnet.com/article/samsung-gives-enticing-preorder-deal-to-new-xr-headset-users-amidst-m5-vision-pro-launch/"
+    value: "https://www.zdnet.com/article/samsung-offers-100-instant-deal-to-new-xr-headset-users-ahead-of-unpacked/"
+    value: "https://www.zdnet.com/article/should-you-upgrade-to-m5-macbook-pro-from-an-m1-how-the-numbers-add-up/"
+    value: "https://www.zdnet.com/article/spend-too-much-time-scheduling-meetings-this-gemini-feature-could-save-you-the-hassle/"
+    value: "https://www.zdnet.com/article/the-new-ipad-pros-biggest-upgrade-isnt-the-m5-chip-id-buy-it-for-this-feature-instead/"
+    value: "https://www.zdnet.com/article/this-dell-pc-redfines-what-a-premium-windows-11-laptop-can-and-should-be/"
+    value: "https://www.zdnet.com/article/this-hp-elitebook-i-tested-proves-why-windows-laptops-still-rule-the-workplace/"
+    value: "https://www.zdnet.com/article/this-new-copilot-trick-will-save-you-tons-of-time-in-windows-11-heres-how/"
+    value: "https://www.zdnet.com/article/this-niche-y-dt-research-windows-tablet-is-fascinating/"
+    value: "https://www.zdnet.com/article/try-googles-nano-banana-image-generator-in-search-and-notebooklm-heres-how/"
+    value: "https://www.zdnet.com/article/windows-10s-final-update-is-a-big-one-with-a-record-173-bug-fixes/"
+    value: "https://www.zdnet.com/article/you-can-hide-ads-on-google-now-thanks-to-this-new-feature-try-it-now/"
+    value: "https://www.zdnet.com/article/you-can-test-microsofts-new-in-house-ai-image-generator-model-now-heres-how/"
+    value: "https://www.zdnet.com/home-and-office/home-entertainment/rokus-new-ai-feature-solves-the-biggest-problem-with-tv-streaming-heres-how/"
+    value: "https://www.zdnet.com/home-and-office/home-entertainment/your-roku-devices-are-getting-a-big-free-upgrade-including-ai-voice/"
+    value: "https://www.zdnet.com/home-and-office/smart-office/this-google-meet-tool-could-help-you-look-better-in-meetings-even-the-early-ones/"
+  }
+  string_domain {
+    name: "article_id"
+    value: "0105a75d4a19f4ecb49efedf4e8169da"
+    value: "080618fb0411772cb01fa7b234bcb577"
+    value: "0b1800226a5b3c87e540583c9ddccdf8"
+    value: "0d376f9a3c60fc0f1d711fa0a8448ad7"
+    value: "0ecbb81139876a2928b30bf9e0fd9c33"
+    value: "0fa4be618a1d19ecc244fa400b68b9f8"
+    value: "18f86e8b4b2b8173434dc55efa3a20cc"
+    value: "1ab29b79dd2e778def13da96b865b708"
+    value: "1c0a7a4177041b094ddc40fcfffcb410"
+    value: "1c4f37417d6d8ff66426fd56c6331ba8"
+    value: "1cd9435deae5b71d67c049110d5674f8"
+    value: "21285029aed592595ccd5de2da66a22a"
+    value: "230756b88fd45f0b31e79cf69ab6e190"
+    value: "23606745ca5ddd39e84f81b8d5e56408"
+    value: "2520fa980210c18a6aa817c3c1fae8f6"
+    value: "2615a7d02acb2d9fff624f6972f084d3"
+    value: "265a72b6eecc3b7159d3e5ecf0304301"
+    value: "266d74f4d8d1bbf6f3c82a1650fd822a"
+    value: "273f528ad4fa3337b64dbf3f4974de71"
+    value: "2c036d91fa4b7e398f41b717bbc56107"
+    value: "2ed6992bfa1b93105cf70443d46f091c"
+    value: "357ffbbd922f655e11af62d893bbc59b"
+    value: "371814367a40174fbbaccc80dfa5265b"
+    value: "37bc7c993369a8ece6e5f11dcd8455ae"
+    value: "3acda8205868ef3dc4513b2043f3aa25"
+    value: "3bcd98d1c5135930bc71af0d08102911"
+    value: "3f62358068220411cc383678f4f048e2"
+    value: "404e79dab01be2dde4439b60248c00fb"
+    value: "475b943df05b28fd518e13381832d15e"
+    value: "4d7e40cf0d871f304552697b753da5fd"
+    value: "5033f6cfe4a9a7d9ad35cbd74b177055"
+    value: "516d888a1af5f2ebf8cbab5a1c1ce99c"
+    value: "524a61e016406340b6f7a2ee4f5289e6"
+    value: "5443996f7aec9c589fddb81108b9fbe1"
+    value: "55104c8d27818f1d8e7ed4581d976b6d"
+    value: "5bee5417b76019cf0251d8ef5a295d5c"
+    value: "5d2c5589fe37c5d83a7e2343949847d9"
+    value: "602dbbf259a680a2ba43267bd5670991"
+    value: "6130f13786fb78f56a974bd48c5afaf8"
+    value: "61c337bc4c3d016e1cbb3c2083c9f2e5"
+    value: "6342b07f583d274ecb0c07be857f2fb8"
+    value: "671ed4e84d4f681da4fd8adeceab8d14"
+    value: "690f24216c4cba8facebf4fbce350f4a"
+    value: "7a473b77ff231f9fac9413ce330a86d6"
+    value: "7ace77e468a61fa9e1c25aece47da2b6"
+    value: "7ada3529f3a868ca71ef4e6622556196"
+    value: "7b33c4b218a2d29a1070fd1f8b28e322"
+    value: "7bd852e80a7aace013f4265f7b2c466c"
+    value: "80879899bc74f76457e2bfa83117e01c"
+    value: "82e05ecdc9653e1c779022a8d6730fbd"
+    value: "8d1b5dff32bac0f2f80c224ca02cf034"
+    value: "90876b2635c3d6307202f3cc7e03f4c5"
+    value: "9138b0c521fb8f89cf7596ae1587d305"
+    value: "93473cba414297e03a541d173b4c5f40"
+    value: "93e98ea2054f64a1667dd561c98789bd"
+    value: "9aaa720c7f68cdd1929ccbf9c22cabc7"
+    value: "9ac5377e1e6b37a2d819612b85279c92"
+    value: "a1d88057491716cb6ed3e052fb213553"
+    value: "a30938a57fd7409c1666ca220ae8dc6a"
+    value: "a487a1424035abeea8918b7c8011bced"
+    value: "a59e181e7c066b2cc31c3e1b13f957ae"
+    value: "a857f74adea184312f7f472835d961f1"
+    value: "ad15dc908584671ef6934ed4e614fbc9"
+    value: "adf39a0ca83de30421ae418234f46caa"
+    value: "b05ca071be130f700c7f1dd3bf7a5af6"
+    value: "b37b68220ad00a23d91689869a70633d"
+    value: "b4f4af77d91b60e34a7e5a9bc67ad855"
+    value: "b5d90a8e9a3c2f6d805744944d291b61"
+    value: "bc7c4378703b16069b403490c0821cd0"
+    value: "bebb28978cb77e1efed9d0ffca8ec9b1"
+    value: "c0f6690eeca61fd759c1b8fbce8d05a6"
+    value: "c68a2dc79956e3ebfeeace624fec8642"
+    value: "c717dd9508b0fbb7dee658408c17bb05"
+    value: "c75f350aa2c929f0f48c0a56e6153c87"
+    value: "c8b3becefe2bf1f9cbe94437fafcd42e"
+    value: "c9da1558822f28cf3599cf7493f33fe0"
+    value: "cbeb68ede0105f200f63c38cb814b14b"
+    value: "cf65377d798964ac52ce77ea112c27bb"
+    value: "cf73d9f26cbc57981f50da50a25c3fd3"
+    value: "d078968fcb04101d3db60496a7345c94"
+    value: "d5070f343f57d84ead2913dd6e4abb48"
+    value: "d5c9a59b364422e9cf0d0b22efc56dbc"
+    value: "d77e5bb6ca9718d0ff1b50bebd06e165"
+    value: "d992fe37dd22bdf6a4acd829b75f30bb"
+    value: "dcd581632ab83dbcd838544de41fee4a"
+    value: "df1a79efa7acc77c2a5deef7f8e1dffa"
+    value: "df90ac5e96bff58be9a7c106d8418d4e"
+    value: "e384fc0468603c3e4c8d131741411d2b"
+    value: "e447477251a94e8f744377f6cdf902f1"
+    value: "e47619174498194fbf1f78f05c2ad692"
+    value: "e4cb12dc1d98efdbdb05f8a84d0a6755"
+    value: "e6979ab624a98f3c8f08110557eb2266"
+    value: "ed7634766da462c3ae4716adea051357"
+    value: "eeb6584ab0378ba0192addec086b92bb"
+    value: "f3a9e098d2de695e4bae7f5117f871bd"
+    value: "f5735aa1e4772b07d1d7fb31e3945884"
+    value: "fcc111789312b7a47434af6d4ed1ea0e"
+    value: "fe096ac9be2e182af964f11be94edf8b"
+    value: "fe45022cab0a2bfa87a0ba1bcfc106db"
+    value: "ff874acd1c3f295ed7d0c8d95dd19bec"
+  }
+  string_domain {
+    name: "title"
+    value: "4 Best Resume Builders (2025), Tested and Reviewed"
+    value: "9 essential Mac apps I cant live without - and why"
+    value: "A New Road Safety Group Targets Self-Driving Cars"
+    value: "A minority of businesses have won big with AI. What are they doing right?"
+    value: "Anthropic launches new version of scaled-down Haiku model  TechCrunch"
+    value: "Apple Just Upgraded the iPad Pro, MacBook Pro, and Vision Pro with Its New M5 Chip"
+    value: "Apple adds 650 megawatts of renewables in Europe with more coming in China"
+    value: "Apple just launched an M5 MacBook, iPad, and Vision Pro: Specs, prices, and availability"
+    value: "Apple upgrades iPad Pro, MacBook Pro, and Vision Pro with new M5 chip"
+    value: "Apples iPad Pro now has a new M5 processor inside"
+    value: "Apples rumored smart home display hub might start at 350"
+    value: "Capita to pay 14 million for data breach impacting 6.6 million people"
+    value: "Claudes latest model is cheaper and faster than Sonnet 4 - and free"
+    value: "Clothing giant MANGO discloses data breach exposing customer info"
+    value: "Coco Robotics taps UCLA professor to lead new physical AI research lab  TechCrunch"
+    value: "Could have downloaded malware"
+    value: "Doing it for themselves"
+    value: "Eightfold co-founders raise 35M for Viven, an AI digital twin startup for querying unavailable coworkers  TechCrunch"
+    value: "Everything Apple announced with the M5 chipset: MacBook Pro, iPad Pro and Vision Pro"
+    value: "F5 releases BIG-IP patches for stolen security vulnerabilities"
+    value: "F5 says hackers stole undisclosed BIG-IP flaws, source code"
+    value: "Fake LastPass, Bitwarden breach alerts lead to PC hijacks"
+    value: "Final Windows 10 Patch Tuesday update rolls out as support ends"
+    value: "Gmail now uses AI to help you find meeting times"
+    value: "Google Meet launches an AI-powered makeup feature"
+    value: "Google releases Veo 3.1, adds it to Flow video editor"
+    value: "Google updates Search and Discover with collapsible ads, AI features, and more"
+    value: "Googles AI video generator is getting better editing and more audio"
+    value: "Googles Gemini can now help you schedule Google Calendar meetings"
+    value: "Googles Veo 3.1 can turn separate images into a single video"
+    value: "Heres where you can preorder the new M5 MacBook Pro and iPad Pro"
+    value: "Honors Magic 8 phones have huge batteries and oodles of AI"
+    value: "Honors Robot Phone concept features a fold-out camera arm"
+    value: "How to spot dark web threats on your network using NDR"
+    value: "I abandoned Google for a search tool that doesnt track me or push AI - and it gets better"
+    value: "I put AirTags on everything and this 65 deal makes the 4-pack too good to skip"
+    value: "I tested this Windows 11 tablet built for the medical industry, and it made my Android look boring"
+    value: "I thought Bose had perfected noise canceling - then I tried these headphones"
+    value: "Immutable Linux delivers serious security - here are your 5 best options"
+    value: "Insta360s impressive X5 action cam has fallen to a new low price"
+    value: "Ive tested dozens of noise-cancelling headphones on flights - this one is the audio king"
+    value: "Ive tested free vs. paid AI coding tools - heres which one Id actually use"
+    value: "Japan wants OpenAI to stop ripping off manga and anime"
+    value: "Looking for a Windows 11 laptop? This Dell checks all the right boxes for me"
+    value: "Major federation of unions calls for worker-centered AI future"
+    value: "Malicious crypto-stealing VSCode extensions resurface on OpenVSX"
+    value: "Meta partners up with Arm to scale AI efforts  TechCrunch"
+    value: "Microsoft October 2025 Patch Tuesday fixes 6 zero-days, 172 flaws"
+    value: "Microsoft warns that Windows 10 reaches end of support today"
+    value: "Microsoft: Exchange 2016 and 2019 have reached end of support"
+    value: "Microsoft: Sept Windows Server updates cause Active Directory issues"
+    value: "Mozillas Firefox adds Perplexitys AI answer engine as a new search option"
+    value: "My favorite iOS 26 productivity feature is highly useful but hidden - heres how to find it"
+    value: "New Android Pixnapping attack steals MFA codes pixel-by-pixel"
+    value: "New media is just right-wing media"
+    value: "Nscale inks massive AI infrastructure deal with Microsoft  TechCrunch"
+    value: "Only out online"
+    value: "OpenAI and Broadcom partner on AI hardware  TechCrunch"
+    value: "OpenAI has five years to turn 13 billion into 1 trillion  TechCrunch"
+    value: "Oracle silently fixes zero-day exploit leaked by ShinyHunters"
+    value: "Oracles silently fixes zero-day exploit leaked by ShinyHunters"
+    value: "Over 100 VS Code Extensions Exposed Developers to Hidden Supply Chain Risks"
+    value: "Own a Google Pixel? 8 settings I changed to extend the battery life by hours"
+    value: "PowerSchool hacker gets sentenced to four years in prison"
+    value: "Ready to ditch your Windows PC? I highly recommend this mini PC thats optimized for Linux"
+    value: "Rokus AI-upgraded voice assistant can answer questions about what youre watching"
+    value: "Rokus new AI feature solves the biggest problem with TV streaming - heres how"
+    value: "Sam Altman says ChatGPT will soon sext with verified adults"
+    value: "Samsung gives enticing preorder deal to new XR headset users amidst M5 Vision Pro launch"
+    value: "Samsung offers 100 instant deal to new XR headset users ahead of Unpacked"
+    value: "Samsung officially teases Moohan headset launch for next week"
+    value: "Security firms debate CVE credit in overlapping vulnerability reports"
+    value: "Security firms dispute credit for overlapping CVE reports"
+    value: "Sheryl Sandberg-backed Flint wants to use AI to autonomously build and update websites  TechCrunch"
+    value: "Should you upgrade to M5 MacBook Pro from an M1? How the numbers add up"
+    value: "Sovereign AI Has Become a New Front in the US-China Tech War"
+    value: "Spend too much time scheduling meetings? This Gemini feature could save you the hassle"
+    value: "The AI Industrys Scaling Obsession Is Headed for a Cliff"
+    value: "The full Space Stage agenda at Disrupt 2025  TechCrunch"
+    value: "The latest Moto Razr Ultra foldable is an even better value at 999"
+    value: "The new iPad Pros biggest upgrade isnt the M5 chip - Id buy it for this feature instead"
+    value: "This Dell PC redfines what a premium Windows 11 laptop can and should be"
+    value: "This Google Meet tool could help you look better in meetings - even the early ones"
+    value: "This HP EliteBook I tested proves why Windows laptops still rule the workplace"
+    value: "This new Copilot trick will save you tons of time in Windows 11 - heres how"
+    value: "This niche-y DT Research Windows tablet is fascinating"
+    value: "Try Googles Nano Banana image generator in Search and NotebookLM - heres how"
+    value: "US seizes 15 billion in crypto from pig butchering kingpin"
+    value: "VSCO gets AI editing chops, support for RAW files"
+    value: "Waymo plans to launch a robotaxi service in London in 2026  TechCrunch"
+    value: "When Face Recognition Doesnt Know Your Face Is a Face"
+    value: "Windows 10s final update is a big one - with a record 173 bug fixes"
+    value: "Windows 11 KB5066835 and KB5066793 updates released"
+    value: "X plans to show more information about user profiles to help improve trust"
+    value: "Xbox Ally and Ally X review: this is not an Xbox"
+    value: "You can hide ads on Google now, thanks to this new feature - try it now"
+    value: "You can now text Spotifys AI DJ"
+    value: "You can test Microsofts new in-house AI image generator model now - heres how"
+    value: "Youll soon be able to shop Walmart from ChatGPT"
+    value: "Your Roku devices are getting a big, free upgrade - including AI Voice"
+  }
+  string_domain {
+    name: "description"
+    value: "19-year-old college student Matthew D. Lane, from Worcester, Massachusetts, was sentenced to 4 years in prison for orchestrating a cyberattack on PowerSchool in December 2024 that resulted in a massive data breach. [...]"
+    value: "A Tesla Takedown alum has launched a campaign for stricter regulation of autonomous vehicles in the US."
+    value: "A new side-channel attack called Pixnapping enables a malicious Android app with no permissions to extract sensitive data by stealing pixels displayed by applications or websites, and reconstructing them to derive the content. [...]"
+    value: "A threat actor called TigerJack is constantly targeting developers with malicious extensions published on Microsofts Visual Code (VSCode) marketplace and OpenVSX registry to steal cryptocurrency and plant backdoors. [...]"
+    value: "An estimated 100 million people live with facial differences. As face recognition tech becomes widespread, some say theyre getting blocked from accessing essential systems and services."
+    value: "An ongoing phishing campaign is targeting LastPass and Bitwarden users with fake emails claiming that the companies were hacked, urging them to download a supposedly more secure desktop version of the password manager. [...]"
+    value: "Anthropic has released Claude Haiku 4.5, the newest version of its smallest model, billed as offering similar performance to Sonnet 4 at one-third the cost and more than twice the speed."
+    value: "Apple announced its new M5 chip along with the new iPad Pro, MacBook Pro, and Vision Pro."
+    value: "Apple is adding renewable power to offset customer charging and support its operations, including third-party manufacturing in China."
+    value: "Apple just announced a new model of its best and highest-end tablet, the iPad Pro. The new device comes with a couple of internal upgrades, most notably a brand-new chip, the M5. Apple says the chip brings up to 3.5x the AI performance of last years Pro wh"
+    value: "Apple just announced three new Pro devices with an all-new chipset that focuses on AI compute performance. Heres what to know."
+    value: "Apple recently announced revised 14-inch MacBook Pro and iPad Pro models, each equipped with the new M5 processor. As expected, Apples new M5 chip is supposedly faster than the M4, with better performance for graphically demanding applications. Apple also sa"
+    value: "Apples long-rumored smart home display hub may finally launch in Spring 2026, according to Bloombergs Mark Gurman, but at a relatively steep cost. Gurman reports that Apple has targeted a price of around 350 for its upcoming 7-inch smart display meant to s"
+    value: "Apples new M5 MacBook Pro advertises some impressive performance gains, but who are they relevant for? Lets break down the numbers."
+    value: "Ciscos new study explores how to be an AI Pacesetter and stand apart from the stagnant masses."
+    value: "Coco Robotics is working toward automating its fleet of delivery robots using its millions of miles of collected data."
+    value: "Could have downloaded malware - posted in Virus, Trojan, Spyware, and Malware Removal Help: I downloaded what I thought was a legit program to view pictures on my iphone and got flooded with popups. Might not be anything but I would like someone to take a lo"
+    value: "Cybersecurity company F5 has released security updates to address BIG-IP vulnerabilities stolen in a breach detected on August 9, 2025. [...]"
+    value: "DT Researchs 323MD rugged tablet has an anti-microbial keyboard and IP65 water and dust resistance."
+    value: "Dark web activity can hide in plain sight within everyday network traffic. Corelights NDR platform brings deep visibility, AI-driven detection, and behavioral analytics to uncover hidden threats across your network. [...]"
+    value: "Designed for one-on-one meetings, the tool lets you insert available time slots directly into an email, automatically creating a calendar invite once a recipient selects a time."
+    value: "Eightfold co-founders raise 35M for Viven, an AI digital twin startup for querying unavailable coworkers  TechCrunchtechcrunch.com"
+    value: "Enhancements are coming to Roku City screensaver, Roku Voice, Live TV Channels, the mobile app, and headphone mode. Theres also a new smart projector."
+    value: "Finding a new job is tough, but the best resume builders help you put together a CV that can stand out from the crowd."
+    value: "Flint raised a 5 million seed round led by Accel, with participation from Sheryl Sandbergs fund, Sandberg Bernthal Venture Partners, and prior investor Neo."
+    value: "For about a year of my life, from late 2019 through the summer of 2020, I was trans only on Reddit. I dont know why I chose Reddit. I dont normally use the site heavily, or at all. But Reddit is a place where users ask for advice, and I needed advice desper"
+    value: "FuzzingLabs has accused the YCombinator-backed startup, Gecko Security, of replicating its vulnerability disclosures. Gecko allegedly filed for 2 CVEs based on FuzzingLabs reports without crediting them. Gecko denies any wrongdoing, calling the allegations a"
+    value: "Google Meet finally has a makeup filter for those days when you dont feel like applying lipstick."
+    value: "Google is making videos created with the AI filmmaking tool Flow even more realistic  and harder to identify as AI-generated at first glance. The company announced Wednesday that users can add in and change the shadows and lighting of their AI videos. The ex"
+    value: "Google is rolling out updates to Search and Discover that introduce AI-powered features, improved navigation, and a new option to collapse ads. While users can now hide sponsored results, the Sponsored label will remain visible as they scroll  making ads p"
+    value: "Google is trying to make it easier to find time to meet with coworkers and clients. Its launching a new Gemini AI-powered Help me schedule feature that suggests meeting time slots based on your Google Calendar and the context of the message. You can direct"
+    value: "Google launched its new video model Veo 3.1 with improved audio output, granular editing controls, and better output for image to video. It said that Veo 3.1 builds on Mays Veo 3 release and generates more realistic clips and adheres to prompts better. The m"
+    value: "Google says this new Gemini feature will put an end to tedious emailing. Heres how it works."
+    value: "Googles AI image editor is coming to a new lineup of applications."
+    value: "HPs EliteBook Ultra G1i is impressively lightweight, reliably powerful, and built to last on battery life. But theres more to it."
+    value: "Hello and welcome to a post-October Federal Holiday edition of Regulator. Last week, I caught wind that House Speaker Mike Johnson, along with several top House Republican leaders, had held an exclusive press briefing about the government shutdown that was re"
+    value: "Heres what Haiku 4.5 offers users and developers."
+    value: "Honor announced its Magic 8 and Magic 8 Pro flagships at a launch event in China today, with an international launch scheduled for later this year. They boast some of the biggest batteries in mainstream phones, along with a suite of AI features including a de"
+    value: "Honor has announced what its calling the Robot Phone, a concept device with an AI-enabled, gimbal-mounted camera that unfolds from the phones rear and can shoot photos and film video in any direction. The phone  so far only seen in CGI form in a teaser v"
+    value: "Huge AI infrastructure deals assume that algorithms will keep improving with scale. They may not."
+    value: "If you use MacOS, check out my go-to apps list. You might find a few worth trying."
+    value: "If youre looking for a great 360-degree action camera for your next adventure, the Insta360 X5 is an excellent pick thats on sale in black at Amazon and Best Buy for 499.99 (50 off) through October 16th, which is an all-time low. Its also available direc"
+    value: "If youre on the fence about trying a foldable smartphone, Motorolas Razr Ultra (2025) may be the one youve been waiting for, and you can pick it up for 999.99 (300 off) at Amazon and Best Buy. Our reviewer praised its design (the wooden back panel has a "
+    value: "In 2014, Time announced the Transgender Tipping Point. The perilous conditions trans people are facing right now probably werent the progress the publication had in mind. In the US, state legislators and even the president are on the attack, while in the U"
+    value: "In what marks the end of an era, Microsoft has released the Windows 10 KB5066791 cumulative update, the final free update for the operating system as it reaches the end of its support lifecycle. [...]"
+    value: "It makes Windows 11 PCs easier to use and might just be the fastest way to find settings."
+    value: "Its already scoring in the top ten at the AI leaderboard LMArena."
+    value: "Japans government is dialing up the heat on OpenAI, formally asking it to stop ripping off Japanese artwork, according to ITMedia and reported by IGN. The company has been in copyright hell after the launch of its social video app Sora, which users swiftly f"
+    value: "Microsoft has confirmed that the September 2025 security updates are causing Active Directory issues on Windows Server 2025 systems. [...]"
+    value: "Microsoft has released Windows 11 KB5066835 and KB5066793 cumulative updates for versions 25H224H2 and 23H2 to fix security vulnerabilities and issues. [...]"
+    value: "Microsoft has reminded customers today that Windows 10 has reached the end of support and will no longer receive patches for newly discovered security vulnerabilities. [...]"
+    value: "Microsoft has reminded that Exchange Server 2016 and 2019 reached the end of support and advised IT administrators to upgrade servers to Exchange Server SE or migrate to Exchange Online. [...]"
+    value: "New research has uncovered that publishers of over 100 Visual Studio Code (VS Code) extensions leaked access tokens that could be exploited by bad actors to update the extensions, posing a critical software supply chain risk. A leaked VSCode Marketplace or O"
+    value: "Nscale plans to deploy the chips over the next few years to three data centers in Europe and a fourth in the U.S."
+    value: "On Wednesday, the largest US group of unions called on employers and policymakers to join in an effort its calling the workers first initiative on AI. Functionally, the effort by the American Federation of Labor and Congress of Industrial Organizations (AF"
+    value: "OpenAI has announced AI sovereignty partnerships with governments around the world, but can proprietary models compete with Beijings open source offerings?"
+    value: "OpenAI will purchase 10 gigawatts worth of AI accelerator hardware from semiconductor Broadcom."
+    value: "OpenAI will soon allow erotica for ChatGPT users who verify their age on the platform. In an X post on Tuesday, OpenAI CEO Sam Altman said the company will add support for mature conversations when it launches age-gating in December. As we roll out age-gat"
+    value: "Oracle has silently fixed an Oracle E-Business Suite vulnerability (CVE-2025-61884) that was actively exploited to breach servers, with a proof-of-concept exploit publicly leaked by the ShinyHunters extortion group. [...]"
+    value: "Overslept? Google Meets AI-powered makeup feature offers 12 looks to make you look meeting-ready."
+    value: "Roku is updating its voice assistant with AI features that can answer questions about movies, shows, and actors, as well as help you find something to watch next. Now, instead of just following simple commands, Roku says its voice assistant can respond to que"
+    value: "Samsung is finally about to reveal more details about its Project Moohan mixed reality headset. The company just announced a new Worlds Wide Open Galaxy event that will take place on October 21st at 10PM ET, where its promising to reveal details about the "
+    value: "Semiconductor firm Arm is partnering with Meta to enhance the social media companys AI systems amid an unprecedented infrastructure buildout."
+    value: "Some developers pay big for AI coding tools. Others stick with free. Heres how to know when to spend - and when to save."
+    value: "Some of Americas most valuable companies are now leaning on OpenAI to fulfill major contracts, notes the FT."
+    value: "Spanish fashion retailer MANGO is sending notices of a data breach to its customers, warning that its marketing vendor suffered a compromise exposing personal data. [...]"
+    value: "Spotifys AI DJ now takes text commands and accepts Spanish-language music requests by voice."
+    value: "Surrealist visuals, scene extensions, fill-in-the-blank features - heres what the new Veo can do."
+    value: "The Apple AirTag 4-pack is now at an all-time low price, making it the perfect accessory to track your keys, wallets, and luggage during the holiday travel season."
+    value: "The Dell 16 Premium extends the XPS legacy, combining high-end components with a striking 4K touchscreen in a sleek design."
+    value: "The Information Commissioners Office (ICO) in the UK has fined Capita, a provider of data-driven business process services, 14 million (18.7 million) for a data breach incident in 2023 that exposed the personal information of 6.6 million people. [...]"
+    value: "The Kubuntu Focus NX Gen 3 ships with one of my favorite Linux distributions preinstalled, and takes just minutes to set up."
+    value: "The M5 chip delivers up to 5.6 times faster performance than the M1 processor."
+    value: "The Sony WH-1000XM6 are staying in my backpack for the next several trips. Heres why."
+    value: "The Space Stage agenda is full at TechCrunch Disrupt 2025. Join 10,000 tech leaders to hear whats next in space tech. Register now to save up to 624."
+    value: "The U.S. Department of Justice has seized 15 billion in bitcoin from the leader of Prince Group, a criminal organization that stole billions of dollars from victims in the United States through cryptocurrency investment scams, also known as romance baiting o"
+    value: "The hardware largely remains the same, but performance gets a boost."
+    value: "The integration offers conversational, cited answers instead of traditional links and follows positive feedback from earlier tests in select markets. Perplexity will expand to mobile soon."
+    value: "The latest Patch Tuesday is a bug-fixing bonanza."
+    value: "The latest reservation offer comes just one week before Samsungs virtual Unpacked event, where Project Moohan is expected to debut."
+    value: "The reservation offer comes just one week before Samsungs virtual Unpacked event, where Project Moohan is expected to debut."
+    value: "This Visual Intelligence feature makes adding events so much easier."
+    value: "Today is Microsofts October 2025 Patch Tuesday, which includes security updates for 172 flaws, including six zero-day vulnerabilities. Get patching! [...]"
+    value: "Tweak these settings to keep your phone lasting longer - while maintaining great battery health."
+    value: "U.S. cybersecurity company F5 disclosed that it suffered a cyberattack in early August, where suspected nation-state hackers breached its systems and stole undisclosed BIG-IP security vulnerabilities and source code. [...]"
+    value: "Video editing app VSCO is adding a set of new AI image editing tools, support for high-resolution RAW files, non-destructive edits, and content-aware region detection."
+    value: "Walmart is partnering with OpenAI to let shoppers buy products directly through ChatGPT. The new integration will allow users to link their Walmart accounts, browse items ,and instantly check out  all within the chatbot."
+    value: "Waymo already has ties to the UK, which began after the autonomous vehicle technology company acquired Latent Logic in 2019."
+    value: "What does Xbox mean? Some might say it can only refer to a box-shaped Microsoft game machine. Others will argue its a collection of Xbox-native titles like Halo, Gears, Forza, and Fable. I think most would probably agree its a game console experience, a w"
+    value: "With an immutable distribution, you never have to worry about an upgrade breaking things. These are my favorite immutable Linux distros."
+    value: "With the new QuietComfort Ultra 2, Bose isnt reinventing the wheel. Instead, its made strides in almost every essential aspect."
+    value: "X is working on new transparency features to help users identify who theyre interacting with, such as account creation date, location, username change history, and how each account uses the service."
+    value: "YaCy is completely private and can be installed on Linux, Mac, and Windows PCs."
+    value: "Youll soon be able to see fewer sponsored ads in Search."
+    value: "Your favorite city is also getting an interactive update."
+  }
+  string_domain {
+    name: "source_name"
+    value: "BleepingComputer"
+    value: "Internet"
+    value: "TechCrunch"
+    value: "The Verge"
+    value: "Wired"
+    value: "ZDNet"
+  }
+  string_domain {
+    name: "published_at"
+    value: "2025-10-14T14:47:33Z"
+    value: "2025-10-14T14:52:13Z"
+    value: "2025-10-14T14:54:35Z"
+    value: "2025-10-14T15:05:28Z"
+    value: "2025-10-14T15:12:42Z"
+    value: "2025-10-14T15:29:32Z"
+    value: "2025-10-14T15:32:23Z"
+    value: "2025-10-14T15:50:08Z"
+    value: "2025-10-14T15:52:15Z"
+    value: "2025-10-14T15:52:27Z"
+    value: "2025-10-14T15:53:32Z"
+    value: "2025-10-14T16:00:00Z"
+    value: "2025-10-14T16:00:12Z"
+    value: "2025-10-14T16:00:34Z"
+    value: "2025-10-14T16:03:48Z"
+    value: "2025-10-14T16:10:46Z"
+    value: "2025-10-14T16:38:48Z"
+    value: "2025-10-14T17:37:43Z"
+    value: "2025-10-14T17:45:34Z"
+    value: "2025-10-14T17:46:00Z"
+    value: "2025-10-14T17:49:21Z"
+    value: "2025-10-14T18:02:50Z"
+    value: "2025-10-14T18:16:21Z"
+    value: "2025-10-14T18:24:25Z"
+    value: "2025-10-14T18:26:16Z"
+    value: "2025-10-14T18:46:47Z"
+    value: "2025-10-14T19:07:49Z"
+    value: "2025-10-14T20:17:58Z"
+    value: "2025-10-14T21:06:15Z"
+    value: "2025-10-14T21:35:12Z"
+    value: "2025-10-14T23:00:30Z"
+    value: "2025-10-14T23:05:59Z"
+    value: "2025-10-14T23:10:01Z"
+    value: "2025-10-15T02:00:36Z"
+    value: "2025-10-15T02:00:50Z"
+    value: "2025-10-15T05:40:33Z"
+    value: "2025-10-15T08:30:33Z"
+    value: "2025-10-15T09:00:00Z"
+    value: "2025-10-15T09:30:00Z"
+    value: "2025-10-15T10:46:00Z"
+    value: "2025-10-15T10:47:00Z"
+    value: "2025-10-15T11:00:00Z"
+    value: "2025-10-15T11:05:00Z"
+    value: "2025-10-15T11:09:00Z"
+    value: "2025-10-15T12:06:29Z"
+    value: "2025-10-15T12:11:00Z"
+    value: "2025-10-15T12:22:46Z"
+    value: "2025-10-15T12:30:00Z"
+    value: "2025-10-15T12:30:03Z"
+    value: "2025-10-15T12:49:20Z"
+    value: "2025-10-15T12:53:13Z"
+    value: "2025-10-15T12:58:20Z"
+    value: "2025-10-15T13:00:40Z"
+    value: "2025-10-15T13:05:37Z"
+    value: "2025-10-15T13:32:00Z"
+    value: "2025-10-15T13:32:07Z"
+    value: "2025-10-15T13:38:38Z"
+    value: "2025-10-15T13:41:46Z"
+    value: "2025-10-15T14:01:11Z"
+    value: "2025-10-15T14:02:54Z"
+    value: "2025-10-15T14:03:33Z"
+    value: "2025-10-15T14:09:00Z"
+    value: "2025-10-15T14:13:55Z"
+    value: "2025-10-15T14:16:00Z"
+    value: "2025-10-15T14:17:28Z"
+    value: "2025-10-15T14:22:00Z"
+    value: "2025-10-15T14:22:36Z"
+    value: "2025-10-15T14:53:00Z"
+    value: "2025-10-15T15:04:00Z"
+    value: "2025-10-15T15:05:00Z"
+    value: "2025-10-15T15:05:28Z"
+    value: "2025-10-15T15:11:26Z"
+    value: "2025-10-15T15:15:33Z"
+    value: "2025-10-15T15:18:28Z"
+    value: "2025-10-15T15:35:30Z"
+    value: "2025-10-15T15:54:51Z"
+    value: "2025-10-15T16:00:00Z"
+    value: "2025-10-15T16:01:12Z"
+    value: "2025-10-15T16:02:59Z"
+    value: "2025-10-15T16:05:00Z"
+    value: "2025-10-15T16:06:00Z"
+    value: "2025-10-15T16:06:50Z"
+    value: "2025-10-15T16:49:00Z"
+    value: "2025-10-15T17:00:30Z"
+    value: "2025-10-15T17:04:26Z"
+    value: "2025-10-15T17:29:11Z"
+    value: "2025-10-15T17:30:18Z"
+    value: "2025-10-15T17:32:11Z"
+    value: "2025-10-15T18:00:00Z"
+    value: "2025-10-15T18:01:34Z"
+    value: "2025-10-15T18:30:36Z"
+    value: "2025-10-15T19:19:23Z"
+    value: "2025-10-15T19:22:08Z"
+    value: "2025-10-15T19:41:51Z"
+    value: "2025-10-15T19:50:00Z"
+    value: "2025-10-15T20:50:24Z"
+    value: "2025-10-15T20:53:05Z"
+    value: "2025-10-15T21:46:38Z"
+  }
+  string_domain {
+    name: "image_url"
+    value: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh7nxODcfvRiRGSDL38ckIG0H-EQiEDgbQ7L09l-4hmze6f8fJxdAGx1sTPtM7qq4RJKe-0hvOxWJnxKElwWIem-mteqIPckj3p3LsPg-qWkBMHgS-hhQvOZZTwXvun2IRsLnjJt4d3nu0orFjiZYNDj_frr4wU6zTId8Lli8pr_yq1I4KbDMj18Je21op9/s790-rw-e365/vscode.jpg"
+    value: "https://media.wired.com/photos/68d2b8a6ec02cfea46385bf5/191:100/w_1280,c_limit/FacialRecognition_Illo.png"
+    value: "https://media.wired.com/photos/68ed60d1bfe13206c9ff9d9f/191:100/w_1280,c_limit/Biz-model-behavior-stargate-uae-2236543888.jpg"
+    value: "https://media.wired.com/photos/68ed64b64991e2f0569dd36d/191:100/w_1280,c_limit/gear-tesla-robotaxi-2220873143.jpg"
+    value: "https://media.wired.com/photos/68eeae717c200f52288c73c6/191:100/w_1280,c_limit/W1102806-Credit-Jacob-Roach.JPG"
+    value: "https://media.wired.com/photos/68efb698670b06a048487b72/191:100/w_1280,c_limit/Apple%20iPad%20Pro%20M5%20SOURCE%20Apple.jpg"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/02/STK_414_AI_CHATBOT_R2_CVirginia_B.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/03/acastro_STK459_09.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/09/amazon-echo-show-alexa-plus-smart-home.webp?quality=90&strip=all&crop=0%2C10.782006784713%2C100%2C78.435986430574&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/257907_future_of_being_trans_DOING_IT_THEMSELVES_CVirginia-1.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/257907_future_of_being_trans_DOING_IT_THEMSELVES_CVirginia.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/257996_ROG_Xbox_Ally_and_Xbox_Ally_X_AKrales_0145.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/AFL-CIO.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/Apple-MacBook-Pro-14-in-lifestyle-podcast-251015.jpg?quality=90&strip=all&crop=0%2C3.4613147178592%2C100%2C93.077370564282&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/Apple-iPad-Pro-Hero-Large.jpeg?quality=90&strip=all&crop=0%2C13.339328880589%2C100%2C73.321342238821&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/Fall-2025-Hero-Image.png?quality=90&strip=all&crop=0%2C10.746395159214%2C100%2C78.507209681572&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/Screenshot-2025-10-15-at-4.52.06%E2%80%AFPM.png?quality=90&strip=all&crop=6.0433133732535%2C0%2C87.913373253493%2C100&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/VERGE-DEALS-DAILY-IMAGE-9.png?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/Verge-Deals-Motorola-Razr-Ultra-2025.png?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/gettyimages-2201631023.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/honor-magic-8-pro-cyan.jpg?quality=90&strip=all&crop=0%2C10.741906587151%2C100%2C78.516186825698&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/honor-robot-phone_859504.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/2025/10/image002.jpg?quality=90&strip=all&crop=0%2C3.4846106844621%2C100%2C93.030778631076&w=1200"
+    value: "https://platform.theverge.com/wp-content/uploads/sites/2/chorus/uploads/chorus_asset/file/24428734/Screen_Shot_2023_02_13_at_8.38.37_AM.jpg?quality=90&strip=all&crop=0%2C10.732984293194%2C100%2C78.534031413613&w=1200"
+    value: "https://techcrunch.com/wp-content/uploads/2019/09/google-search-app-ios.jpg?resize=1200,644"
+    value: "https://techcrunch.com/wp-content/uploads/2020/11/GettyImages-1228097014.jpg?w=1024"
+    value: "https://techcrunch.com/wp-content/uploads/2023/08/twitter-x-logo-musk-1.jpg?resize=1200,675"
+    value: "https://techcrunch.com/wp-content/uploads/2024/12/GettyImages-831764682.jpeg?resize=1200,797"
+    value: "https://techcrunch.com/wp-content/uploads/2025/01/GettyImages-2173579488.jpg?resize=1200,799"
+    value: "https://techcrunch.com/wp-content/uploads/2025/02/GettyImages-2197181602.jpg?w=1024"
+    value: "https://techcrunch.com/wp-content/uploads/2025/02/GettyImages-2201260651.jpg?w=1024"
+    value: "https://techcrunch.com/wp-content/uploads/2025/02/firefox.jpeg?w=1200"
+    value: "https://techcrunch.com/wp-content/uploads/2025/05/GettyImages-2213399157.jpg?resize=1200,800"
+    value: "https://techcrunch.com/wp-content/uploads/2025/09/GettyImages-2233653192.jpg?resize=1200,786"
+    value: "https://techcrunch.com/wp-content/uploads/2025/09/waymo-robotaxi-fifth-gen.jpg?resize=1200,800"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Apple-iPad-Pro-lifestyle-251015_big.jpg.large_2x.jpg?w=1200"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Coco-Robotics-image.jpg?resize=1200,960"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/DJ-Header-2-2048x782-1.png?resize=1200,458"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/DSC09795-1.jpg?resize=1200,801"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Disrupt-2024-Bridgit-Mendler.jpg?resize=1200,800"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/GoogleMeet-makeup-e1760456693707.png?w=818"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/HERO-16x9-1.jpg?resize=1200,674"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Screen-Shot-2025-10-15-at-10.38.58-AM.jpg?w=800"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Screenshot-2025-10-15-at-8.03.20PM.jpg?resize=1200,578"
+    value: "https://techcrunch.com/wp-content/uploads/2025/10/Viven.jpg.jpeg?resize=1200,801"
+    value: "https://www.bleepingcomputer.com/forums/public/style_images/master/meta_image.png"
+    value: "https://www.bleepstatic.com/content/hl-images/2021/08/23/Mircosoft-Exchange_headpic.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2023/04/03/Capita-logo.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2023/08/04/package-container.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2023/11/13/hackers_data_center.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2024/04/11/LastPass-headpic.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2024/07/18/Windows11.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2024/09/10/windows-10-gradient.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2024/10/08/patch_tuesday_microsoft.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2024/12/05/Cryptocurrency.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/03/04/Android_cracks.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/03/21/Oracle.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/03/27/Windows_Server.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/03/28/Windows_headpic.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/10/15/F5-headpic.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/10/15/F5.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/10/15/School-hacker.jpg"
+    value: "https://www.bleepstatic.com/content/hl-images/2025/10/15/mango-store-header.jpg"
+    value: "https://www.bleepstatic.com/content/posts/2025/10/14/dark-web-ndr.jpg"
+    value: "https://www.zdnet.com/a/img/resize/0117181e6991931b3a6b1bce23dcc7285be4f811/2025/10/08/8ad2b478-ec18-487d-8deb-e6d5c444499c/dsc07944.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/04e61dc26395d5b7fd612f310bb8c273123f31fe/2024/03/07/15da65af-12d1-4d5c-94ed-961bc74d4fda/m3-macbook-air-close-up.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/1329bc9baa1d52949e0bdef59056a6d36a4b04b5/2023/07/19/e35de1c0-270d-4fd8-8864-0daba07eadf8/google-meet.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/1372d2de2f59ac6a76a28c6a36a09bc2d62546ba/2025/10/15/80610d69-58de-438f-91aa-2c6ad56f938e/this-cool-new-copilot-feature-will-help-you-use-windows-more-easily.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/21c40e997391c86686310412af721d9a4293553a/2025/10/15/dec85513-02a7-40a6-a06a-6483a5b0b581/screenshot-2025-10-15-at-11-59-25am.png?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/268c177763a07164e9afa3b804b9828eebf046f6/2025/07/24/6e232056-02a4-47cd-b1a1-a7155e96e957/dell-premium-16-image-5.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/36abab24ac2c84e27f1dba686cea0483fb2af323/2025/10/15/5017377f-4b3b-424e-9b8d-ee3a890e94ab/gettyimages-2229869214.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/413b35a8ddd9bbb286a5dc8a2b66e28f04ce569b/2025/10/07/bca0ee02-b5fc-47b9-8bd8-1bf6a207ccdf/why-use-a-third-party-search-tool-when-you-can-install-and-use-your-own.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/47528b9d706c4ffb63301039136955c5c623d009/2025/09/30/08a069a4-2905-4ddd-955a-68ee99b23535/1000004409.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/4b879ea3527a4c8ff4b76c6024c633dcf7d1eed7/2024/09/30/e7e268f6-caf5-4344-a640-71016a177cea/4pk.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/688449dd0c68acc3b0a3f0bc1ec782391005ade6/2025/03/03/286abb41-6604-4c25-b731-15641af4c355/dsc04225.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/7977a84dc7f0550d0a871e026eb13488bc126a1b/2025/08/28/3848813c-a2ac-4a89-bf87-51682faa6585/gemini-on-premise.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/7ef6819d553fc80fff97b1dd1ad8b4a4d9c28c6c/2024/11/06/30d11d3b-4623-4e04-a7f3-ed36dbe4e391/dsc02525-2.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8194078d25f5a047c8625aebf7890af6badfa4e2/2025/10/10/55697a7a-387a-4f58-b90c-fbabcc0a9c8e/qcu2-9.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8270da20b8f878684eb08f59c1f00a0f734bd3fc/2025/10/14/da187e9d-4cb8-4df2-8ad0-6478a492abce/gettyimages-2128592701.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8b18b253191ac58588828f513f51ebbcfdb5e7e6/2025/10/14/83ea3fde-487f-4d5b-a2ef-e349dfdc7b2a/323amkey.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8b8966286130a6a8acb9f77bcdb511cb5ff06fe2/2025/08/18/5c81783b-76a7-417f-bc06-122827dee962/5-reasons-you-should-use-immutable-linux-distros.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8ec89d15322f025d425f4626dc58b0366928a240/2025/09/19/6d6ecc93-c339-4b4c-b752-b3983ba1bb41/dsc07765.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/8fd6b42d25332cfb0fa1f5412a58a769c138ef56/2025/10/07/256fecb2-bf39-4462-ac7d-66787e91af68/focus3.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/ac8325d9064533d659c5f62910b6a77e3979ee26/2025/10/14/2e4b7fd5-acb3-4004-baef-da8f1c4587d4/gettyimages-2197380148.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/b85a4d94c47ce3cea0b68acd6e552c3be4297d24/2025/10/14/d4554b87-3648-475a-9983-3802eaf96556/gettyimages-1411567359.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/c565a94d3a6c0cc18f1efd940e139a141da7ed0c/2025/10/14/d1e64bea-e271-4e62-8f87-b707b5d00e7b/gettyimages-2234178220.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/c629658fe797056625079bd470c20470b18bb9f6/2025/10/15/75b50551-c937-47a6-b0b2-0cd7b3befbc4/ipad-pro-m5.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/c78a00000f7c1a17602287ac68fe06dec12edd6c/2025/10/15/c45fc2c3-741f-4d37-9e95-0551f661ec9d/illustration.png?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/cbbaf18b61873a257611b310697df9d4150578d4/2025/04/09/37004b75-7537-495e-a7b8-317853549901/hp-elitebook-ultra-g1i-image-2.png?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/cc1077fe22563157e2e14ff19398fba939003a69/2024/10/25/e259f42a-b71f-47b5-8656-262c05f52963/4.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/dee9fd666e27cfcdd482ffd8f11e3178ff63578d/2025/10/15/58b63710-de31-474f-a7e0-4ec487bafd23/microsofts-final-patch-tuesday-update-for-windows-10-is-a-bug-fixing-bonanza2.jpg?auto=webp&fit=crop&height=675&width=1200"
+    value: "https://www.zdnet.com/a/img/resize/f669203aabd4ee7f61aa393b1980a25d0ccb8de4/2024/11/06/fe5d85e7-054c-44d7-804a-8b6b6b66443f/dsc02545-2.jpg?auto=webp&fit=crop&height=675&width=1200"
+  }
+  string_domain {
+    name: "primary_category"
+    value: "artificial_intelligence"
+    value: "general"
+  }
+  string_domain {
+    name: "all_categories"
+    value: "[\'artificial_intelligence\']"
+    value: "[]"
+  }
+  string_domain {
+    name: "category_scores"
+    value: "{\'artificial_intelligence\': 0.2}"
+    value: "{\'artificial_intelligence\': 0.3}"
+    value: "{\'artificial_intelligence\': 0.4}"
+    value: "{\'artificial_intelligence\': 0.5}"
+    value: "{\'artificial_intelligence\': 0.6}"
+    value: "{\'artificial_intelligence\': 0.9}"
+    value: "{}"
+  }
+  string_domain {
+    name: "processed_at"
+    value: "2025-10-16T22:26:50.841492"
+    value: "2025-10-16T22:26:50.844021"
+    value: "2025-10-16T22:26:50.846923"
+    value: "2025-10-16T22:26:50.850156"
+    value: "2025-10-16T22:26:50.852452"
+    value: "2025-10-16T22:26:50.854944"
+    value: "2025-10-16T22:26:50.857333"
+    value: "2025-10-16T22:26:50.859690"
+    value: "2025-10-16T22:26:50.862103"
+    value: "2025-10-16T22:26:50.865269"
+    value: "2025-10-16T22:26:50.867841"
+    value: "2025-10-16T22:26:50.870282"
+    value: "2025-10-16T22:26:50.872963"
+    value: "2025-10-16T22:26:50.875523"
+    value: "2025-10-16T22:26:50.877874"
+    value: "2025-10-16T22:26:50.880269"
+    value: "2025-10-16T22:26:50.885689"
+    value: "2025-10-16T22:26:50.888176"
+    value: "2025-10-16T22:26:50.890709"
+    value: "2025-10-16T22:26:50.893187"
+    value: "2025-10-16T22:26:50.895430"
+    value: "2025-10-16T22:26:50.898268"
+    value: "2025-10-16T22:26:50.901181"
+    value: "2025-10-16T22:26:50.904188"
+    value: "2025-10-16T22:26:50.907035"
+    value: "2025-10-16T22:26:50.909536"
+    value: "2025-10-16T22:26:50.912111"
+    value: "2025-10-16T22:26:50.915652"
+    value: "2025-10-16T22:26:50.918919"
+    value: "2025-10-16T22:26:50.920940"
+    value: "2025-10-16T22:26:50.923600"
+    value: "2025-10-16T22:26:50.925854"
+    value: "2025-10-16T22:26:50.928411"
+    value: "2025-10-16T22:26:50.931844"
+    value: "2025-10-16T22:26:50.934489"
+    value: "2025-10-16T22:26:50.937183"
+    value: "2025-10-16T22:26:50.939826"
+    value: "2025-10-16T22:26:50.942829"
+    value: "2025-10-16T22:26:50.945207"
+    value: "2025-10-16T22:26:50.947977"
+    value: "2025-10-16T22:26:50.950956"
+    value: "2025-10-16T22:26:50.953471"
+    value: "2025-10-16T22:26:50.955890"
+    value: "2025-10-16T22:26:50.958242"
+    value: "2025-10-16T22:26:50.960657"
+    value: "2025-10-16T22:26:50.963416"
+    value: "2025-10-16T22:26:50.966951"
+    value: "2025-10-16T22:26:50.969821"
+    value: "2025-10-16T22:26:50.972105"
+    value: "2025-10-16T22:26:50.974598"
+    value: "2025-10-16T22:26:50.976519"
+    value: "2025-10-16T22:26:50.978755"
+    value: "2025-10-16T22:26:50.980892"
+    value: "2025-10-16T22:26:50.984243"
+    value: "2025-10-16T22:26:50.986336"
+    value: "2025-10-16T22:26:50.988488"
+    value: "2025-10-16T22:26:50.990532"
+    value: "2025-10-16T22:26:50.992468"
+    value: "2025-10-16T22:26:50.994230"
+    value: "2025-10-16T22:26:50.996379"
+    value: "2025-10-16T22:26:50.999257"
+    value: "2025-10-16T22:26:51.001583"
+    value: "2025-10-16T22:26:51.004053"
+    value: "2025-10-16T22:26:51.006308"
+    value: "2025-10-16T22:26:51.008582"
+    value: "2025-10-16T22:26:51.010491"
+    value: "2025-10-16T22:26:51.012648"
+    value: "2025-10-16T22:26:51.015815"
+    value: "2025-10-16T22:26:51.018523"
+    value: "2025-10-16T22:26:51.020856"
+    value: "2025-10-16T22:26:51.022981"
+    value: "2025-10-16T22:26:51.024908"
+    value: "2025-10-16T22:26:51.026906"
+    value: "2025-10-16T22:26:51.029377"
+    value: "2025-10-16T22:26:51.031794"
+    value: "2025-10-16T22:26:51.034523"
+    value: "2025-10-16T22:26:51.036665"
+    value: "2025-10-16T22:26:51.039575"
+    value: "2025-10-16T22:26:51.042443"
+    value: "2025-10-16T22:26:51.044684"
+    value: "2025-10-16T22:26:51.047004"
+    value: "2025-10-16T22:26:51.049806"
+    value: "2025-10-16T22:26:51.052015"
+    value: "2025-10-16T22:26:51.054197"
+    value: "2025-10-16T22:26:51.056204"
+    value: "2025-10-16T22:26:51.058264"
+    value: "2025-10-16T22:26:51.060009"
+    value: "2025-10-16T22:26:51.062173"
+    value: "2025-10-16T22:26:51.065364"
+    value: "2025-10-16T22:26:51.067933"
+    value: "2025-10-16T22:26:51.070431"
+    value: "2025-10-16T22:26:51.073097"
+    value: "2025-10-16T22:26:51.076428"
+    value: "2025-10-16T22:26:51.078759"
+    value: "2025-10-16T22:26:51.081696"
+    value: "2025-10-16T22:26:51.084104"
+    value: "2025-10-16T22:26:51.087562"
+    value: "2025-10-16T22:26:51.090444"
+    value: "2025-10-16T22:26:51.093455"
+    value: "2025-10-16T22:26:51.096169"
+  }
+}
+anomaly_info {
+  key: "all_categories"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "all_categories"
+    }
+  }
+}
+anomaly_info {
+  key: "article_id"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "article_id"
+    }
+  }
+}
+anomaly_info {
+  key: "author"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "author"
+    }
+  }
+}
+anomaly_info {
+  key: "category_distribution"
+  value {
+    description: "New column (column in data but not in schema)"
+    severity: ERROR
+    short_description: "New column"
+    reason {
+      type: SCHEMA_NEW_COLUMN
+      short_description: "New column"
+      description: "New column (column in data but not in schema)"
+    }
+    path {
+      step: "category_distribution"
+    }
+  }
+}
+anomaly_info {
+  key: "category_scores"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "category_scores"
+    }
+  }
+}
+anomaly_info {
+  key: "description"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "description"
+    }
+  }
+}
+anomaly_info {
+  key: "image_url"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "image_url"
+    }
+  }
+}
+anomaly_info {
+  key: "keywords_config"
+  value {
+    description: "New column (column in data but not in schema)"
+    severity: ERROR
+    short_description: "New column"
+    reason {
+      type: SCHEMA_NEW_COLUMN
+      short_description: "New column"
+      description: "New column (column in data but not in schema)"
+    }
+    path {
+      step: "keywords_config"
+    }
+  }
+}
+anomaly_info {
+  key: "overall_relevance"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "overall_relevance"
+    }
+  }
+}
+anomaly_info {
+  key: "papers"
+  value {
+    description: "New column (column in data but not in schema)"
+    severity: ERROR
+    short_description: "New column"
+    reason {
+      type: SCHEMA_NEW_COLUMN
+      short_description: "New column"
+      description: "New column (column in data but not in schema)"
+    }
+    path {
+      step: "papers"
+    }
+  }
+}
+anomaly_info {
+  key: "primary_category"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "primary_category"
+    }
+  }
+}
+anomaly_info {
+  key: "processed_at"
+  value {
+    description: "Examples contain values missing from the schema: 2025-10-17T00:47:21.729372 (~100%). "
+    severity: ERROR
+    short_description: "Unexpected string values"
+    reason {
+      type: ENUM_TYPE_UNEXPECTED_STRING_VALUES
+      short_description: "Unexpected string values"
+      description: "Examples contain values missing from the schema: 2025-10-17T00:47:21.729372 (~100%). "
+    }
+    path {
+      step: "processed_at"
+    }
+  }
+}
+anomaly_info {
+  key: "published_at"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "published_at"
+    }
+  }
+}
+anomaly_info {
+  key: "source_name"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "source_name"
+    }
+  }
+}
+anomaly_info {
+  key: "title"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "title"
+    }
+  }
+}
+anomaly_info {
+  key: "total_papers"
+  value {
+    description: "New column (column in data but not in schema)"
+    severity: ERROR
+    short_description: "New column"
+    reason {
+      type: SCHEMA_NEW_COLUMN
+      short_description: "New column"
+      description: "New column (column in data but not in schema)"
+    }
+    path {
+      step: "total_papers"
+    }
+  }
+}
+anomaly_info {
+  key: "url"
+  value {
+    description: "Column is completely missing"
+    severity: ERROR
+    short_description: "Column dropped"
+    reason {
+      type: SCHEMA_MISSING_COLUMN
+      short_description: "Column dropped"
+      description: "Column is completely missing"
+    }
+    path {
+      step: "url"
+    }
+  }
+}
+anomaly_name_format: SERIALIZED_PATH

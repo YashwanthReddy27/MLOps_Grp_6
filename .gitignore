@@ -1,3 +1,5 @@
+.vscode/
+
 # Airflow logs
 logs/
 *.log

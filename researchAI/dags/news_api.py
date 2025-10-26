@@ -3,6 +3,9 @@ import os
 import json
 import requests
 import logging
+from bs4 import BeautifulSoup
+
+from sympy import re
 from airflow.models import Variable
 
 # Import common utilities from modular structure
@@ -269,12 +272,11 @@ class NewsAPIPipeline:
                 enriched = {
                     'article_id': self.deduplication_manager.generate_hash(title_clean, article.get('url', '')),
                     'title': title_clean,
-                    'description': desc_clean,
+                    'description': self.extract_article_content(url=article.get('url')),
                     'url': article.get('url'),
                     'source_name': article.get('source', {}).get('name'),
                     'author': article.get('author') or 'Unknown',
                     'published_at': article.get('publishedAt'),
-                    'image_url': article.get('urlToImage'),
                     'primary_category': categorization['primary_category'],
                     'all_categories': categorization['all_categories'],
                     'category_scores': categorization['category_scores'],
@@ -327,6 +329,92 @@ class NewsAPIPipeline:
         except Exception as e:
             self.logger.error(f"[CATEGORIZE] Error: {str(e)}")
             raise
+
+    def extract_article_content(self, url: str):
+        """
+        Extract article content from URL
+        
+        Args:
+            url: Article URL
+            
+        Returns:
+            Dictionary with extracted content
+        """
+        try:
+            response = self.session.get(url, timeout=self.timeout)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Remove script and style elements
+            for script in soup(["script", "style", "noscript"]):
+                script.decompose()
+            
+            # Try multiple extraction strategies
+            content = self._extract_by_article_tags(soup)
+            if not content:
+                content = self._extract_by_common_patterns(soup)
+            if not content:
+                content = self._extract_by_paragraphs(soup)
+            
+            return {
+                'description': content
+            }
+        except requests.RequestException as e:
+            self.logger.error(f"Failed to fetch {url}: {e}")
+            return {
+                'description': None
+            }
+        except Exception as e:
+            self.logger.error(f"Error processing {url}: {e}")
+            return {'description': None}
+
+    def _extract_by_article_tags(self, soup):
+        """Extract content using article/main tags"""
+        article = soup.find('article') or soup.find('main')
+        if article:
+            paragraphs = article.find_all('p')
+            if paragraphs:
+                content = ' '.join([p.get_text().strip() for p in paragraphs])
+                return self._clean_text(content)
+        return None
+    
+    def _extract_by_common_patterns(self, soup):
+        """Extract using common content div patterns"""
+        content_indicators = [
+            {'class': re.compile(r'(article|content|post|entry|story|body)', re.I)},
+            {'id': re.compile(r'(article|content|post|entry|story|body)', re.I)}
+        ]
+        for indicator in content_indicators:
+            containers = soup.find_all('div', indicator)
+            if containers:
+                best_container = max(containers, key=lambda x: len(x.find_all('p')))
+                paragraphs = best_container.find_all('p')
+                if paragraphs:
+                    content = ' '.join([p.get_text().strip() for p in paragraphs])
+                    return self._clean_text(content)
+        return None
+    
+    def _extract_by_paragraphs(self, soup):
+        """Fallback: Extract all substantial paragraphs"""
+        paragraphs = soup.find_all('p')
+        substantial_paragraphs = [
+            p.get_text().strip() for p in paragraphs
+            if len(p.get_text().strip()) > 50
+        ]
+        
+        if substantial_paragraphs:
+            content = ' '.join(substantial_paragraphs)
+            return self._clean_text(content)
+        return None
+    
+    def _clean_text(self, text: str) -> str:
+        """Clean extracted text"""
+        text = re.sub(r'\s+', ' ', text)
+        text = re.sub(r'(Advertisement|ADVERTISEMENT)', '', text)
+        text = re.sub(r'(Read more|Continue reading)\.?$', '', text, flags=re.I)
+        text = re.sub(r'\s{2,}', ' ', text)
+        return text.strip()
 
 
     def load_to_postgresql(self, **context):

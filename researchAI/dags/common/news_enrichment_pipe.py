@@ -22,9 +22,6 @@ from common.file_management import FileManager
 from common.data_cleaning import TextCleaner
 from common.deduplication import DeduplicationManager
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 # ============================================================================
 # CONTENT FETCHER CLASS
@@ -47,6 +44,8 @@ class ArticleContentFetcher:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         })
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
     
     def extract_article_content(self, url: str) -> Dict[str, Optional[str]]:
         """
@@ -87,7 +86,7 @@ class ArticleContentFetcher:
             }
             
         except requests.RequestException as e:
-            logger.error(f"Failed to fetch {url}: {e}")
+            self.logger.error(f"Failed to fetch {url}: {e}")
             return {
                 'full_content': None,
                 'word_count': 0,
@@ -95,7 +94,7 @@ class ArticleContentFetcher:
                 'extracted_at': datetime.now().isoformat()
             }
         except Exception as e:
-            logger.error(f"Error processing {url}: {e}")
+            self.logger.error(f"Error processing {url}: {e}")
             return {
                 'full_content': None,
                 'word_count': 0,
@@ -397,7 +396,7 @@ def enrich_news_articles(**context):
         # Get keywords configuration
         keywords_config = news_data.get('keywords_config')
         if not keywords_config:
-            from news_api_pipeline import NEWS_KEYWORDS
+            from researchAI.dags.news_api import NEWS_KEYWORDS
             keywords_config = NEWS_KEYWORDS
         
         # Enrich articles
@@ -500,7 +499,7 @@ def extract_keywords_and_categorize_enriched(**context):
         
         keywords_config = data.get('keywords_config')
         if not keywords_config:
-            from news_api_pipeline import NEWS_KEYWORDS
+            from researchAI.dags.news_api import NEWS_KEYWORDS
             keywords_config = NEWS_KEYWORDS
         
         logger.info(f"Categorizing {len(articles)} articles (enriched: {using_enriched})")

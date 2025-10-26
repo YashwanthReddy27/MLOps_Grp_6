@@ -9,18 +9,15 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 # Import ALL functions from your original arxiv_pipeline
-from arxiv_pipeline import (
-    fetch_arxiv_papers,
-    process_and_categorize_papers,
-    load_to_postgresql,
-    cleanup_old_files
-)
+from researchAI.dags.arxiv import ArxivPipeline
 
 # Import new Great Expectations validation functions
 from common.ge_validation_task import (
     validate_data_quality,
     generate_data_statistics_report
 )
+
+arxiv = ArxivPipeline()
 
 # Default arguments - UPDATE EMAIL ADDRESS
 default_args = {
@@ -50,14 +47,14 @@ with DAG(
     # Task 1: Fetch papers from arXiv (from original pipeline)
     fetch_papers_task = PythonOperator(
         task_id='fetch_arxiv_papers',
-        python_callable=fetch_arxiv_papers,
+        python_callable=arxiv.fetch_arxiv_papers,
         provide_context=True,
     )
     
     # Task 2: Process and categorize papers (from original pipeline)
     process_task = PythonOperator(
         task_id='process_and_categorize_papers',
-        python_callable=process_and_categorize_papers,
+        python_callable=arxiv.process_and_categorize_papers,
         provide_context=True,
     )
     
@@ -72,14 +69,14 @@ with DAG(
     # Only runs if validation passes
     load_db_task = PythonOperator(
         task_id='load_to_postgresql',
-        python_callable=load_to_postgresql,
+        python_callable=arxiv.load_to_postgresql,
         provide_context=True,
     )
     
     # Task 5: Cleanup old files (from original pipeline)
     cleanup_task = PythonOperator(
         task_id='cleanup_old_files',
-        python_callable=cleanup_old_files,
+        python_callable=arxiv.cleanup_old_files,
         provide_context=True,
     )
 

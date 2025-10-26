@@ -1,6 +1,6 @@
 """
 Common utilities package for data pipelines
-Modular structure for News and arXivpipelines
+Modular structure for News and arXiv pipelines
 """
 
 # Import all utilities for convenient access

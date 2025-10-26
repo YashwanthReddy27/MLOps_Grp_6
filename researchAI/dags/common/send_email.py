@@ -2,28 +2,27 @@ import smtplib
 from email.message import EmailMessage
 import yaml
 import logging
+import os
 
 class AlertEmail:
 
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
         with open("email_config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
-        self.logger = logging.getLogger(__name__)
+            self.logger.info("Email configuration loaded successfully.")
 
     def send_email_with_attachment(
         self,
         recipient_email: str, 
         subject: str, 
         body: str, 
-        attachments=None, 
-        sender_email: str=self.config['sender_email'], 
-        sender_password: str=self.config['sender_password'], 
-        smtp_server: str=self.config['smtp_server'], 
-        smtp_port: int=self.config['smtp_port']
+        attachments=None
     ):
         # Create the email
         msg = EmailMessage()
-        msg["From"] = sender_email
+        msg["From"] = self.config['sender_email']
         msg["To"] = recipient_email
         msg["Subject"] = subject
         msg.set_content(body)
@@ -46,9 +45,9 @@ class AlertEmail:
 
         # Send the email
         try:
-            with smtplib.SMTP(smtp_server, smtp_port) as smtp:
+            with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as smtp:
                 smtp.starttls()  # Secure connection
-                smtp.login(sender_email, sender_password)
+                smtp.login(self.config['sender_email'], self.config['sender_password'])
                 smtp.send_message(msg)
             self.logger.info(" Email sent successfully!")
         except Exception as e:

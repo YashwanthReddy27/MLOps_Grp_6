@@ -8,12 +8,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 # Import ALL functions from your original news_api_pipeline
-from news_api_pipeline import (
-    fetch_tech_news,
-    extract_keywords_and_categorize,
-    load_to_postgresql,
-    cleanup_old_files
-)
+from researchAI.dags.news_api import NewsAPIPipeline
 
 from common.news_enrichment_pipe import (
     enrich_news_articles,
@@ -37,6 +32,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
+news_api = NewsAPIPipeline()
+
 # ============================================================================
 # MAIN DAG - Tech News with Full Content Enrichment
 # ============================================================================
@@ -56,7 +53,7 @@ with DAG(
     # Returns: article count (int), saves data to file, pushes filename to XCom
     extract_news = PythonOperator(
         task_id='extract_tech_news',
-        python_callable=fetch_tech_news,
+        python_callable=news_api.fetch_tech_news,
         doc_md="""
         Fetches tech news articles from News API based on predefined keywords.
         Filters duplicates and saves new articles to JSON file.
@@ -68,7 +65,7 @@ with DAG(
     # Scrapes article URLs to get complete text (500-2000+ words vs 200 chars)
     enrich_content = PythonOperator(
         task_id='enrich_article_content',
-        python_callable=enrich_news_articles,
+        python_callable=news_api.enrich_news_articles,
         execution_timeout=timedelta(minutes=30),  # Web scraping can take time
         doc_md="""
         Enriches articles by fetching full content from URLs via web scraping.
@@ -81,7 +78,7 @@ with DAG(
     # Uses full article text for better categorization accuracy
     categorize = PythonOperator(
         task_id='extract_keywords_and_categorize',
-        python_callable=extract_keywords_and_categorize_enriched,
+        python_callable=news_api.extract_keywords_and_categorize_enriched,
         doc_md="""
         Categorizes articles using full content (if available) or descriptions.
         Assigns primary category, relevance scores, and extracts keywords.
@@ -105,7 +102,7 @@ with DAG(
     # Stores enriched and categorized articles in database
     load_db = PythonOperator(
         task_id='load_to_postgresql',
-        python_callable=load_to_postgresql,
+        python_callable=news_api.load_to_postgresql,
         doc_md="""
         Loads categorized articles to PostgreSQL database.
         Stores full content, categories, and enrichment metadata.
@@ -116,7 +113,7 @@ with DAG(
     # Removes files older than retention period
     cleanup = PythonOperator(
         task_id='cleanup_old_files',
-        python_callable=cleanup_old_files,
+        python_callable=news_api.cleanup_old_files,
         trigger_rule='none_failed_or_skipped',  # Always run cleanup
         doc_md="""
         Cleans up old JSON files based on retention policy.

@@ -4,13 +4,14 @@ FIXED for Universal GE Validator
 """
 
 from common.ge_validator import PipelineValidator
-from common.send_email import send_email_with_attachment
-from dotenv import load_dotenv
+from common.send_email import AlertEmail
 import json
 from datetime import datetime
 from pathlib import Path
 import os
 
+
+alert_email = AlertEmail()
 
 def validate_data_quality(**context):
     """
@@ -83,11 +84,11 @@ def validate_data_quality(**context):
                 # Send notification
                 send_schema_created_email(pipeline_name, validator, context)
                 
-                print("[VALIDATION] ✅ Schema created successfully")
+                print("[VALIDATION] Schema created successfully")
                 return True
                 
             except Exception as e:
-                print(f"[VALIDATION] ❌ Error creating schema: {e}")
+                print(f"[VALIDATION] Error creating schema: {e}")
                 import traceback
                 traceback.print_exc()
                 
@@ -109,7 +110,7 @@ def validate_data_quality(**context):
             validation_passed = validator.validate_data(data_file, raise_on_error=False)
             
             if validation_passed:
-                print("[VALIDATION] ✅ Data validation PASSED")
+                print("[VALIDATION] Data validation PASSED")
                 
                 context['ti'].xcom_push(key='validation_result', value={
                     'status': 'success',
@@ -120,7 +121,7 @@ def validate_data_quality(**context):
                 return True
             else:
                 # Validation failed - load the results to get details
-                print("[VALIDATION] ❌ Data validation FAILED - Anomalies detected")
+                print("[VALIDATION] Data validation FAILED - Anomalies detected")
                 
                 # Load the most recent validation result
                 validations_dir = validator.validations_dir
@@ -174,7 +175,7 @@ def validate_data_quality(**context):
                     context['ti'].xcom_push(key='validation_result', value=anomaly_summary)
                 
                 # Continue pipeline but log the issues
-                print("[VALIDATION] ⚠️  Continuing pipeline despite anomalies")
+                print("[VALIDATION]  Continuing pipeline despite anomalies")
                 return True
                 
         except Exception as e:
@@ -258,9 +259,7 @@ View: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 ═══════════════════════════════════════════════════════════
 """
         
-        send_email_with_attachment(
-            sender_email="projectmlops@gmail.com",
-            sender_password="axhh ojnp axum udnj",
+        alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",
             subject=f"📋 New Schema Created: {pipeline.upper()} Pipeline",
             body=body
@@ -327,9 +326,7 @@ PIPELINE STATUS
 Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
-        send_email_with_attachment(
-            sender_email=os.getenv('SENDER_EMAIL'),
-            sender_password=os.getenv('SENDER_PASSWORD'),
+        alert_email.send_email_with_attachment(
             recipient_email=os.getenv('RECIPIENT_EMAIL'),
             subject=f"🚨 Data Quality Alert: {pipeline.upper()} - {anomaly_count} Anomalies",
             body=body
@@ -375,7 +372,7 @@ ACTION REQUIRED
 Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
-        send_email_with_attachment(
+        alert_email.send_email_with_attachment(
             sender_email="SENDER_EMAIL",
             sender_password="SENDER_PASSWORD",
             recipient_email="RECIPIENT_EMAIL",

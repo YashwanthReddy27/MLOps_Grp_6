@@ -35,15 +35,6 @@ class DatabaseManager:
         Args:
             table_name: Name of the table
             schema_sql: SQL CREATE TABLE statement
-            
-        Example:
-            db.create_table_if_not_exists(
-                'articles',
-                '''CREATE TABLE IF NOT EXISTS articles (
-                    id SERIAL PRIMARY KEY,
-                    title VARCHAR(500)
-                );'''
-            )
         """
         try:
             hook = self.get_hook()
@@ -66,13 +57,6 @@ class DatabaseManager:
             
         Returns:
             Number of records processed
-            
-        Example:
-            count = db.upsert_records(
-                'articles',
-                [{'article_id': '123', 'title': 'New Title'}],
-                conflict_column='article_id'
-            )
         """
         if not records:
             print("[DB] No records to upsert")
@@ -119,12 +103,6 @@ class DatabaseManager:
             
         Returns:
             List of dictionaries representing rows
-            
-        Example:
-            results = db.execute_query(
-                "SELECT * FROM articles WHERE category = %s",
-                ('AI',)
-            )
         """
         try:
             hook = self.get_hook()
@@ -194,9 +172,6 @@ class DatabaseManager:
             
         Returns:
             Row count
-            
-        Example:
-            count = db.get_row_count('articles', "category = 'AI'")
         """
         try:
             query = f"SELECT COUNT(*) as count FROM {table_name}"
@@ -219,9 +194,6 @@ class DatabaseManager:
             
         Returns:
             Number of records inserted
-            
-        Example:
-            count = db.bulk_insert('articles', article_list)
         """
         if not records:
             print("[DB] No records to insert")
@@ -316,9 +288,6 @@ class DatabaseManager:
             
         Returns:
             Number of records deleted
-            
-        Example:
-            deleted = db.delete_old_records('articles', 'created_at', 30)
         """
         try:
             query = f"""

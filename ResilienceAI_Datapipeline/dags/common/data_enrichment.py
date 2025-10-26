@@ -21,13 +21,6 @@ class DataEnricher:
         
         Returns:
             Relevance score between 0 and 1
-            
-        Example:
-            score = DataEnricher.calculate_relevance_score(
-                "machine learning article",
-                ["machine", "learning", "AI"]
-            )
-            # Returns: 0.6 (found 2 out of 3 terms)
         """
         if not text or not query_terms:
             return 0.0
@@ -49,29 +42,6 @@ class DataEnricher:
         return min(score, 1.0)
     
     @staticmethod
-    def calculate_weighted_score(text: str, keywords: List[str], weight: float = 1.0) -> float:
-        """
-        Calculate weighted relevance score for categorization
-        
-        Args:
-            text: Text to score
-            keywords: List of keywords for this category
-            weight: Category weight multiplier (default: 1.0)
-        
-        Returns:
-            Weighted relevance score
-            
-        Example:
-            score = DataEnricher.calculate_weighted_score(
-                "AI research paper",
-                ["AI", "research", "machine learning"],
-                weight=1.5  # High priority category
-            )
-        """
-        base_score = DataEnricher.calculate_relevance_score(text, keywords)
-        return base_score * weight
-    
-    @staticmethod
     def add_timestamps(record: Dict) -> Dict:
         """
         Add standard timestamp fields to record
@@ -81,10 +51,6 @@ class DataEnricher:
             
         Returns:
             Enhanced record with timestamps
-            
-        Example:
-            record = DataEnricher.add_timestamps({"title": "Article"})
-            # Adds 'processed_at' and 'created_at' fields
         """
         now = datetime.now().isoformat()
         record['processed_at'] = now
@@ -95,7 +61,7 @@ class DataEnricher:
     @staticmethod
     def extract_keywords(text: str, min_length: int = 3, max_keywords: int = 10) -> List[str]:
         """
-        Extract potential keywords from text (simple word frequency approach)
+        Extract potential keywords from text
         
         Args:
             text: Text to extract keywords from
@@ -155,17 +121,6 @@ class CategoryManager:
                     'category_scores': Dict[str, float],
                     'overall_relevance': float
                 }
-                
-        Example:
-            config = {
-                'AI': {'keywords': ['AI', 'machine learning'], 'weight': 1.5},
-                'security': {'keywords': ['security', 'vulnerability'], 'weight': 1.0}
-            }
-            result = CategoryManager.categorize_content(
-                "AI security research",
-                config
-            )
-            # Returns both categories with scores
         """
         text_lower = text.lower()
         matched_categories = []
@@ -208,10 +163,6 @@ class CategoryManager:
             
         Returns:
             Dictionary with category counts
-            
-        Example:
-            dist = CategoryManager.get_category_distribution(articles)
-            # Returns: {'AI': 45, 'security': 23, ...}
         """
         distribution = {}
         for item in items:

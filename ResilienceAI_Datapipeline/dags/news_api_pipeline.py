@@ -11,7 +11,7 @@ from airflow.models import Variable
 # Import common utilities from modular structure
 from common.deduplication import DeduplicationManager
 from common.data_cleaning import TextCleaner
-from common.data_enrichment import DataEnricher, CategoryManager
+from common.data_enrichment import CategoryManager
 from common.database_utils import DatabaseManager
 from common.file_management import FileManager
 

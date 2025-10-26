@@ -8,6 +8,7 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, List, Callable
+from logging import getLogger
 
 
 class DeduplicationManager:
@@ -25,6 +26,8 @@ class DeduplicationManager:
         self.hash_dir = f'{base_dir}/hashes'
         self.hash_file = f'{self.hash_dir}/{pipeline_name}_hashes.json'
         os.makedirs(self.hash_dir, exist_ok=True)
+        self.logger = getLogger(__name__)
+        self.logger.info(f"[DEDUP] Initialized DeduplicationManager for {pipeline_name}")
     
     def generate_hash(self, *fields) -> str:
         """
@@ -35,9 +38,6 @@ class DeduplicationManager:
             
         Returns:
             MD5 hash string
-            
-        Example:
-            hash = dedup.generate_hash(title, url)
         """
         content = ''.join(str(f) for f in fields if f)
         return hashlib.md5(content.encode()).hexdigest()
@@ -55,7 +55,7 @@ class DeduplicationManager:
                     data = json.load(f)
                     return set(data.get('hashes', []))
             except Exception as e:
-                print(f"[DEDUP] Error loading hashes: {e}")
+                self.logger.error(f"[DEDUP] Error loading hashes: {e}")
                 return set()
         return set()
     
@@ -75,9 +75,9 @@ class DeduplicationManager:
                     'count': len(hashes),
                     'pipeline': self.pipeline_name
                 }, f, indent=2)
-            print(f"[DEDUP] Saved {len(hashes)} hashes for {self.pipeline_name}")
+            self.logger.info(f"[DEDUP] Saved {len(hashes)} hashes for {self.pipeline_name}")
         except Exception as e:
-            print(f"[DEDUP] Error saving hashes: {e}")
+            self.logger.error(f"[DEDUP] Error saving hashes: {e}")
     
     def filter_duplicates(self, items: List[Dict], hash_key_func: Callable) -> tuple:
         """
@@ -89,15 +89,6 @@ class DeduplicationManager:
         
         Returns:
             (new_items, new_hashes) tuple
-            
-        Example:
-            new_articles, new_hashes = dedup.filter_duplicates(
-                articles,
-                lambda article: dedup.generate_hash(
-                    article.get('title'),
-                    article.get('url')
-                )
-            )
         """
         existing_hashes = self.load_hashes()
         new_items = []
@@ -110,10 +101,10 @@ class DeduplicationManager:
                     new_items.append(item)
                     new_hashes.append(item_hash)
             except Exception as e:
-                print(f"[DEDUP] Error processing item: {e}")
+                self.logger.error(f"[DEDUP] Error processing item: {e}")
                 continue
         
-        print(f"[DEDUP] Filtered {len(items)} items -> {len(new_items)} new, {len(items) - len(new_items)} duplicates")
+        self.logger.info(f"[DEDUP] Filtered {len(items)} items -> {len(new_items)} new, {len(items) - len(new_items)} duplicates")
         return new_items, new_hashes
     
     def update_hashes(self, new_hashes: List[str]) -> None:
@@ -126,16 +117,6 @@ class DeduplicationManager:
         existing = list(self.load_hashes())
         all_hashes = existing + new_hashes
         self.save_hashes(all_hashes)
-    
-    def clear_hashes(self) -> None:
-        """Clear all stored hashes for this pipeline"""
-        if os.path.exists(self.hash_file):
-            os.remove(self.hash_file)
-            print(f"[DEDUP] Cleared all hashes for {self.pipeline_name}")
-    
-    def get_hash_count(self) -> int:
-        """Get count of stored hashes"""
-        return len(self.load_hashes())
 
 
 __all__ = ['DeduplicationManager']

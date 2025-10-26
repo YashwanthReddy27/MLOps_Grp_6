@@ -33,27 +33,74 @@ class PipelineValidator:
     
     def __init__(self, pipeline_name: str, base_dir: Optional[str] = None):
         """Initialize validator"""
-        if base_dir is None:
-            base_dir = Path(__file__).resolve().parent.parent.parent / "ge_artifacts"
-        
         self.pipeline_name = pipeline_name
-        self.ge_root_dir = Path(base_dir).resolve() / pipeline_name
         self.expectation_suite_name = f"{pipeline_name}_suite"
         
-        # Create all directories
-        self.ge_root_dir.mkdir(parents=True, exist_ok=True)
-        self.expectations_dir = self.ge_root_dir / "expectations"
-        self.expectations_dir.mkdir(parents=True, exist_ok=True)
-        self.validations_dir = self.ge_root_dir / "validations"
-        self.validations_dir.mkdir(parents=True, exist_ok=True)
-        self.uncommitted_dir = self.ge_root_dir / "uncommitted"
-        self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
+        # Try multiple directory locations in order of preference
+        dir_options = []
         
-        logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
-        logger.info(f"Great Expectations version: {ge.__version__}")
-        logger.info(f"Expectations dir: {self.expectations_dir}")
-        logger.info(f"Validations dir: {self.validations_dir}")
-        logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+        if base_dir:
+            dir_options.append(Path(base_dir).resolve())
+        
+        # Add default directory options
+        dir_options.extend([
+            Path('/opt/airflow/data/ge_artifacts'),  # Airflow data directory
+            Path('/opt/airflow/ge_artifacts'),       # Alternative Airflow location
+            Path('/tmp/ge_artifacts'),               # Temp directory (always writable)
+        ])
+        
+        # Try each directory option until one works
+        for base_path in dir_options:
+            try:
+                self.ge_root_dir = base_path / pipeline_name
+                
+                # Attempt to create all directories
+                self.ge_root_dir.mkdir(parents=True, exist_ok=True)
+                self.expectations_dir = self.ge_root_dir / "expectations"
+                self.expectations_dir.mkdir(parents=True, exist_ok=True)
+                self.validations_dir = self.ge_root_dir / "validations"
+                self.validations_dir.mkdir(parents=True, exist_ok=True)
+                self.uncommitted_dir = self.ge_root_dir / "uncommitted"
+                self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
+                
+                # If we get here, directories were created successfully
+                logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
+                logger.info(f"Great Expectations version: {ge.__version__}")
+                logger.info(f"Expectations dir: {self.expectations_dir}")
+                logger.info(f"Validations dir: {self.validations_dir}")
+                logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+                
+                # Success - exit the method
+                return
+                
+            except (PermissionError, OSError) as e:
+                logger.warning(f"Could not create directories at {base_path}: {e}")
+                continue
+        
+        # If we get here, all directory options failed
+        # Set up attributes with tmp directory as last resort
+        self.ge_root_dir = Path('/tmp') / f"ge_artifacts_{pipeline_name}_{os.getpid()}"
+        try:
+            self.ge_root_dir.mkdir(parents=True, exist_ok=True)
+            self.expectations_dir = self.ge_root_dir / "expectations"
+            self.expectations_dir.mkdir(parents=True, exist_ok=True)
+            self.validations_dir = self.ge_root_dir / "validations"
+            self.validations_dir.mkdir(parents=True, exist_ok=True)
+            self.uncommitted_dir = self.ge_root_dir / "uncommitted"
+            self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
+            
+            logger.warning(f"Using temporary directory: {self.ge_root_dir}")
+            logger.info(f"Expectations dir: {self.expectations_dir}")
+            logger.info(f"Validations dir: {self.validations_dir}")
+            logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+            
+        except Exception as e:
+            # Final fallback - set attributes even if directories don't exist
+            logger.error(f"Could not create any directories. Setting paths without creation: {e}")
+            self.expectations_dir = self.ge_root_dir / "expectations"
+            self.validations_dir = self.ge_root_dir / "validations"
+            self.uncommitted_dir = self.ge_root_dir / "uncommitted"
+        
     
     def _load_json_to_dataframe(self, json_path: str) -> pd.DataFrame:
         """Load JSON file and convert to DataFrame"""
@@ -402,40 +449,3 @@ class PipelineValidator:
             logger.warning(f"[{self.pipeline_name}] Could not save report: {e}")
         
         return report_data
-
-
-class MultiPipelineValidator:
-    """Manages validation for multiple pipelines"""
-    
-    def __init__(self, base_dir: Optional[str] = None):
-        if base_dir is None:
-            base_dir = Path(__file__).resolve().parent.parent.parent / "ge_artifacts"
-        self.base_dir = Path(base_dir).resolve()
-        self.validators: Dict[str, PipelineValidator] = {}
-        logger.info(f"Multi-pipeline validator initialized at: {self.base_dir}")
-    
-    def get_validator(self, pipeline_name: str) -> PipelineValidator:
-        """Get or create validator for a pipeline"""
-        if pipeline_name not in self.validators:
-            self.validators[pipeline_name] = PipelineValidator(pipeline_name, str(self.base_dir))
-        return self.validators[pipeline_name]
-    
-    def create_all_schemas(self, pipeline_configs: Dict[str, str]):
-        """Create schemas for multiple pipelines"""
-        results = {}
-        for pipeline_name, train_path in pipeline_configs.items():
-            validator = self.get_validator(pipeline_name)
-            try:
-                validator.create_schema(train_path)
-                results[pipeline_name] = 'success'
-            except Exception as e:
-                results[pipeline_name] = f'failed: {e}'
-        return results
-    
-    def validate_all(self, pipeline_data: Dict[str, str], raise_on_error: bool = False) -> Dict[str, bool]:
-        """Validate data for multiple pipelines"""
-        results = {}
-        for pipeline_name, data_path in pipeline_data.items():
-            validator = self.get_validator(pipeline_name)
-            results[pipeline_name] = validator.validate_data(data_path, raise_on_error)
-        return results

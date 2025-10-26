@@ -1,0 +1,4 @@
+stmp_server: "smtp.gmail.com"
+smtp_port: 587
+sender_email: "projectmlops@gmail.com"
+sender_password: "axhh ojnp axum udnj"

@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+import os
 import json
 import requests
 from airflow import DAG
@@ -26,8 +28,88 @@ default_args = {
 # CONFIGURATION: Define your preferred keywords and categories
 NEWS_KEYWORDS = {
     'artificial_intelligence': {
-        'keywords': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'GPT', 'LLM', 'AI', 'generative AI', 'OpenAI', 'Claude', 'ChatGPT', 'transformer'],
+        'keywords': ['artificial intelligence', 'machine learning', 'deep learning', 'neural networks', 'GPT', 'LLM', 'AI', 'generative AI', 'OpenAI', 'Claude', 'ChatGPT', 'transformer', 'reinforcement learning'],
         'weight': 1.0
+    },
+    'language_models': {
+        'keywords': ['large language model', 'foundation model', 'GPT-4', 'GPT-5', 'Gemini', 'Llama', 'Mistral', 'prompt engineering', 'fine-tuning', 'RLHF', 'instruction tuning', 'context window', 'reasoning model', 'pre-training', 'BERT'],
+        'weight': 0.95
+    },
+    'multimodal_ai': {
+        'keywords': ['multimodal AI', 'multimodal learning', 'vision-language model', 'text-to-image', 'text-to-video', 'DALL-E', 'Midjourney', 'Stable Diffusion', 'Sora', 'image generation', 'video generation', 'speech synthesis', 'text-to-speech', 'cross-modal retrieval'],
+        'weight': 0.9
+    },
+    'efficient_ml': {
+        'keywords': ['model compression', 'quantization', 'pruning', 'knowledge distillation', 'low-rank adaptation', 'LoRA', 'QLoRA', 'parameter-efficient fine-tuning', 'PEFT', 'mixture of experts', 'MoE', 'model optimization', 'edge AI'],
+        'weight': 0.9
+    },
+    'ai_agents': {
+        'keywords': ['AI agent', 'autonomous agent', 'agentic AI', 'agentic LLM', 'multi-agent system', 'agent framework', 'AutoGPT', 'agent orchestration', 'tool use', 'function calling', 'agent memory', 'planning agent', 'collaborative agents'],
+        'weight': 0.9
+    },
+    'reasoning_planning': {
+        'keywords': ['reasoning', 'chain-of-thought', 'CoT', 'tree of thoughts', 'planning', 'problem solving', 'mathematical reasoning', 'logical reasoning', 'commonsense reasoning', 'zero-shot', 'few-shot learning', 'in-context learning'],
+        'weight': 0.9
+    },
+    'diffusion_generative': {
+        'keywords': ['diffusion model', 'denoising diffusion', 'DDPM', 'DDIM', 'score-based model', 'latent diffusion', 'consistency model', 'flow matching', 'generative adversarial network', 'GAN', 'StyleGAN', 'image-to-image translation'],
+        'weight': 0.85
+    },
+    'retrieval_augmentation': {
+        'keywords': ['retrieval augmented generation', 'RAG', 'dense retrieval', 'semantic search', 'vector search', 'vector database', 'embedding model', 'FAISS', 'approximate nearest neighbor', 'knowledge retrieval', 'semantic indexing'],
+        'weight': 0.85
+    },
+    'rl_agents': {
+        'keywords': ['reinforcement learning', 'deep RL', 'policy gradient', 'Q-learning', 'DQN', 'PPO', 'SAC', 'multi-agent RL', 'inverse RL', 'offline RL', 'model-based RL', 'world model', 'reward modeling'],
+        'weight': 0.85
+    },
+    'ai_safety_alignment': {
+        'keywords': ['AI safety', 'AI alignment', 'AI ethics', 'responsible AI', 'AI governance', 'AI regulation', 'explainable AI', 'interpretability', 'XAI', 'bias detection', 'fairness', 'AI risks', 'existential risk', 'mechanistic interpretability'],
+        'weight': 0.85
+    },
+    'computer_vision': {
+        'keywords': ['computer vision', 'object detection', 'image segmentation', 'semantic segmentation', 'instance segmentation', 'panoptic segmentation', 'image classification', 'facial recognition', 'YOLO', 'SAM', 'vision transformer', 'ViT', '3D vision', '3D reconstruction', 'depth estimation', 'NeRF', 'action recognition', 'optical flow'],
+        'weight': 0.8
+    },
+    'nlp_techniques': {
+        'keywords': ['natural language processing', 'NLP', 'text generation', 'language understanding', 'named entity recognition', 'NER', 'question answering', 'summarization', 'machine translation', 'sentiment analysis', 'information extraction'],
+        'weight': 0.8
+    },
+    'mlops_infrastructure': {
+        'keywords': ['MLOps', 'LLMOps', 'AgentOps', 'model deployment', 'model serving', 'AI infrastructure', 'AI pipelines', 'model monitoring', 'drift detection', 'continuous evaluation', 'distributed training', 'model parallelism'],
+        'weight': 0.8
+    },
+    'robotics_embodied': {
+        'keywords': ['robotics', 'embodied AI', 'humanoid robot', 'robotic automation', 'robot learning', 'manipulation', 'grasping', 'navigation', 'sim-to-real', 'imitation learning', 'demonstration learning', 'motion planning', 'robotic vision', 'dynamics model', 'Boston Dynamics', 'Tesla Bot'],
+        'weight': 0.75
+    },
+    'graph_knowledge': {
+        'keywords': ['graph neural network', 'GNN', 'graph transformer', 'message passing', 'node embedding', 'link prediction', 'graph representation learning', 'knowledge graph', 'relational reasoning', 'semantic retrieval'],
+        'weight': 0.75
+    },
+    'continual_meta_learning': {
+        'keywords': ['continual learning', 'lifelong learning', 'catastrophic forgetting', 'meta-learning', 'transfer learning', 'domain adaptation', 'multi-task learning', 'curriculum learning', 'self-supervised learning', 'semi-supervised learning'],
+        'weight': 0.7
+    },
+    'federated_privacy': {
+        'keywords': ['federated learning', 'differential privacy', 'privacy-preserving ML', 'privacy-preserving AI', 'secure aggregation', 'homomorphic encryption', 'synthetic data', 'data poisoning', 'backdoor attack'],
+        'weight': 0.7
+    },
+    'ai_hardware': {
+        'keywords': ['AI chip', 'GPU', 'TPU', 'neural processing unit', 'NPU', 'AI accelerator', 'Nvidia H100', 'neuromorphic computing', 'quantum AI', 'inference optimization', 'tinyML'],
+        'weight': 0.7
+    },
+    'neurosymbolic': {
+        'keywords': ['neurosymbolic', 'neuro-symbolic AI', 'symbolic reasoning', 'logic programming', 'program synthesis', 'differentiable programming', 'probabilistic programming', 'causal inference'],
+        'weight': 0.65
+    },
+    'medical_scientific_ai': {
+        'keywords': ['medical AI', 'healthcare AI', 'medical imaging', 'disease diagnosis', 'drug discovery', 'protein folding', 'genomics', 'clinical decision support', 'radiology AI', 'scientific machine learning', 'physics-informed neural network', 'PINN', 'scientific AI'],
+        'weight': 0.6
+    },
+    'time_series': {
+        'keywords': ['time series', 'forecasting', 'temporal modeling', 'sequential data', 'recurrent neural network', 'RNN', 'LSTM', 'GRU', 'temporal convolution', 'attention mechanism'],
+        'weight': 0.55
     }
 }
 
@@ -58,7 +140,7 @@ def fetch_tech_news(**context):
         # NewsAPI endpoint and parameters
         url = 'https://newsapi.org/v2/everything'
         params = {
-            'apiKey': 'f9756ab031a94ffc9a4241993518a5b5',
+            'apiKey': os.getenv("API_KEY"),
             'q': search_query,
             'language': 'en',
             'sortBy': 'publishedAt',
@@ -423,43 +505,3 @@ def cleanup_old_files(**context):
 
 
 # Define the DAG - can be triggered manually or scheduled
-with DAG(
-    'tech_news_keyword_based',
-    default_args=default_args,
-    description='Fetch and categorize tech news based on predefined keywords',
-    schedule_interval='0 */6 * * *',  # Run every 6 hours (or set to None for manual only)
-    start_date=days_ago(1),
-    catchup=False,
-    tags=['tech', 'news', 'keywords', 'automated', 'categorization'],
-) as dag:
-    
-    # Task 1: Extract news based on keywords
-    extract_news_task = PythonOperator(
-        task_id='extract_tech_news',
-        python_callable=fetch_tech_news,
-        provide_context=True,
-    )
-    
-    # Task 2: Extract keywords and categorize articles
-    categorize_task = PythonOperator(
-        task_id='extract_keywords_and_categorize',
-        python_callable=extract_keywords_and_categorize,
-        provide_context=True,
-    )
-    
-    # Task 3: Load to PostgreSQL
-    load_db_task = PythonOperator(
-        task_id='load_to_postgresql',
-        python_callable=load_to_postgresql,
-        provide_context=True,
-    )
-    
-    # Task 4: Cleanup old files
-    cleanup_task = PythonOperator(
-        task_id='cleanup_old_files',
-        python_callable=cleanup_old_files,
-        provide_context=True,
-    )
-
-    # Set task dependencies
-    extract_news_task >> categorize_task >> load_db_task >> cleanup_task

@@ -1,7 +1,0 @@
-[core]
-    remote = mygcp
-['remote "gcs"']
-    url = gs://citewise-dvc-store-54873845389/resilienceai-datapipeline
-['remote "mygcp"']
-    url = gs://citewise-dvc-store-8232761765
-    projectname = applied-light-453519-q3

@@ -1,6 +1,6 @@
-# Environment variables
+.vscode/
+.env/
 .env
-
 # Airflow logs
 logs/
 *.log
@@ -12,3 +12,11 @@ data/
 __pycache__/
 *.py[cod]
 *.pyc
+
+ge_artifacts/*/uncommitted/
+ge_artifacts/*/validations/
+ge_artifacts/*/*.db
+
+# Keep schema folder tracked (but add .gitkeep)
+!data/schema/
+data/schema/.gitkeep

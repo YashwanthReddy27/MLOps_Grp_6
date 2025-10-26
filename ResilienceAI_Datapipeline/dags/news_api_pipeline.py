@@ -140,7 +140,7 @@ def fetch_tech_news(**context):
         # NewsAPI endpoint and parameters
         url = 'https://newsapi.org/v2/everything'
         params = {
-            'apiKey': os.getenv("API_KEY"),
+            'apiKey': os.getenv('NEWS_API_KEY'),
             'q': search_query,
             'language': 'en',
             'sortBy': 'publishedAt',

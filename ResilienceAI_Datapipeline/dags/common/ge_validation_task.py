@@ -5,6 +5,7 @@ FIXED for Universal GE Validator
 
 from common.ge_validator import PipelineValidator
 from common.send_email import send_email_with_attachment
+from dotenv import load_dotenv
 import json
 from datetime import datetime
 from pathlib import Path
@@ -327,9 +328,9 @@ Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
         send_email_with_attachment(
-            sender_email="projectmlops@gmail.com",
-            sender_password="axhh ojnp axum udnj",
-            recipient_email="anirudhshrikanth65@gmail.com",
+            sender_email=os.getenv('SENDER_EMAIL'),
+            sender_password=os.getenv('SENDER_PASSWORD'),
+            recipient_email=os.getenv('RECIPIENT_EMAIL'),
             subject=f"🚨 Data Quality Alert: {pipeline.upper()} - {anomaly_count} Anomalies",
             body=body
         )
@@ -375,9 +376,9 @@ Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
         send_email_with_attachment(
-            sender_email="projectmlops@gmail.com",
-            sender_password="axhh ojnp axum udnj",
-            recipient_email="anirudhshrikanth65@gmail.com",
+            sender_email="SENDER_EMAIL",
+            sender_password="SENDER_PASSWORD",
+            recipient_email="RECIPIENT_EMAIL",
             subject=f"⚠️ Validation Error: {pipeline.upper()} Pipeline",
             body=body
         )

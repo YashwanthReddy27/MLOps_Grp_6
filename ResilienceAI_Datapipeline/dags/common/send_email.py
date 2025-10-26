@@ -1,6 +1,10 @@
 import smtplib
 from email.message import EmailMessage
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 def send_email_with_attachment(
     sender_email, 
@@ -48,9 +52,9 @@ def send_email_with_attachment(
 # Example usage
 if __name__ == "__main__":
     send_email_with_attachment(
-        sender_email="projectmlops@gmail.com",
-        sender_password="axhh ojnp axum udnj",  # Use an app password, not your normal one
-        recipient_email="anirudhshrikanth65@gmail.com",
+        sender_email=os.getenv('SENDER_EMAIL'),
+        sender_password=os.getenv('SENDER_PASSWORD'),
+        recipient_email=os.getenv('RECIPIENT_EMAIL'),
         subject="Test Email with Attachment",
         body="Hi there,\n\nThis is a test email with an attachment.\n\nBest,\nAnirudh",
         attachments=["expanded_fitness_data_1.csv"],

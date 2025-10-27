@@ -1,0 +1,19 @@
+{
+  "papers": [
+    {
+      "arxiv_id": "2401.00123",
+      "title": "Attention Is All You Need: Revisited",
+      "abstract": "We present improvements to the transformer architecture...",
+      "authors": [
+        "Vaswani, A.",
+        "Shazeer, N."
+      ],
+      "published_date": "2024-01-10T00:00:00Z",
+      "categories": [
+        "cs.LG",
+        "cs.CL"
+      ],
+      "pdf_url": "https://arxiv.org/pdf/2401.00123.pdf"
+    }
+  ]
+}

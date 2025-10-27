@@ -1,12 +1,76 @@
-# DataPipeline
+# Research AI Chatbot-DataPipeline
 
-## Run Airflow with Docker Compose
+## Setting Up Your Development Environment
+Please follow these two essential steps:
+### 1. Downloading the Repository
+To download this repository, use the following commands depending on your operating system.
+### On Mac & Windows 
+Open a terminal and run:
+```bash
+git clone //link//
+```
+This will create a local copy of the repository on your machine.
 
-This guide explains how to initialize and run Apache Airflow using the provided `docker.yaml` configuration file.
+### 2. Create the Virtual Environment
+First, create an isolated environment to house your project dependencies. Execute the following commands:
+
+```bash
+python3 -m venv venv
+```
+
+```bash
+# For Windows
+.\venv\Scripts\activate
+# For macOS and Linux
+source venv/bin/activate
+```
+
+### 3. Install All Required Libraries
+Next, activate your virtual environment and install the necessary libraries in one swift command:
+
+```bash
+# Install all dependencies
+pip install -r requirements.txt
+pip install -r requirements-test.txt 
+```
+install the requirements in the tests folder if those packages are not there in your PC.
+
+### 4. Set Up Docker
+1. Download Docker:
+   Go to the Docker website. Choose the appropriate Docker Desktop version for your operating system (Windows, Mac, or Linux).
+2. Install Docker.
+   Follow the installation instructions specific to your OS.
+   - Windows: Run the installer and follow the prompts. Make sure to enable Windows Subsystem for Linux (WSL) if prompted.
+   - Mac: Open the downloaded .dmg file, drag Docker to your Applications folder, and launch it.
+   - Linux: Install Docker Engine by using commands specified in the Docker website.
+  
+3. Verify Installation:
+   Run the following command to check if Docker is installed correctly:
+```bash
+docker --version
+```
+
+### 5. Set Up Email Notifications
+1. Navigate to the email_config.yaml file in the repository
+2. Update the following fields: 
+   ```bash
+   smtp_server = smtp.gmail.com
+   sender_email = <your gmail ID>
+   sender_password = <your Gmail authenticated app password>
+   smtp_port = 587
+   ```
+   - smtp_server: Set to smtp.gmail.com for Gmail SMTP.
+   - sender_email: Your full Gmail email address (e.g., youremail@gmail.com).
+   - sender_password: Your Gmail authenticated app password. Ensure you have enabled App Passwords in your Google account settings.
+   - smtp_port: Use 587 
+   
+## 6. Run Airflow with Docker Compose
+
+This guide explains how to initialize and run Apache Airflow using the provided `docker-compose.yaml` configuration file.
 
 ### Prerequisites
 - **Docker** and **Docker Compose** installed on your local machine  
-- The `docker.yaml` file must be located in the project’s root directory
+- The `docker-compose.yaml` file must be located in the project’s root directory
 
 ### Initialization
 
@@ -49,3 +113,82 @@ To remove all associated volumes and networks as well:
 ```
 docker compose down -v
 ```
+
+## 7. Run the tests
+To get the setup run
+''' python
+python test_runner_config.py --setup
+'''
+
+If you want to focus on fixing one module at a time
+'''bash
+python test_runner.py --module #Module_name# example: python test_runner.py --module data_validator
+'''
+
+Run all th tests at once amek sure you are in tests directory when you run this command
+'''bash
+python test_runner_config.py
+'''
+
+# Code Structure and Explanation
+
+## Overview
+This project contains a collection of data processing scripts and Airflow DAGs designed to handle data ingestion, validation, enrichment, and quality assurance for ArXiv academic papers and news data sources.
+
+## Project Structure
+
+### Core Data Processing
+
+#### `data_cleaning.py`
+Handles data sanitization, formatting, and normalization tasks to ensure consistent data quality across the pipeline.
+
+#### `data_enrichment.py`
+Adds supplementary information and enhances existing data with additional context and metadata.
+
+#### `data_validator.py`
+Validates data quality, completeness, and conformity to business rules, ensuring data meets required standards before processing.
+
+#### `deduplication.py`
+Identifies and removes duplicate records from datasets to maintain data integrity and prevent redundancy.
+
+### Infrastructure & Support
+
+#### `database_utils.py`
+Provides database connection management and query execution utilities for seamless data persistence and retrieval.
+
+#### `file_management.py`
+Handles file operations including reading, writing, and organizing data files across the pipeline.
+
+#### `send_email.py`
+Email notification system for pipeline status updates and alerts, keeping stakeholders informed of processing outcomes.
+
+### Validation Framework
+
+#### `ge_validator.py`
+Great Expectations validator implementation for comprehensive data quality checks and validation rules.
+
+#### `ge_validation_task.py`
+Task wrapper for integrating Great Expectations validation into pipeline workflows.
+
+#### `Schema_creator_module.py`
+Creates explicit schemas for ArXiv and news data sources, providing a foundation for validating incoming data against expected formats.
+
+## Airflow DAGs
+
+Orchestration pipelines for automated data workflows.
+
+### ArXiv Pipeline
+
+#### `arxiv_pipeline.py`
+Main pipeline for processing ArXiv academic papers data, handling ingestion, transformation, and storage.
+
+#### `arxiv_pipeline_with_validation.py`
+Enhanced ArXiv pipeline with integrated data validation steps to ensure data quality at each stage.
+
+### News Pipeline
+
+#### `news_pipeline.py`
+Pipeline for collecting and processing news data from various sources.
+
+#### `news_pipeline_validation.py`
+News pipeline with comprehensive validation checks to maintain data accuracy and reliability.

@@ -1,0 +1,24 @@
+{
+  "articles": [
+    {
+      "title": "AI Breakthrough: GPT-5 Announced",
+      "description": "OpenAI announces next generation language model",
+      "url": "https://example.com/gpt5",
+      "publishedAt": "2024-01-15T10:00:00Z",
+      "source": {
+        "name": "TechCrunch"
+      },
+      "author": "Sarah Johnson"
+    },
+    {
+      "title": "Computer Vision Advances in Medical Imaging",
+      "description": "New YOLO variant improves tumor detection",
+      "url": "https://example.com/medical-cv",
+      "publishedAt": "2024-01-14T15:30:00Z",
+      "source": {
+        "name": "Medical AI News"
+      },
+      "author": "Dr. Smith"
+    }
+  ]
+}

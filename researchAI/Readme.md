@@ -7,7 +7,7 @@ To download this repository, use the following commands depending on your operat
 ### On Mac & Windows 
 Open a terminal and run:
 ```bash
-git clone //link//
+git clone https://github.com/YashwanthReddy27/MLOps_Grp_6.git
 ```
 This will create a local copy of the repository on your machine.
 
@@ -167,7 +167,7 @@ Email notification system for pipeline status updates and alerts, keeping stakeh
 #### `ge_validator.py`
 Great Expectations validator implementation for comprehensive data quality checks and validation rules.
 
-#### `ge_validation_task.py`
+#### `data_validation.py`
 Task wrapper for integrating Great Expectations validation into pipeline workflows.
 
 #### `Schema_creator_module.py`
@@ -179,16 +179,16 @@ Orchestration pipelines for automated data workflows.
 
 ### ArXiv Pipeline
 
-#### `arxiv_pipeline.py`
+#### `arxiv.py`
 Main pipeline for processing ArXiv academic papers data, handling ingestion, transformation, and storage.
 
-#### `arxiv_pipeline_with_validation.py`
+#### `arxiv_pipeline.py`
 Enhanced ArXiv pipeline with integrated data validation steps to ensure data quality at each stage.
 
 ### News Pipeline
 
-#### `news_pipeline.py`
+#### `news_api.py`
 Pipeline for collecting and processing news data from various sources.
 
-#### `news_pipeline_validation.py`
+#### `news_pipeline.py`
 News pipeline with comprehensive validation checks to maintain data accuracy and reliability.

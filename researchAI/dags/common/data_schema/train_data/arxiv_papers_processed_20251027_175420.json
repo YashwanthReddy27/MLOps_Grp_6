@@ -1,0 +1,1080 @@
+{
+  "keywords_config": {
+    "artificial_intelligence": {
+      "keywords": [
+        "artificial intelligence",
+        "machine learning",
+        "deep learning",
+        "neural networks",
+        "GPT",
+        "LLM",
+        "AI",
+        "generative AI",
+        "OpenAI",
+        "Claude",
+        "ChatGPT",
+        "transformer",
+        "reinforcement learning"
+      ],
+      "weight": 1.0
+    },
+    "language_models": {
+      "keywords": [
+        "large language model",
+        "foundation model",
+        "GPT-4",
+        "GPT-5",
+        "Gemini",
+        "Llama",
+        "Mistral",
+        "prompt engineering",
+        "fine-tuning",
+        "RLHF",
+        "instruction tuning",
+        "context window",
+        "reasoning model",
+        "pre-training",
+        "BERT"
+      ],
+      "weight": 0.95
+    },
+    "multimodal_ai": {
+      "keywords": [
+        "multimodal AI",
+        "multimodal learning",
+        "vision-language model",
+        "text-to-image",
+        "text-to-video",
+        "DALL-E",
+        "Midjourney",
+        "Stable Diffusion",
+        "Sora",
+        "image generation",
+        "video generation",
+        "speech synthesis",
+        "text-to-speech",
+        "cross-modal retrieval"
+      ],
+      "weight": 0.9
+    },
+    "efficient_ml": {
+      "keywords": [
+        "model compression",
+        "quantization",
+        "pruning",
+        "knowledge distillation",
+        "low-rank adaptation",
+        "LoRA",
+        "QLoRA",
+        "parameter-efficient fine-tuning",
+        "PEFT",
+        "mixture of experts",
+        "MoE",
+        "model optimization",
+        "edge AI"
+      ],
+      "weight": 0.9
+    },
+    "ai_agents": {
+      "keywords": [
+        "AI agent",
+        "autonomous agent",
+        "agentic AI",
+        "agentic LLM",
+        "multi-agent system",
+        "agent framework",
+        "AutoGPT",
+        "agent orchestration",
+        "tool use",
+        "function calling",
+        "agent memory",
+        "planning agent",
+        "collaborative agents"
+      ],
+      "weight": 0.9
+    },
+    "reasoning_planning": {
+      "keywords": [
+        "reasoning",
+        "chain-of-thought",
+        "CoT",
+        "tree of thoughts",
+        "planning",
+        "problem solving",
+        "mathematical reasoning",
+        "logical reasoning",
+        "commonsense reasoning",
+        "zero-shot",
+        "few-shot learning",
+        "in-context learning"
+      ],
+      "weight": 0.9
+    },
+    "diffusion_generative": {
+      "keywords": [
+        "diffusion model",
+        "denoising diffusion",
+        "DDPM",
+        "DDIM",
+        "score-based model",
+        "latent diffusion",
+        "consistency model",
+        "flow matching",
+        "generative adversarial network",
+        "GAN",
+        "StyleGAN",
+        "image-to-image translation"
+      ],
+      "weight": 0.85
+    },
+    "retrieval_augmentation": {
+      "keywords": [
+        "retrieval augmented generation",
+        "RAG",
+        "dense retrieval",
+        "semantic search",
+        "vector search",
+        "vector database",
+        "embedding model",
+        "FAISS",
+        "approximate nearest neighbor",
+        "knowledge retrieval",
+        "semantic indexing"
+      ],
+      "weight": 0.85
+    },
+    "rl_agents": {
+      "keywords": [
+        "reinforcement learning",
+        "deep RL",
+        "policy gradient",
+        "Q-learning",
+        "DQN",
+        "PPO",
+        "SAC",
+        "multi-agent RL",
+        "inverse RL",
+        "offline RL",
+        "model-based RL",
+        "world model",
+        "reward modeling"
+      ],
+      "weight": 0.85
+    },
+    "ai_safety_alignment": {
+      "keywords": [
+        "AI safety",
+        "AI alignment",
+        "AI ethics",
+        "responsible AI",
+        "AI governance",
+        "AI regulation",
+        "explainable AI",
+        "interpretability",
+        "XAI",
+        "bias detection",
+        "fairness",
+        "AI risks",
+        "existential risk",
+        "mechanistic interpretability"
+      ],
+      "weight": 0.85
+    },
+    "computer_vision": {
+      "keywords": [
+        "computer vision",
+        "object detection",
+        "image segmentation",
+        "semantic segmentation",
+        "instance segmentation",
+        "panoptic segmentation",
+        "image classification",
+        "facial recognition",
+        "YOLO",
+        "SAM",
+        "vision transformer",
+        "ViT",
+        "3D vision",
+        "3D reconstruction",
+        "depth estimation",
+        "NeRF",
+        "action recognition",
+        "optical flow"
+      ],
+      "weight": 0.8
+    },
+    "nlp_techniques": {
+      "keywords": [
+        "natural language processing",
+        "NLP",
+        "text generation",
+        "language understanding",
+        "named entity recognition",
+        "NER",
+        "question answering",
+        "summarization",
+        "machine translation",
+        "sentiment analysis",
+        "information extraction"
+      ],
+      "weight": 0.8
+    },
+    "mlops_infrastructure": {
+      "keywords": [
+        "MLOps",
+        "LLMOps",
+        "AgentOps",
+        "model deployment",
+        "model serving",
+        "AI infrastructure",
+        "AI pipelines",
+        "model monitoring",
+        "drift detection",
+        "continuous evaluation",
+        "distributed training",
+        "model parallelism"
+      ],
+      "weight": 0.8
+    },
+    "robotics_embodied": {
+      "keywords": [
+        "robotics",
+        "embodied AI",
+        "humanoid robot",
+        "robotic automation",
+        "robot learning",
+        "manipulation",
+        "grasping",
+        "navigation",
+        "sim-to-real",
+        "imitation learning",
+        "demonstration learning",
+        "motion planning",
+        "robotic vision",
+        "dynamics model",
+        "Boston Dynamics",
+        "Tesla Bot"
+      ],
+      "weight": 0.75
+    },
+    "graph_knowledge": {
+      "keywords": [
+        "graph neural network",
+        "GNN",
+        "graph transformer",
+        "message passing",
+        "node embedding",
+        "link prediction",
+        "graph representation learning",
+        "knowledge graph",
+        "relational reasoning",
+        "semantic retrieval"
+      ],
+      "weight": 0.75
+    },
+    "continual_meta_learning": {
+      "keywords": [
+        "continual learning",
+        "lifelong learning",
+        "catastrophic forgetting",
+        "meta-learning",
+        "transfer learning",
+        "domain adaptation",
+        "multi-task learning",
+        "curriculum learning",
+        "self-supervised learning",
+        "semi-supervised learning"
+      ],
+      "weight": 0.7
+    },
+    "federated_privacy": {
+      "keywords": [
+        "federated learning",
+        "differential privacy",
+        "privacy-preserving ML",
+        "privacy-preserving AI",
+        "secure aggregation",
+        "homomorphic encryption",
+        "synthetic data",
+        "data poisoning",
+        "backdoor attack"
+      ],
+      "weight": 0.7
+    },
+    "ai_hardware": {
+      "keywords": [
+        "AI chip",
+        "GPU",
+        "TPU",
+        "neural processing unit",
+        "NPU",
+        "AI accelerator",
+        "Nvidia H100",
+        "neuromorphic computing",
+        "quantum AI",
+        "inference optimization",
+        "tinyML"
+      ],
+      "weight": 0.7
+    },
+    "neurosymbolic": {
+      "keywords": [
+        "neurosymbolic",
+        "neuro-symbolic AI",
+        "symbolic reasoning",
+        "logic programming",
+        "program synthesis",
+        "differentiable programming",
+        "probabilistic programming",
+        "causal inference"
+      ],
+      "weight": 0.65
+    },
+    "medical_scientific_ai": {
+      "keywords": [
+        "medical AI",
+        "healthcare AI",
+        "medical imaging",
+        "disease diagnosis",
+        "drug discovery",
+        "protein folding",
+        "genomics",
+        "clinical decision support",
+        "radiology AI",
+        "scientific machine learning",
+        "physics-informed neural network",
+        "PINN",
+        "scientific AI"
+      ],
+      "weight": 0.6
+    },
+    "time_series": {
+      "keywords": [
+        "time series",
+        "forecasting",
+        "temporal modeling",
+        "sequential data",
+        "recurrent neural network",
+        "RNN",
+        "LSTM",
+        "GRU",
+        "temporal convolution",
+        "attention mechanism"
+      ],
+      "weight": 0.55
+    }
+  },
+  "total_papers": 25,
+  "category_distribution": {
+    "artificial_intelligence": 21,
+    "language_models": 1,
+    "nlp_techniques": 2,
+    "general": 1
+  },
+  "processed_at": "2025-10-27T17:54:20.426771",
+  "papers": [
+    {
+      "arxiv_id": "2510.21693",
+      "arxiv_id_with_version": "2510.21693v1",
+      "title": "Mechanistic Interpretability for Neural TSP Solvers",
+      "abstract": "Neural networks have advanced combinatorial optimization, with Transformer-based solvers achieving near-optimal solutions on the Traveling Salesman Problem (TSP) in milliseconds. However, these models operate as black boxes, providing no insight into the geometric patterns they learn or the heuristics they employ during tour construction. We address this opacity by applying sparse autoencoders (SAEs), a mechanistic interpretability technique, to a Transformer-based TSP solver, representing the first application of activation-based interpretability methods to operations research models. We train a pointer network with reinforcement learning on 100-node instances, then fit an SAE to the encoders residual stream to discover an overcomplete dictionary of interpretable features. Our analysis reveals that the solver naturally develops features mirroring fundamental TSP concepts: boundary detectors that activate on convex-hull nodes, cluster-sensitive features responding to locally dense regions, and separator features encoding geometric partitions. These findings provide the first model-internal account of what neural TSP solvers compute before node selection, demonstrate that geometric structure emerges without explicit supervision, and suggest pathways toward transparent hybrid systems that combine neural efficiency with algorithmic interpretability. Interactive feature explorer: https:reubennarad.github.ioTSP_interp",
+      "authors": "Reuben Narad, Leonard Boussioux, Michael Wagner",
+      "author_count": 3,
+      "published_date": "2025-10-24T17:54:19Z",
+      "updated_date": "2025-10-24T17:54:19Z",
+      "arxiv_categories": [
+        "cs.LG"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21693v1",
+      "html_url": "http://arxiv.org/abs/2510.21693v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "ai_safety_alignment"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.5,
+        "ai_safety_alignment": 0.425
+      },
+      "overall_relevance": 0.5,
+      "processed_at": "2025-10-27T17:54:20.407782"
+    },
+    {
+      "arxiv_id": "2510.21631",
+      "arxiv_id_with_version": "2510.21631v1",
+      "title": "Few-Shot Knowledge Distillation of LLMs With Counterfactual Explanations",
+      "abstract": "Knowledge distillation is a promising approach to transfer capabilities from complex teacher models to smaller, resource-efficient student models that can be deployed easily, particularly in task-aware scenarios. However, existing methods of task-aware distillation typically require substantial quantities of data which may be unavailable or expensive to obtain in many practical scenarios. In this paper, we address this challenge by introducing a novel strategy called Counterfactual-explanation-infused Distillation CoD for few-shot task-aware knowledge distillation by systematically infusing counterfactual explanations. Counterfactual explanations (CFEs) refer to inputs that can flip the output prediction of the teacher model with minimum perturbation. Our strategy CoD leverages these CFEs to precisely map the teachers decision boundary with significantly fewer samples. We provide theoretical guarantees for motivating the role of CFEs in distillation, from both statistical and geometric perspectives. We mathematically show that CFEs can improve parameter estimation by providing more informative examples near the teachers decision boundary. We also derive geometric insights on how CFEs effectively act as knowledge probes, helping the students mimic the teachers decision boundaries more effectively than standard data. We perform experiments across various datasets and LLMs to show that CoD outperforms standard distillation approaches in few-shot regimes (as low as 8-512 samples). Notably, CoD only uses half of the original samples used by the baselines, paired with their corresponding CFEs and still improves performance.",
+      "authors": "Faisal Hamman, Pasan Dissanayake, Yanjun Fu, Sanghamitra Dutta",
+      "author_count": 4,
+      "published_date": "2025-10-24T16:36:34Z",
+      "updated_date": "2025-10-24T16:36:34Z",
+      "arxiv_categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL",
+        "cs.CY",
+        "stat.ML"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21631v1",
+      "html_url": "http://arxiv.org/abs/2510.21631v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "efficient_ml",
+        "computer_vision",
+        "ai_hardware"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.5,
+        "efficient_ml": 0.27,
+        "computer_vision": 0.24,
+        "ai_hardware": 0.14
+      },
+      "overall_relevance": 0.5,
+      "processed_at": "2025-10-27T17:54:20.421546"
+    },
+    {
+      "arxiv_id": "2510.21623",
+      "arxiv_id_with_version": "2510.21623v1",
+      "title": "The Universal Landscape of Human Reasoning",
+      "abstract": "Understanding how information is dynamically accumulated and transformed in human reasoning has long challenged cognitive psychology, philosophy, and artificial intelligence. Existing accounts, from classical logic to probabilistic models, illuminate aspects of output or individual modelling, but do not offer a unified, quantitative description of general human reasoning dynamics. To solve this, we introduce Information Flow Tracking (IF-Track), that uses large language models (LLMs) as probabilistic encoder to quantify information entropy and gain at each reasoning step. Through fine-grained analyses across diverse tasks, our method is the first successfully models the universal landscape of human reasoning behaviors within a single metric space. We show that IF-Track captures essential reasoning features, identifies systematic error patterns, and characterizes individual differences. Applied to discussion of advanced psychological theory, we first reconcile single- versus dual-process theories in IF-Track and discover the alignment of artificial and human cognition and how LLMs reshaping human reasoning process. This approach establishes a quantitative bridge between theory and measurement, offering mechanistic insights into the architecture of reasoning.",
+      "authors": "Qiguang Chen, Jinhao Liu, Libo Qin, Yimeng Zhang, Yihao Liang et al. (17 total)",
+      "author_count": 17,
+      "published_date": "2025-10-24T16:26:36Z",
+      "updated_date": "2025-10-24T16:26:36Z",
+      "arxiv_categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.CL",
+      "pdf_url": "http://arxiv.org/pdf/2510.21623v1",
+      "html_url": "http://arxiv.org/abs/2510.21623v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "reasoning_planning"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.5,
+        "reasoning_planning": 0.27
+      },
+      "overall_relevance": 0.5,
+      "processed_at": "2025-10-27T17:54:20.422506"
+    },
+    {
+      "arxiv_id": "2510.21618",
+      "arxiv_id_with_version": "2510.21618v1",
+      "title": "DeepAgent: A General Reasoning Agent with Scalable Toolsets",
+      "abstract": "Large reasoning models have demonstrated strong problem-solving abilities, yet real-world tasks often require external tools and long-horizon interactions. Existing agent frameworks typically follow predefined workflows, which limit autonomous and global task completion. In this paper, we introduce DeepAgent, an end-to-end deep reasoning agent that performs autonomous thinking, tool discovery, and action execution within a single, coherent reasoning process. To address the challenges of long-horizon interactions, particularly the context length explosion from multiple tool calls and the accumulation of interaction history, we introduce an autonomous memory folding mechanism that compresses past interactions into structured episodic, working, and tool memories, reducing error accumulation while preserving critical information. To teach general-purpose tool use efficiently and stably, we develop an end-to-end reinforcement learning strategy, namely ToolPO, that leverages LLM-simulated APIs and applies tool-call advantage attribution to assign fine-grained credit to the tool invocation tokens. Extensive experiments on eight benchmarks, including general tool-use tasks (ToolBench, API-Bank, TMDB, Spotify, ToolHop) and downstream applications (ALFWorld, WebShop, GAIA, HLE), demonstrate that DeepAgent consistently outperforms baselines across both labeled-tool and open-set tool retrieval scenarios. This work takes a step toward more general and capable agents for real-world applications. The code and demo are available at https:github.comRUC-NLPIRDeepAgent.",
+      "authors": "Xiaoxi Li, Wenxiang Jiao, Jiarui Jin, Guanting Dong, Jiajie Jin et al. (11 total)",
+      "author_count": 11,
+      "published_date": "2025-10-24T16:24:01Z",
+      "updated_date": "2025-10-24T16:24:01Z",
+      "arxiv_categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "primary_arxiv_category": "cs.AI",
+      "pdf_url": "http://arxiv.org/pdf/2510.21618v1",
+      "html_url": "http://arxiv.org/abs/2510.21618v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "ai_agents",
+        "reasoning_planning",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.5,
+        "ai_agents": 0.18,
+        "reasoning_planning": 0.27,
+        "nlp_techniques": 0.32
+      },
+      "overall_relevance": 0.5,
+      "processed_at": "2025-10-27T17:54:20.423327"
+    },
+    {
+      "arxiv_id": "2510.21696",
+      "arxiv_id_with_version": "2510.21696v1",
+      "title": "BachVid: Training-Free Video Generation with Consistent Background and Character",
+      "abstract": "Diffusion Transformers (DiTs) have recently driven significant progress in text-to-video (T2V) generation. However, generating multiple videos with consistent characters and backgrounds remains a significant challenge. Existing methods typically rely on reference images or extensive training, and often only address character consistency, leaving background consistency to image-to-video models. We introduce BachVid, the first training-free method that achieves consistent video generation without needing any reference images. Our approach is based on a systematic analysis of DiTs attention mechanism and intermediate features, revealing its ability to extract foreground masks and identify matching points during the denoising process. Our method leverages this finding by first generating an identity video and caching the intermediate variables, and then inject these cached variables into corresponding positions in newly generated videos, ensuring both foreground and background consistency across multiple videos. Experimental results demonstrate that BachVid achieves robust consistency in generated videos without requiring additional training, offering a novel and efficient solution for consistent video generation without relying on reference images or additional training.",
+      "authors": "Han Yan, Xibin Song, Yifu Wang, Hongdong Li, Pan Ji et al. (6 total)",
+      "author_count": 6,
+      "published_date": "2025-10-24T17:56:37Z",
+      "updated_date": "2025-10-24T17:56:37Z",
+      "arxiv_categories": [
+        "cs.CV"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21696v1",
+      "html_url": "http://arxiv.org/abs/2510.21696v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "multimodal_ai",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.4,
+        "multimodal_ai": 0.36,
+        "nlp_techniques": 0.24
+      },
+      "overall_relevance": 0.4,
+      "processed_at": "2025-10-27T17:54:20.405833"
+    },
+    {
+      "arxiv_id": "2510.21691",
+      "arxiv_id_with_version": "2510.21691v1",
+      "title": "On Uncertainty Calibration for Equivariant Functions",
+      "abstract": "Data-sparse settings such as robotic manipulation, molecular physics, and galaxy morphology classification are some of the hardest domains for deep learning. For these problems, equivariant networks can help improve modeling across undersampled parts of the input space, and uncertainty estimation can guard against overconfidence. However, until now, the relationships between equivariance and model confidence, and more generally equivariance and model calibration, has yet to be studied. Since traditional classification and regression error terms show up in the definitions of calibration error, it is natural to suspect that previous work can be used to help understand the relationship between equivariance and calibration error. In this work, we present a theory relating equivariance to uncertainty estimation. By proving lower and upper bounds on uncertainty calibration errors (ECE and ENCE) under various equivariance conditions, we elucidate the generalization limits of equivariant models and illustrate how symmetry mismatch can result in miscalibration in both classification and regression. We complement our theoretical framework with numerical experiments that clarify the relationship between equivariance and uncertainty using a variety of real and simulated datasets, and we comment on trends with symmetry mismatch, group size, and aleatoric and epistemic uncertainties.",
+      "authors": "Edward Berman, Jacob Ginesin, Marco Pacini, Robin Walters",
+      "author_count": 4,
+      "published_date": "2025-10-24T17:50:41Z",
+      "updated_date": "2025-10-24T17:50:41Z",
+      "arxiv_categories": [
+        "cs.LG",
+        "math.ST",
+        "stat.TH"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21691v1",
+      "html_url": "http://arxiv.org/abs/2510.21691v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.4,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.4,
+      "processed_at": "2025-10-27T17:54:20.408492"
+    },
+    {
+      "arxiv_id": "2510.21679",
+      "arxiv_id_with_version": "2510.21679v1",
+      "title": "A Multimodal Benchmark for Framing of Oil  Gas Advertising and Potential Greenwashing Detection",
+      "abstract": "Companies spend large amounts of money on public relations campaigns to project a positive brand image. However, sometimes there is a mismatch between what they say and what they do. Oil  gas companies, for example, are accused of greenwashing with imagery of climate-friendly initiatives. Understanding the framing, and changes in framing, at scale can help better understand the goals and nature of public relations campaigns. To address this, we introduce a benchmark dataset of expert-annotated video ads obtained from Facebook and YouTube. The dataset provides annotations for 13 framing types for more than 50 companies or advocacy groups across 20 countries. Our dataset is especially designed for the evaluation of vision-language models (VLMs), distinguishing it from past text-only framing datasets. Baseline experiments show some promising results, while leaving room for improvement for future work: GPT-4.1 can detect environmental messages with 79 F1 score, while our best model only achieves 46 F1 score on identifying framing around green innovation. We also identify challenges that VLMs must address, such as implicit framing, handling videos of various lengths, or implicit cultural backgrounds. Our dataset contributes to research in multimodal analysis of strategic communication in the energy sector.",
+      "authors": "Gaku Morio, Harri Rowlands, Dominik Stammbach, Christopher D. Manning, Peter Henderson",
+      "author_count": 5,
+      "published_date": "2025-10-24T17:34:28Z",
+      "updated_date": "2025-10-24T17:34:28Z",
+      "arxiv_categories": [
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.AI",
+      "pdf_url": "http://arxiv.org/pdf/2510.21679v1",
+      "html_url": "http://arxiv.org/abs/2510.21679v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.4
+      },
+      "overall_relevance": 0.4,
+      "processed_at": "2025-10-27T17:54:20.412316"
+    },
+    {
+      "arxiv_id": "2510.21647",
+      "arxiv_id_with_version": "2510.21647v1",
+      "title": "Hybrid Genetic Algorithm for Optimal User Order Routing: Multi-Objective Solver Optimization in CoW Protocol Batch Auctions",
+      "abstract": "CoW Protocol batch auctions aggregate user intents and rely on solvers to find optimal execution paths that maximize user surplus across heterogeneous automated market makers (AMMs) under stringent auction deadlines. Deterministic single-objective heuristics that optimize only expected output frequently fail to exploit split-flow opportunities across multiple parallel paths and to internalize gas, slippage, and execution risk constraints in a unified search. We apply evolutionary multi-objective optimization to this blockchain routing problem, proposing a hybrid genetic algorithm (GA) architecture for real-time solver optimization that combines a production-grade, multi-objective NSGA-II engine with adaptive instance profiling and deterministic baselines. Our core engine encodes variable-length path sets with continuous split ratios and evolves candidate route-and-volume allocations under a Pareto objective vector F  (user surplus, -gas, -slippage, -risk), enabling principled trade-offs and anytime operation within the auction deadline. An adaptive controller selects between GA and a deterministic dual-decomposition optimizer with Bellman-Ford based negative-cycle detection, with a guarantee to never underperform the baseline. The open-source system integrates six protection layers and passes 88 tests, validating safety and correctness. In a 14-stratum benchmark (30 seeds each), the hybrid approach yields absolute user-surplus gains of approximately 0.40-9.82 ETH on small-to-medium orders, while large high-fragmentation orders are unprofitable across gas regimes. Convergence occurs in about 0.5 s median (soft capped at 1.0 s) within a 2-second limit. We are not aware of an openly documented multi-objective GA with end-to-end safety for real-time DEX routing.",
+      "authors": "Mitchell Marfinetz",
+      "author_count": 1,
+      "published_date": "2025-10-24T17:05:07Z",
+      "updated_date": "2025-10-24T17:05:07Z",
+      "arxiv_categories": [
+        "cs.NE",
+        "I.2.8; C.2.4"
+      ],
+      "primary_arxiv_category": "cs.NE",
+      "pdf_url": "http://arxiv.org/pdf/2510.21647v1",
+      "html_url": "http://arxiv.org/abs/2510.21647v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.4
+      },
+      "overall_relevance": 0.4,
+      "processed_at": "2025-10-27T17:54:20.419313"
+    },
+    {
+      "arxiv_id": "2510.21638",
+      "arxiv_id_with_version": "2510.21638v1",
+      "title": "DEEDEE: Fast and Scalable Out-of-Distribution Dynamics Detection",
+      "abstract": "Deploying reinforcement learning (RL) in safety-critical settings is constrained by brittleness under distribution shift. We study out-of-distribution (OOD) detection for RL time series and introduce DEEDEE, a two-statistic detector that revisits representation-heavy pipelines with a minimal alternative. DEEDEE uses only an episodewise mean and an RBF kernel similarity to a training summary, capturing complementary global and local deviations. Despite its simplicity, DEEDEE matches or surpasses contemporary detectors across standard RL OOD suites, delivering a 600-fold reduction in compute (FLOPs  wall-time) and an average 5 absolute accuracy gain over strong baselines. Conceptually, our results indicate that diverse anomaly types often imprint on RL trajectories through a small set of low-order statistics, suggesting a compact foundation for OOD detection in complex environments.",
+      "authors": "Tala Aljaafari, Varun Kanade, Philip Torr, Christian Schroeder de Witt",
+      "author_count": 4,
+      "published_date": "2025-10-24T16:51:17Z",
+      "updated_date": "2025-10-24T16:51:17Z",
+      "arxiv_categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21638v1",
+      "html_url": "http://arxiv.org/abs/2510.21638v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.4
+      },
+      "overall_relevance": 0.4,
+      "processed_at": "2025-10-27T17:54:20.419920"
+    },
+    {
+      "arxiv_id": "2510.21635",
+      "arxiv_id_with_version": "2510.21635v1",
+      "title": "DAP-MAE: Domain-Adaptive Point Cloud Masked Autoencoder for Effective Cross-Domain Learning",
+      "abstract": "Compared to 2D data, the scale of point cloud data in different domains available for training, is quite limited. Researchers have been trying to combine these data of different domains for masked autoencoder (MAE) pre-training to leverage such a data scarcity issue. However, the prior knowledge learned from mixed domains may not align well with the downstream 3D point cloud analysis tasks, leading to degraded performance. To address such an issue, we propose the Domain-Adaptive Point Cloud Masked Autoencoder (DAP-MAE), an MAE pre-training method, to adaptively integrate the knowledge of cross-domain datasets for general point cloud analysis. In DAP-MAE, we design a heterogeneous domain adapter that utilizes an adaptation mode during pre-training, enabling the model to comprehensively learn information from point clouds across different domains, while employing a fusion mode in the fine-tuning to enhance point cloud features. Meanwhile, DAP-MAE incorporates a domain feature generator to guide the adaptation of point cloud features to various downstream tasks. With only one pre-training, DAP-MAE achieves excellent performance across four different point cloud analysis tasks, reaching 95.18 in object classification on ScanObjectNN and 88.45 in facial expression recognition on Bosphorus.",
+      "authors": "Ziqi Gao, Qiufu Li, Linlin Shen",
+      "author_count": 3,
+      "published_date": "2025-10-24T16:44:40Z",
+      "updated_date": "2025-10-24T16:44:40Z",
+      "arxiv_categories": [
+        "cs.CV"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21635v1",
+      "html_url": "http://arxiv.org/abs/2510.21635v1",
+      "primary_category": "language_models",
+      "all_categories": [
+        "artificial_intelligence",
+        "language_models",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "language_models": 0.38,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.38,
+      "processed_at": "2025-10-27T17:54:20.420594"
+    },
+    {
+      "arxiv_id": "2510.21706",
+      "arxiv_id_with_version": "2510.21706v1",
+      "title": "Equivariance by Contrast: Identifiable Equivariant Embeddings from Unlabeled Finite Group Actions",
+      "abstract": "We propose Equivariance by Contrast (EbC) to learn equivariant embeddings from observation pairs (y, g y), where g is drawn from a finite group acting on the data. Our method jointly learns a latent space and a group representation in which group actions correspond to invertible linear maps -- without relying on group-specific inductive biases. We validate our approach on the infinite dSprites dataset with structured transformations defined by the finite group G: (R_m Z_n Z_n), combining discrete rotations and periodic translations. The resulting embeddings exhibit high-fidelity equivariance, with group operations faithfully reproduced in latent space. On synthetic data, we further validate the approach on the non-abelian orthogonal group O(n) and the general linear group GL(n). We also provide a theoretical proof for identifiability. While broad evaluation across diverse group types on real-world data remains future work, our results constitute the first successful demonstration of general-purpose encoder-only equivariant learning from group action observations alone, including non-trivial non-abelian groups and a product group motivated by modeling affine equivariances in computer vision.",
+      "authors": "Tobias Schmidt, Steffen Schneider, Matthias Bethge",
+      "author_count": 3,
+      "published_date": "2025-10-24T17:59:46Z",
+      "updated_date": "2025-10-24T17:59:46Z",
+      "arxiv_categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21706v1",
+      "html_url": "http://arxiv.org/abs/2510.21706v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.402883"
+    },
+    {
+      "arxiv_id": "2510.21697",
+      "arxiv_id_with_version": "2510.21697v1",
+      "title": "Visual Diffusion Models are Geometric Solvers",
+      "abstract": "In this paper we show that visual diffusion models can serve as effective geometric solvers: they can directly reason about geometric problems by working in pixel space. We first demonstrate this on the Inscribed Square Problem, a long-standing problem in geometry that asks whether every Jordan curve contains four points forming a square. We then extend the approach to two other well-known hard geometric problems: the Steiner Tree Problem and the Simple Polygon Problem. Our method treats each problem instance as an image and trains a standard visual diffusion model that transforms Gaussian noise into an image representing a valid approximate solution that closely matches the exact one. The model learns to transform noisy geometric structures into correct configurations, effectively recasting geometric reasoning as image generation. Unlike prior work that necessitates specialized architectures and domain-specific adaptations when applying diffusion to parametric geometric representations, we employ a standard visual diffusion model that operates on the visual representation of the problem. This simplicity highlights a surprising bridge between generative modeling and geometric problem solving. Beyond the specific problems studied here, our results point toward a broader paradigm: operating in image space provides a general and practical framework for approximating notoriously hard problems, and opens the door to tackling a far wider class of challenging geometric tasks.",
+      "authors": "Nir Goren, Shai Yehezkel, Omer Dahary, Andrey Voynov, Or Patashnik et al. (6 total)",
+      "author_count": 6,
+      "published_date": "2025-10-24T17:57:31Z",
+      "updated_date": "2025-10-24T17:57:31Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "cs.LG"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21697v1",
+      "html_url": "http://arxiv.org/abs/2510.21697v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "reasoning_planning",
+        "diffusion_generative",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "reasoning_planning": 0.18,
+        "diffusion_generative": 0.255,
+        "nlp_techniques": 0.24
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.404801"
+    },
+    {
+      "arxiv_id": "2510.21689",
+      "arxiv_id_with_version": "2510.21689v1",
+      "title": "On Thin Ice: Towards Explainable Conservation Monitoring via Attribution and Perturbations",
+      "abstract": "Computer vision can accelerate ecological research and conservation monitoring, yet adoption in ecology lags in part because of a lack of trust in black-box neural-network-based models. We seek to address this challenge by applying post-hoc explanations to provide evidence for predictions and document limitations that are important to field deployment. Using aerial imagery from Glacier Bay National Park, we train a Faster R-CNN to detect pinnipeds (harbor seals) and generate explanations via gradient-based class activation mapping (HiResCAM, LayerCAM), local interpretable model-agnostic explanations (LIME), and perturbation-based explanations. We assess explanations along three axes relevant to field use: (i) localization fidelity: whether high-attribution regions coincide with the animal rather than background context; (ii) faithfulness: whether deletioninsertion tests produce changes in detector confidence; and (iii) diagnostic utility: whether explanations reveal systematic failure modes. Explanations concentrate on seal torsos and contours rather than surrounding icerock, and removal of the seals reduces detection confidence, providing model-evidence for true positives. The analysis also uncovers recurrent error sources, including confusion between seals and black ice and rocks. We translate these findings into actionable next steps for model development, including more targeted data curation and augmentation. By pairing object detection with post-hoc explainability, we can move beyond black-box predictions toward auditable, decision-supporting tools for conservation monitoring.",
+      "authors": "Jiayi Zhou, Günel Aghakishiyeva, Saagar Arya, Julian Dale, James David Poling et al. (10 total)",
+      "author_count": 10,
+      "published_date": "2025-10-24T17:46:24Z",
+      "updated_date": "2025-10-24T17:46:24Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21689v1",
+      "html_url": "http://arxiv.org/abs/2510.21689v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "computer_vision"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "computer_vision": 0.16
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.409279"
+    },
+    {
+      "arxiv_id": "2510.21682",
+      "arxiv_id_with_version": "2510.21682v1",
+      "title": "WorldGrow: Generating Infinite 3D World",
+      "abstract": "We tackle the challenge of generating the infinitely extendable 3D world -- large, continuous environments with coherent geometry and realistic appearance. Existing methods face key challenges: 2D-lifting approaches suffer from geometric and appearance inconsistencies across views, 3D implicit representations are hard to scale up, and current 3D foundation models are mostly object-centric, limiting their applicability to scene-level generation. Our key insight is leveraging strong generation priors from pre-trained 3D models for structured scene block generation. To this end, we propose WorldGrow, a hierarchical framework for unbounded 3D scene synthesis. Our method features three core components: (1) a data curation pipeline that extracts high-quality scene blocks for training, making the 3D structured latent representations suitable for scene generation; (2) a 3D block inpainting mechanism that enables context-aware scene extension; and (3) a coarse-to-fine generation strategy that ensures both global layout plausibility and local geometrictextural fidelity. Evaluated on the large-scale 3D-FRONT dataset, WorldGrow achieves SOTA performance in geometry reconstruction, while uniquely supporting infinite scene generation with photorealistic and structurally consistent outputs. These results highlight its capability for constructing large-scale virtual environments and potential for building future world models.",
+      "authors": "Sikuang Li, Chen Yang, Jiemin Fang, Taoran Yi, Jia Lu et al. (9 total)",
+      "author_count": 9,
+      "published_date": "2025-10-24T17:39:52Z",
+      "updated_date": "2025-10-24T17:39:52Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "cs.GR"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21682v1",
+      "html_url": "http://arxiv.org/abs/2510.21682v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "rl_agents",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "rl_agents": 0.17,
+        "nlp_techniques": 0.24
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.411188"
+    },
+    {
+      "arxiv_id": "2510.21669",
+      "arxiv_id_with_version": "2510.21669v1",
+      "title": "Optimal Graph Clustering without Edge Density Signals",
+      "abstract": "This paper establishes the theoretical limits of graph clustering under the Popularity-Adjusted Block Model (PABM), addressing limitations of existing models. In contrast to the Stochastic Block Model (SBM), which assumes uniform vertex degrees, and to the Degree-Corrected Block Model (DCBM), which applies uniform degree corrections across clusters, PABM introduces separate popularity parameters for intra- and inter-cluster connections. Our main contribution is the characterization of the optimal error rate for clustering under PABM, which provides novel insights on clustering hardness: we demonstrate that unlike SBM and DCBM, cluster recovery remains possible in PABM even when traditional edge-density signals vanish, provided intra- and inter-cluster popularity coefficients differ. This highlights a dimension of degree heterogeneity captured by PABM but overlooked by DCBM: local differences in connectivity patterns can enhance cluster separability independently of global edge densities. Finally, because PABM exhibits a richer structure, its expected adjacency matrix has rank between k and k2, where k is the number of clusters. As a result, spectral embeddings based on the top k eigenvectors may fail to capture important structural information. Our numerical experiments on both synthetic and real datasets confirm that spectral clustering algorithms incorporating k2 eigenvectors outperform traditional spectral approaches.",
+      "authors": "Maximilien Dreveton, Elaine Siyu Liu, Matthias Grossglauser, Patrick Thiran",
+      "author_count": 4,
+      "published_date": "2025-10-24T17:24:26Z",
+      "updated_date": "2025-10-24T17:24:26Z",
+      "arxiv_categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "primary_arxiv_category": "cs.LG",
+      "pdf_url": "http://arxiv.org/pdf/2510.21669v1",
+      "html_url": "http://arxiv.org/abs/2510.21669v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.413063"
+    },
+    {
+      "arxiv_id": "2510.21664",
+      "arxiv_id_with_version": "2510.21664v1",
+      "title": "Foundation Models in Dermatopathology: Skin Tissue Classification",
+      "abstract": "The rapid generation of whole-slide images (WSIs) in dermatopathology necessitates automated methods for efficient processing and accurate classification. This study evaluates the performance of two foundation models, UNI and Virchow2, as feature extractors for classifying WSIs into three diagnostic categories: melanocytic, basaloid, and squamous lesions. Patch-level embeddings were aggregated into slide-level features using a mean-aggregation strategy and subsequently used to train multiple machine learning classifiers, including logistic regression, gradient-boosted trees, and random forest models. Performance was assessed using precision, recall, true positive rate, false positive rate, and the area under the receiver operating characteristic curve (AUROC) on the test set. Results demonstrate that patch-level features extracted using Virchow2 outperformed those extracted via UNI across most slide-level classifiers, with logistic regression achieving the highest accuracy (90) for Virchow2, though the difference was not statistically significant. The study also explored data augmentation techniques and image normalization to enhance model robustness and generalizability. The mean-aggregation approach provided reliable slide-level feature representations. All experimental results and metrics were tracked and visualized using WandB.ai, facilitating reproducibility and interpretability. This research highlights the potential of foundation models for automated WSI classification, providing a scalable and effective approach for dermatopathological diagnosis while paving the way for future advancements in slide-level representation learning.",
+      "authors": "Riya Gupta, Yiwei Zong, Dennis H. Murphree",
+      "author_count": 3,
+      "published_date": "2025-10-24T17:21:43Z",
+      "updated_date": "2025-10-24T17:21:43Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "q-bio.QM"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21664v1",
+      "html_url": "http://arxiv.org/abs/2510.21664v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "language_models",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "language_models": 0.285,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.413849"
+    },
+    {
+      "arxiv_id": "2510.21657",
+      "arxiv_id_with_version": "2510.21657v1",
+      "title": "Long-tailed Species Recognition in the NACTI Wildlife Dataset",
+      "abstract": "As most in the wild data collections of the natural world, the North America Camera Trap Images (NACTI) dataset shows severe long-tailed class imbalance, noting that the largest Head class alone covers 50 of the 3.7M images in the corpus. Building on the PyTorch Wildlife model, we present a systematic study of Long-Tail Recognition methodologies for species recognition on the NACTI dataset covering experiments on various LTR loss functions plus LTR-sensitive regularisation. Our best configuration achieves 99.40 Top-1 accuracy on our NACTI test data split, substantially improving over a 95.51 baseline using standard cross-entropy with Adam. This also improves on previously reported top performance in MLWIC2 at 96.8 albeit using partly unpublished (potentially different) partitioning, optimiser, and evaluation protocols. To evaluate domain shifts (e.g. night-time captures, occlusion, motion-blur) towards other datasets we construct a Reduced-Bias Test set from the ENA-Detection dataset where our experimentally optimised long-tail enhanced model achieves leading 52.55 accuracy (up from 51.20 with WCE loss), demonstrating stronger generalisation capabilities under distribution shift. We document the consistent improvements of LTR-enhancing scheduler choices in this NACTI wildlife domain, particularly when in tandem with state-of-the-art LTR losses. We finally discuss qualitative and quantitative shortcomings that LTR methods cannot sufficiently address, including catastrophic breakdown for Tail classes under severe domain shift. For maximum reproducibility we publish all dataset splits, key code, and full network weights.",
+      "authors": "Zehua Liu, Tilo Burghardt",
+      "author_count": 2,
+      "published_date": "2025-10-24T17:13:37Z",
+      "updated_date": "2025-10-24T17:13:37Z",
+      "arxiv_categories": [
+        "cs.CV"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21657v1",
+      "html_url": "http://arxiv.org/abs/2510.21657v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.415199"
+    },
+    {
+      "arxiv_id": "2510.21652",
+      "arxiv_id_with_version": "2510.21652v1",
+      "title": "AstaBench: Rigorous Benchmarking of AI Agents with a Scientific Research Suite",
+      "abstract": "AI agents hold the potential to revolutionize scientific productivity by automating literature reviews, replicating experiments, analyzing data, and even proposing new directions of inquiry; indeed, there are now many such agents, ranging from general-purpose deep research systems to specialized science-specific agents, such as AI Scientist and AIGS. Rigorous evaluation of these agents is critical for progress. Yet existing benchmarks fall short on several fronts: they (1) fail to provide holistic, product-informed measures of real-world use cases such as science research; (2) lack reproducible agent tools necessary for a controlled comparison of core agentic capabilities; (3) do not account for confounding variables such as model cost and tool access; (4) do not provide standardized interfaces for quick agent prototyping and evaluation; and (5) lack comprehensive baseline agents necessary to identify true advances. In response, we define principles and tooling for more rigorously benchmarking agents. Using these, we present AstaBench, a suite that provides the first holistic measure of agentic ability to perform scientific research, comprising 2400 problems spanning the entire scientific discovery process and multiple scientific domains, and including many problems inspired by actual user requests to deployed Asta agents. Our suite comes with the first scientific research environment with production-grade search tools that enable controlled, reproducible evaluation, better accounting for confounders. Alongside, we provide a comprehensive suite of nine science-optimized classes of Asta agents and numerous baselines. Our extensive evaluation of 57 agents across 22 agent classes reveals several interesting findings, most importantly that despite meaningful progress on certain individual aspects, AI remains far from solving the challenge of science research assistance.",
+      "authors": "Jonathan Bragg, Mike D'Arcy, Nishant Balepur, Dan Bareket, Bhavana Dalvi et al. (39 total)",
+      "author_count": 39,
+      "published_date": "2025-10-24T17:10:26Z",
+      "updated_date": "2025-10-24T17:10:26Z",
+      "arxiv_categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "primary_arxiv_category": "cs.AI",
+      "pdf_url": "http://arxiv.org/pdf/2510.21652v1",
+      "html_url": "http://arxiv.org/abs/2510.21652v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "ai_agents"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "ai_agents": 0.18
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.417650"
+    },
+    {
+      "arxiv_id": "2510.21649",
+      "arxiv_id_with_version": "2510.21649v1",
+      "title": "A Dynamic Knowledge Distillation Method Based on the Gompertz Curve",
+      "abstract": "This paper introduces a novel dynamic knowledge distillation framework, Gompertz-CNN, which integrates the Gompertz growth model into the training process to address the limitations of traditional knowledge distillation. Conventional methods often fail to capture the evolving cognitive capacity of student models, leading to suboptimal knowledge transfer. To overcome this, we propose a stage-aware distillation strategy that dynamically adjusts the weight of distillation loss based on the Gompertz curve, reflecting the students learning progression: slow initial growth, rapid mid-phase improvement, and late-stage saturation. Our framework incorporates Wasserstein distance to measure feature-level discrepancies and gradient matching to align backward propagation behaviors between teacher and student models. These components are unified under a multi-loss objective, where the Gompertz curve modulates the influence of distillation losses over time. Extensive experiments on CIFAR-10 and CIFAR-100 using various teacher-student architectures (e.g., ResNet50 and MobileNet_v2) demonstrate that Gompertz-CNN consistently outperforms traditional distillation methods, achieving up to 8 and 4 accuracy gains on CIFAR-10 and CIFAR-100, respectively.",
+      "authors": "Han Yang, Guangjun Qin",
+      "author_count": 2,
+      "published_date": "2025-10-24T17:07:27Z",
+      "updated_date": "2025-10-24T17:07:27Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21649v1",
+      "html_url": "http://arxiv.org/abs/2510.21649v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "efficient_ml"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.3,
+        "efficient_ml": 0.27
+      },
+      "overall_relevance": 0.3,
+      "processed_at": "2025-10-27T17:54:20.418323"
+    },
+    {
+      "arxiv_id": "2510.21686",
+      "arxiv_id_with_version": "2510.21686v1",
+      "title": "Multimodal Datasets with Controllable Mutual Information",
+      "abstract": "We introduce a framework for generating highly multimodal datasets with explicitly calculable mutual information between modalities. This enables the construction of benchmark datasets that provide a novel testbed for systematic studies of mutual information estimators and multimodal self-supervised learning techniques. Our framework constructs realistic datasets with known mutual information using a flow-based generative model and a structured causal framework for generating correlated latent variables.",
+      "authors": "Raheem Karim Hashmani, Garrett W. Merz, Helen Qu, Mariel Pettee, Kyle Cranmer",
+      "author_count": 5,
+      "published_date": "2025-10-24T17:44:40Z",
+      "updated_date": "2025-10-24T17:44:40Z",
+      "arxiv_categories": [
+        "stat.ML",
+        "cs.LG"
+      ],
+      "primary_arxiv_category": "stat.ML",
+      "pdf_url": "http://arxiv.org/pdf/2510.21686v1",
+      "html_url": "http://arxiv.org/abs/2510.21686v1",
+      "primary_category": "nlp_techniques",
+      "all_categories": [
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "nlp_techniques": 0.24
+      },
+      "overall_relevance": 0.24,
+      "processed_at": "2025-10-27T17:54:20.409940"
+    },
+    {
+      "arxiv_id": "2510.21654",
+      "arxiv_id_with_version": "2510.21654v1",
+      "title": "Group Inertial Poser: Multi-Person Pose and Global Translation from Sparse Inertial Sensors and Ultra-Wideband Ranging",
+      "abstract": "Tracking human full-body motion using sparse wearable inertial measurement units (IMUs) overcomes the limitations of occlusion and instrumentation of the environment inherent in vision-based approaches. However, purely IMU-based tracking compromises translation estimates and accurate relative positioning between individuals, as inertial cues are inherently self-referential and provide no direct spatial reference for others. In this paper, we present a novel approach for robustly estimating body poses and global translation for multiple individuals by leveraging the distances between sparse wearable sensors - both on each individual and across multiple individuals. Our method Group Inertial Poser estimates these absolute distances between pairs of sensors from ultra-wideband ranging (UWB) and fuses them with inertial observations as input into structured state-space models to integrate temporal motion patterns for precise 3D pose estimation. Our novel two-step optimization further leverages the estimated distances for accurately tracking peoples global trajectories through the world. We also introduce GIP-DB, the first IMUUWB dataset for two-person tracking, which comprises 200 minutes of motion recordings from 14 participants. In our evaluation, Group Inertial Poser outperforms previous state-of-the-art methods in accuracy and robustness across synthetic and real-world data, showing the promise of IMUUWB-based multi-human motion capture in the wild. Code, models, dataset: https:github.cometh-siplabGroupInertialPoser",
+      "authors": "Ying Xue, Jiaxi Jiang, Rayan Armani, Dominik Hollidt, Yi-Chi Liao et al. (6 total)",
+      "author_count": 6,
+      "published_date": "2025-10-24T17:11:50Z",
+      "updated_date": "2025-10-24T17:11:50Z",
+      "arxiv_categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.GR",
+        "cs.HC",
+        "68T07, 68T45, 68U01",
+        "I.2; I.3; I.4; I.5"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21654v1",
+      "html_url": "http://arxiv.org/abs/2510.21654v1",
+      "primary_category": "nlp_techniques",
+      "all_categories": [
+        "retrieval_augmentation",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "retrieval_augmentation": 0.17,
+        "nlp_techniques": 0.24
+      },
+      "overall_relevance": 0.24,
+      "processed_at": "2025-10-27T17:54:20.416767"
+    },
+    {
+      "arxiv_id": "2510.21704",
+      "arxiv_id_with_version": "2510.21704v1",
+      "title": "Automated Detection of Visual Attribute Reliance with a Self-Reflective Agent",
+      "abstract": "When a vision model performs image recognition, which visual attributes drive its predictions? Detecting unintended reliance on specific visual features is critical for ensuring model robustness, preventing overfitting, and avoiding spurious correlations. We introduce an automated framework for detecting such dependencies in trained vision models. At the core of our method is a self-reflective agent that systematically generates and tests hypotheses about visual attributes that a model may rely on. This process is iterative: the agent refines its hypotheses based on experimental outcomes and uses a self-evaluation protocol to assess whether its findings accurately explain model behavior. When inconsistencies arise, the agent self-reflects over its findings and triggers a new cycle of experimentation. We evaluate our approach on a novel benchmark of 130 models designed to exhibit diverse visual attribute dependencies across 18 categories. Our results show that the agents performance consistently improves with self-reflection, with a significant performance increase over non-reflective baselines. We further demonstrate that the agent identifies real-world visual attribute dependencies in state-of-the-art models, including CLIPs vision encoder and the YOLOv8 object detector.",
+      "authors": "Christy Li, Josep Lopez Camuñas, Jake Thomas Touchet, Jacob Andreas, Agata Lapedriza et al. (7 total)",
+      "author_count": 7,
+      "published_date": "2025-10-24T17:59:02Z",
+      "updated_date": "2025-10-24T17:59:02Z",
+      "arxiv_categories": [
+        "cs.CV"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21704v1",
+      "html_url": "http://arxiv.org/abs/2510.21704v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.2
+      },
+      "overall_relevance": 0.2,
+      "processed_at": "2025-10-27T17:54:20.403889"
+    },
+    {
+      "arxiv_id": "2510.21695",
+      "arxiv_id_with_version": "2510.21695v1",
+      "title": "A Knowledge-Graph Translation Layer for Mission-Aware Multi-Agent Path Planning in Spatiotemporal Dynamics",
+      "abstract": "The coordination of autonomous agents in dynamic environments is hampered by the semantic gap between high-level mission objectives and low-level planner inputs. To address this, we introduce a framework centered on a Knowledge Graph (KG) that functions as an intelligent translation layer. The KGs two-plane architecture compiles declarative facts into per-agent, mission-aware worldviews and physics-aware traversal rules, decoupling mission semantics from a domain-agnostic planner. This allows complex, coordinated paths to be modified simply by changing facts in the KG. A case study involving Autonomous Underwater Vehicles (AUVs) in the Gulf of Mexico visually demonstrates the end-to-end process and quantitatively proves that different declarative policies produce distinct, high-performing outcomes. This work establishes the KG not merely as a data repository, but as a powerful, stateful orchestrator for creating adaptive and explainable autonomous systems.",
+      "authors": "Edward Holmberg, Elias Ioup, Mahdi Abdelguerfi",
+      "author_count": 3,
+      "published_date": "2025-10-24T17:55:55Z",
+      "updated_date": "2025-10-24T17:55:55Z",
+      "arxiv_categories": [
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.AI",
+      "pdf_url": "http://arxiv.org/pdf/2510.21695v1",
+      "html_url": "http://arxiv.org/abs/2510.21695v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.2,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.2,
+      "processed_at": "2025-10-27T17:54:20.406775"
+    },
+    {
+      "arxiv_id": "2510.21656",
+      "arxiv_id_with_version": "2510.21656v1",
+      "title": "CMOMgen: Complex Multi-Ontology Alignment via Pattern-Guided In-Context Learning",
+      "abstract": "Constructing comprehensive knowledge graphs requires the use of multiple ontologies in order to fully contextualize data into a domain. Ontology matching finds equivalences between concepts interconnecting ontologies and creating a cohesive semantic layer. While the simple pairwise state of the art is well established, simple equivalence mappings cannot provide full semantic integration of related but disjoint ontologies. Complex multi-ontology matching (CMOM) aligns one source entity to composite logical expressions of multiple target entities, establishing more nuanced equivalences and provenance along the ontological hierarchy. We present CMOMgen, the first end-to-end CMOM strategy that generates complete and semantically sound mappings, without establishing any restrictions on the number of target ontologies or entities. Retrieval-Augmented Generation selects relevant classes to compose the mapping and filters matching reference mappings to serve as examples, enhancing In-Context Learning. The strategy was evaluated in three biomedical tasks with partial reference alignments. CMOMgen outperforms baselines in class selection, demonstrating the impact of having a dedicated strategy. Our strategy also achieves a minimum of 63 in F1-score, outperforming all baselines and ablated versions in two out of three tasks and placing second in the third. Furthermore, a manual evaluation of non-reference mappings showed that 46 of the mappings achieve the maximum score, further substantiating its ability to construct semantically sound mappings.",
+      "authors": "Marta Contreiras Silva, Daniel Faria, Catia Pesquita",
+      "author_count": 3,
+      "published_date": "2025-10-24T17:12:22Z",
+      "updated_date": "2025-10-24T17:12:22Z",
+      "arxiv_categories": [
+        "cs.AI"
+      ],
+      "primary_arxiv_category": "cs.AI",
+      "pdf_url": "http://arxiv.org/pdf/2510.21656v1",
+      "html_url": "http://arxiv.org/abs/2510.21656v1",
+      "primary_category": "artificial_intelligence",
+      "all_categories": [
+        "artificial_intelligence",
+        "reasoning_planning",
+        "nlp_techniques"
+      ],
+      "category_scores": {
+        "artificial_intelligence": 0.2,
+        "reasoning_planning": 0.18,
+        "nlp_techniques": 0.16
+      },
+      "overall_relevance": 0.2,
+      "processed_at": "2025-10-27T17:54:20.416021"
+    },
+    {
+      "arxiv_id": "2510.21663",
+      "arxiv_id_with_version": "2510.21663v1",
+      "title": "Self-Supervised Learning of Synapse Types from EM Images",
+      "abstract": "Separating synapses into different classes based on their appearance in EM images has many applications in biology. Examples may include assigning a neurotransmitter to a particular class, or separating synapses whose strength can be modulated from those whose strength is fixed. Traditionally, this has been done in a supervised manner, giving the classification algorithm examples of the different classes. Here we instead separate synapses into classes based only on the observation that nearby synapses in the same neuron are likely more similar than synapses chosen randomly from different cells. We apply our methodology to data from Drosophila. Our approach has the advantage that the number of synapse types does not need to be known in advance. It may also provide a principled way to select ground-truth that spans the range of synapse structure.",
+      "authors": "Aarav Shetty, Gary B Huang",
+      "author_count": 2,
+      "published_date": "2025-10-24T17:17:46Z",
+      "updated_date": "2025-10-24T17:17:46Z",
+      "arxiv_categories": [
+        "cs.CV"
+      ],
+      "primary_arxiv_category": "cs.CV",
+      "pdf_url": "http://arxiv.org/pdf/2510.21663v1",
+      "html_url": "http://arxiv.org/abs/2510.21663v1",
+      "primary_category": "general",
+      "all_categories": [],
+      "category_scores": {},
+      "overall_relevance": 0.0,
+      "processed_at": "2025-10-27T17:54:20.414386"
+    }
+  ]
+}

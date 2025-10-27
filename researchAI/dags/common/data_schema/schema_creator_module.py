@@ -120,7 +120,7 @@ def create_arxiv_schema(**context):
     """
     pipeline_name = 'arxiv'
     # If no specific file provided, use most recent processed file
-    data_dir = Path('/opt/airflow/dags/common/data_schema/data')
+    data_dir = Path('/opt/airflow/dags/common/data_schema/train_data')
     files = sorted(
         data_dir.glob('arxiv_papers_processed_*.json'),
         key=lambda x: x.stat().st_mtime,
@@ -139,7 +139,7 @@ def create_news_schema(**context):
     Uses a specific training data file
     """
     pipeline_name = 'news_api'
-    data_dir = Path('/opt/airflow/dags/common/data_schema/data')
+    data_dir = Path('/opt/airflow/dags/common/data_schema/train_data')
     files = sorted(
         data_dir.glob('tech_news_categorized_*.json'),
         key=lambda x: x.stat().st_mtime,

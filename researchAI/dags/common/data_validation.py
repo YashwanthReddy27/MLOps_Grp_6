@@ -57,7 +57,7 @@ def validate_data_quality(**context):
             return True
         
         # Check if schema exists
-        suite = validator._get_expectation_suite()
+        suite = validator.get_expectation_suite()
         
         if not suite:
             # Schema doesn't exist - FAIL the validation

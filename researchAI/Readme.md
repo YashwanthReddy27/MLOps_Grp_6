@@ -180,10 +180,10 @@ Orchestration pipelines for automated data workflows.
 ### ArXiv Pipeline
 
 #### `arxiv.py`
-Main pipeline for processing ArXiv academic papers data, handling ingestion, transformation, and storage.
+Pipeline for collecting and processing arxiv articles data from arxiv archive.
 
 #### `arxiv_pipeline.py`
-Enhanced ArXiv pipeline with integrated data validation steps to ensure data quality at each stage.
+Main pipeline for processing ArXiv academic papers data, handling ingestion, transformation, and storage.
 
 ### News Pipeline
 

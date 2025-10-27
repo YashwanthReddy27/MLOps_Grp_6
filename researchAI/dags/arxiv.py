@@ -610,6 +610,3 @@ class ArxivPipeline:
         except Exception as e:
             self.logger.error(f"[CLEANUP] Error during cleanup: {str(e)}")
             return False
-
-
-    # Define the DAG

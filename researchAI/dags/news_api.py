@@ -5,7 +5,7 @@ import requests
 import logging
 from bs4 import BeautifulSoup
 
-from sympy import re
+import re
 from airflow.models import Variable
 
 # Import common utilities from modular structure
@@ -151,7 +151,7 @@ class NewsAPIPipeline:
             # NewsAPI endpoint and parameters
             url = 'https://newsapi.org/v2/everything'
             params = {
-                'apiKey': os.getenv('NEWS_API_KEY'),
+                'apiKey': "f9756ab031a94ffc9a4241993518a5b5",
                 'q': search_query,
                 'language': 'en',
                 'sortBy': 'publishedAt',
@@ -267,7 +267,7 @@ class NewsAPIPipeline:
                 combined_text = title_clean + ' ' + desc_clean
                 
                 # Use CategoryManager to categorize
-                categorization = self.CategoryManager.categorize_content(combined_text, self.NEWS_KEYWORDS)
+                categorization = self.category_manager.categorize_content(combined_text, self.NEWS_KEYWORDS)
                 
                 enriched = {
                     'article_id': self.deduplication_manager.generate_hash(title_clean, article.get('url', '')),
@@ -341,7 +341,7 @@ class NewsAPIPipeline:
             Dictionary with extracted content
         """
         try:
-            response = self.session.get(url, timeout=self.timeout)
+            response = requests.get(url, timeout=30)
             response.raise_for_status()
             
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -357,17 +357,13 @@ class NewsAPIPipeline:
             if not content:
                 content = self._extract_by_paragraphs(soup)
             
-            return {
-                'description': content
-            }
+            return content
         except requests.RequestException as e:
             self.logger.error(f"Failed to fetch {url}: {e}")
-            return {
-                'description': None
-            }
+            return None
         except Exception as e:
             self.logger.error(f"Error processing {url}: {e}")
-            return {'description': None}
+            return None
 
     def _extract_by_article_tags(self, soup):
         """Extract content using article/main tags"""

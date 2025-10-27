@@ -8,12 +8,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 # Import ALL functions from your original news_api_pipeline
-from researchAI.dags.news_api import NewsAPIPipeline
-
-from common.news_enrichment_pipe import (
-    enrich_news_articles,
-    extract_keywords_and_categorize_enriched
-)
+from news_api import NewsAPIPipeline
 
 # Import new Great Expectations validation functions
 from common.ge_validation_task import (
@@ -61,24 +56,11 @@ with DAG(
         """,
     )
     
-    # Task 2: Enrich articles with full content
-    # Scrapes article URLs to get complete text (500-2000+ words vs 200 chars)
-    enrich_content = PythonOperator(
-        task_id='enrich_article_content',
-        python_callable=news_api.enrich_news_articles,
-        execution_timeout=timedelta(minutes=30),  # Web scraping can take time
-        doc_md="""
-        Enriches articles by fetching full content from URLs via web scraping.
-        Extracts complete article text, metadata, and enhanced descriptions.
-        Output: XCom key 'enriched_result' with enriched data filename
-        """,
-    )
-
-    # Task 3: Categorize articles using enriched content
+    # Task 2: Categorize articles using enriched content
     # Uses full article text for better categorization accuracy
     categorize = PythonOperator(
         task_id='extract_keywords_and_categorize',
-        python_callable=news_api.extract_keywords_and_categorize_enriched,
+        python_callable=news_api.extract_keywords_and_categorize,
         doc_md="""
         Categorizes articles using full content (if available) or descriptions.
         Assigns primary category, relevance scores, and extracts keywords.
@@ -86,7 +68,7 @@ with DAG(
         """,
     )
     
-    # Task 4: Validate data quality
+    # Task 3: Validate data quality
     # Ensures data meets quality standards before database insertion
     validate = PythonOperator(
         task_id='validate_data_quality',
@@ -98,7 +80,7 @@ with DAG(
         """,
     )
     
-    # Task 5: Load to PostgreSQL
+    # Task 4: Load to PostgreSQL
     # Stores enriched and categorized articles in database
     load_db = PythonOperator(
         task_id='load_to_postgresql',
@@ -109,7 +91,7 @@ with DAG(
         """,
     )
     
-    # Task 6: Clean up old files
+    # Task 5: Clean up old files
     # Removes files older than retention period
     cleanup = PythonOperator(
         task_id='cleanup_old_files',
@@ -122,7 +104,7 @@ with DAG(
     )
 
     # Define task dependencies
-    extract_news >> enrich_content >> categorize >> validate >> load_db >> cleanup
+    extract_news >> categorize >> validate >> load_db >> cleanup
 
 
 # ============================================================================

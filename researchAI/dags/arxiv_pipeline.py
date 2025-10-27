@@ -9,7 +9,7 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
 
 # Import ALL functions from your original arxiv_pipeline
-from researchAI.dags.arxiv import ArxivPipeline
+from arxiv import ArxivPipeline
 
 # Import new Great Expectations validation functions
 from common.ge_validation_task import (

@@ -41,7 +41,7 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
         validator = PipelineValidator(pipeline_name=pipeline_name)
         
         # Check if schema already exists
-        existing_suite = validator._get_expectation_suite()
+        existing_suite = validator.get_expectation_suite()
         
         if existing_suite:
             print(f"[SCHEMA] ⚠️  WARNING: Schema already exists for {pipeline_name}")
@@ -96,7 +96,7 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
         context['ti'].xcom_push(key='schema_creation_result', value=result)
         
         # Send notification email
-        send_schema_creation_notification(result, context)
+        send_schema_creation_notification(result)
         
         print(f"[SCHEMA] ✅ Schema created successfully")
         print(f"[SCHEMA]    - Expectations: {num_expectations}")
@@ -118,7 +118,7 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
         }
         context['ti'].xcom_push(key='schema_creation_result', value=error_result)
         
-        send_schema_error_notification(pipeline_name, str(e), training_data_path, context)
+        send_schema_error_notification(pipeline_name, str(e), training_data_path)
         
         raise
 
@@ -191,68 +191,38 @@ def create_news_schema(**context):
     return create_pipeline_schema(pipeline_name, training_file, **context)
 
 
-def send_schema_creation_notification(result, context):
+def send_schema_creation_notification(result):
     """Send email notification after successful schema creation"""
     try:
         pipeline = result['pipeline']
         
         body = f"""
-📋 SCHEMA CREATED SUCCESSFULLY
+                    📋 SCHEMA CREATED SUCCESSFULLY
 
-Pipeline: {pipeline.upper()}
-Status: SUCCESS
-Created At: {result.get('created_at', 'N/A')}
+                    Pipeline: {pipeline.upper()}
+                    Status: SUCCESS
+                    Created At: {result.get('created_at', 'N/A')}
 
-═══════════════════════════════════════════════════════════
-SCHEMA DETAILS
-═══════════════════════════════════════════════════════════
-Suite Name: {result.get('suite_name', 'N/A')}
-Expectations: {result.get('num_expectations', 0)}
-Training File: {result.get('training_file', 'N/A')}
-Schema File: {result.get('schema_file', 'N/A')}
-File Size: {result.get('file_size_kb', 0)} KB
+                    ═══════════════════════════════════════════════════════════
+                    SCHEMA DETAILS
+                    ═══════════════════════════════════════════════════════════
+                    Suite Name: {result.get('suite_name', 'N/A')}
+                    Expectations: {result.get('num_expectations', 0)}
+                    Training File: {result.get('training_file', 'N/A')}
+                    Schema File: {result.get('schema_file', 'N/A')}
+                    File Size: {result.get('file_size_kb', 0)} KB
 
-═══════════════════════════════════════════════════════════
-SCHEMA LOCATIONS
-═══════════════════════════════════════════════════════════
-1. GE Artifacts (runtime):
-   {result.get('schema_file', 'N/A')}
+                    ═══════════════════════════════════════════════════════════
+                    SCHEMA LOCATIONS
+                    ═══════════════════════════════════════════════════════════
+                    1. GE Artifacts (runtime):
+                    {result.get('schema_file', 'N/A')}
 
-2. Version Control (git tracked):
-   /opt/airflow/data/schema/{pipeline}_expectations.json
+                    2. Version Control (git tracked):
+                    /opt/airflow/data/schema/{pipeline}_expectations.json
 
-═══════════════════════════════════════════════════════════
-WHAT THIS MEANS
-═══════════════════════════════════════════════════════════
-✓ Schema is now active and ready for validation
-✓ All future data will be validated against this baseline
-✓ You'll receive alerts if data deviates from expectations
-✓ Validation task will now succeed (previously would fail)
-
-═══════════════════════════════════════════════════════════
-NEXT STEPS
-═══════════════════════════════════════════════════════════
-1. ✓ Schema created - DONE
-2. Review the schema file for correctness
-3. IMPORTANT: Commit schema to version control
-   git add data/schema/{pipeline}_expectations.json
-   git commit -m "Add GE schema for {pipeline} pipeline"
-4. Run your regular pipeline - validation will now work
-5. Monitor validation results in future runs
-
-═══════════════════════════════════════════════════════════
-UPDATING THE SCHEMA
-═══════════════════════════════════════════════════════════
-If you need to update the schema later:
-1. Trigger this DAG again with config:
-   {{"overwrite_schema": true, "training_file": "/path/to/new/data.json"}}
-2. Or delete the schema files and run this DAG again
-
-═══════════════════════════════════════════════════════════
-AIRFLOW DASHBOARD
-═══════════════════════════════════════════════════════════
-View: http://localhost:8080/dags/{context['dag'].dag_id}/grid
-"""
+                    ═══════════════════════════════════════════════════════════
+                    """
         
         alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",
@@ -266,65 +236,45 @@ View: http://localhost:8080/dags/{context['dag'].dag_id}/grid
         print(f"[SCHEMA] Error sending notification: {e}")
 
 
-def send_schema_error_notification(pipeline, error_message, training_file, context):
+def send_schema_error_notification(pipeline, error_message, training_file):
     """Send error notification when schema creation fails"""
     try:
         body = f"""
-❌ SCHEMA CREATION FAILED
+            ❌ SCHEMA CREATION FAILED
 
-Pipeline: {pipeline.upper()}
-Training File: {training_file}
-Error Time: {datetime.now().isoformat()}
+            Pipeline: {pipeline.upper()}
+            Training File: {training_file}
+            Error Time: {datetime.now().isoformat()}
 
-═══════════════════════════════════════════════════════════
-ERROR DETAILS
-═══════════════════════════════════════════════════════════
-{error_message}
+            ═══════════════════════════════════════════════════════════
+            ERROR DETAILS
+            ═══════════════════════════════════════════════════════════
+            {error_message}
 
-═══════════════════════════════════════════════════════════
-POSSIBLE CAUSES
-═══════════════════════════════════════════════════════════
-1. Training data file not found or invalid path
-2. Invalid JSON format in training file
-3. Insufficient permissions to write schema files
-4. Empty or corrupted training data
-5. Missing required columns in data
+            ═══════════════════════════════════════════════════════════
+            POSSIBLE CAUSES
+            ═══════════════════════════════════════════════════════════
+            1. Training data file not found or invalid path
+            2. Invalid JSON format in training file
+            3. Insufficient permissions to write schema files
+            4. Empty or corrupted training data
+            5. Missing required columns in data
 
-═══════════════════════════════════════════════════════════
-TROUBLESHOOTING STEPS
-═══════════════════════════════════════════════════════════
-1. Verify training data file exists:
-   ls -lh {training_file}
+            ═══════════════════════════════════════════════════════════
+            IMPACT
+            ═══════════════════════════════════════════════════════════
+            ❌ Schema NOT created
+            ❌ Validation tasks will fail until schema is created
+            ❌ Data quality checks are not active
 
-2. Check if file is valid JSON:
-   python -m json.tool {training_file}
-
-3. Check file contents and structure
-
-4. Verify directory permissions:
-   ls -ld /opt/airflow/data/ge_artifacts/{pipeline}
-
-5. Check Airflow task logs for detailed traceback
-
-6. Try with a different training file
-
-═══════════════════════════════════════════════════════════
-IMPACT
-═══════════════════════════════════════════════════════════
-❌ Schema NOT created
-❌ Validation tasks will fail until schema is created
-❌ Data quality checks are not active
-
-═══════════════════════════════════════════════════════════
-NEXT STEPS
-═══════════════════════════════════════════════════════════
-1. Fix the issue identified above
-2. Re-trigger this schema creation DAG
-3. Verify schema files are created
-4. Run validation pipeline to confirm
-
-Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
-"""
+            ═══════════════════════════════════════════════════════════
+            NEXT STEPS
+            ═══════════════════════════════════════════════════════════
+            1. Fix the issue identified above
+            2. Re-trigger this schema creation DAG
+            3. Verify schema files are created 
+            4. Run validation pipeline to confirm
+            """
         
         alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",

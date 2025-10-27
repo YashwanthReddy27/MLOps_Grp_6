@@ -21,3 +21,4 @@ data/schema/.gitkeep
 .env
 .venv
 .env/
+.project/

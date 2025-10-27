@@ -1,8 +1,4 @@
-"""
-MULTI-PIPELINE GREAT EXPECTATIONS VALIDATOR
-Complete version with full logging and file storage
-Works with GE 0.18.8
-"""
+""" GREAT EXPECTATIONS VALIDATOR. Works with GE 0.18.8 """
 
 import great_expectations as ge
 import pandas as pd
@@ -12,27 +8,25 @@ from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
 import os
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# CSV field size limit handling
+import traceback
 import csv
 import sys
-max_int = sys.maxsize
-while True:
-    try:
-        csv.field_size_limit(max_int)
-        break
-    except OverflowError:
-        max_int = int(max_int / 10)
-
 
 class PipelineValidator:
     """Manages Great Expectations validation for a specific pipeline"""
     
     def __init__(self, pipeline_name: str, base_dir: Optional[str] = None):
         """Initialize validator"""
+        
+        logging.basicConfig(level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+        max_int = sys.maxsize
+        while True:
+            try:
+                csv.field_size_limit(max_int)
+                break
+            except OverflowError:
+                max_int = int(max_int / 10)
         self.pipeline_name = pipeline_name
         self.expectation_suite_name = f"{pipeline_name}_suite"
         
@@ -64,17 +58,17 @@ class PipelineValidator:
                 self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
                 
                 # If we get here, directories were created successfully
-                logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
-                logger.info(f"Great Expectations version: {ge.__version__}")
-                logger.info(f"Expectations dir: {self.expectations_dir}")
-                logger.info(f"Validations dir: {self.validations_dir}")
-                logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
-                
+                self.logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
+                self.logger.info(f"Great Expectations version: {ge.__version__}")
+                self.logger.info(f"Expectations dir: {self.expectations_dir}")
+                self.logger.info(f"Validations dir: {self.validations_dir}")
+                self.logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+
                 # Success - exit the method
                 return
                 
             except (PermissionError, OSError) as e:
-                logger.warning(f"Could not create directories at {base_path}: {e}")
+                self.logger.warning(f"Could not create directories at {base_path}: {e}")
                 continue
         
         # If we get here, all directory options failed
@@ -88,37 +82,36 @@ class PipelineValidator:
             self.validations_dir.mkdir(parents=True, exist_ok=True)
             self.uncommitted_dir = self.ge_root_dir / "uncommitted"
             self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
-            
-            logger.warning(f"Using temporary directory: {self.ge_root_dir}")
-            logger.info(f"Expectations dir: {self.expectations_dir}")
-            logger.info(f"Validations dir: {self.validations_dir}")
-            logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
-            
+
+            self.logger.warning(f"Using temporary directory: {self.ge_root_dir}")
+            self.logger.info(f"Expectations dir: {self.expectations_dir}")
+            self.logger.info(f"Validations dir: {self.validations_dir}")
+            self.logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+
         except Exception as e:
             # Final fallback - set attributes even if directories don't exist
-            logger.error(f"Could not create any directories. Setting paths without creation: {e}")
+            self.logger.error(f"Could not create any directories. Setting paths without creation: {e}")
             self.expectations_dir = self.ge_root_dir / "expectations"
             self.validations_dir = self.ge_root_dir / "validations"
             self.uncommitted_dir = self.ge_root_dir / "uncommitted"
-        
-    
+
     def _load_json_to_dataframe(self, json_path: str) -> pd.DataFrame:
         """Load JSON file and convert to DataFrame"""
-        logger.info(f"[{self.pipeline_name}] Loading JSON from {json_path}")
-        
+        self.logger.info(f"[{self.pipeline_name}] Loading JSON from {json_path}")
+
         if not os.path.exists(json_path):
             raise FileNotFoundError(f"Data file not found: {json_path}")
         
         try:
             df = pd.read_json(json_path, lines=True)
-            logger.info(f"   Loaded as JSON Lines: {len(df)} rows, {len(df.columns)} columns")
+            self.logger.info(f"   Loaded as JSON Lines: {len(df)} rows, {len(df.columns)} columns")
             return df
         except:
             pass
         
         try:
             df = pd.read_json(json_path)
-            logger.info(f"   Loaded as JSON array: {len(df)} rows, {len(df.columns)} columns")
+            self.logger.info(f"   Loaded as JSON array: {len(df)} rows, {len(df.columns)} columns")
             return df
         except:
             pass
@@ -131,37 +124,37 @@ class PipelineValidator:
                 for key in ['data', 'records', 'items', 'results', 'articles', 'papers']:
                     if key in data and isinstance(data[key], list):
                         df = pd.DataFrame(data[key])
-                        logger.info(f"   Loaded from JSON key '{key}': {len(df)} rows, {len(df.columns)} columns")
+                        self.logger.info(f"   Loaded from JSON key '{key}': {len(df)} rows, {len(df.columns)} columns")
                         return df
                 df = pd.DataFrame([data])
-                logger.info(f"   Loaded single record: {len(df.columns)} columns")
+                self.logger.info(f"   Loaded single record: {len(df.columns)} columns")
                 return df
             elif isinstance(data, list):
                 df = pd.DataFrame(data)
-                logger.info(f"   Loaded list: {len(df)} rows, {len(df.columns)} columns")
+                self.logger.info(f"   Loaded list: {len(df)} rows, {len(df.columns)} columns")
                 return df
         except Exception as e:
-            logger.error(f"Failed to load JSON: {e}")
+            self.logger.error(f"Failed to load JSON: {e}")
             raise ValueError(f"Could not parse JSON file {json_path}: {e}")
         
         raise ValueError(f"Could not parse JSON file {json_path}")
     
     def create_schema(self, train_data_path: str) -> bool:
         """Create baseline schema - FIXED for GE 0.18.8"""
-        logger.info(f"📊 [{self.pipeline_name}] Creating schema from {train_data_path}")
-        
+        self.logger.info(f"📊 [{self.pipeline_name}] Creating schema from {train_data_path}")
+
         try:
             df = self._load_json_to_dataframe(train_data_path)
-            
-            logger.info(f"[{self.pipeline_name}] Creating GE DataFrame...")
+
+            self.logger.info(f"[{self.pipeline_name}] Creating GE DataFrame...")
             ge_df = ge.from_pandas(df)
             
             # Set suite name (property, not method in GE 0.18.x)
             ge_df.expectation_suite_name = self.expectation_suite_name
-            logger.info(f"[{self.pipeline_name}] Set expectation suite name: {self.expectation_suite_name}")
-            
-            logger.info(f"[{self.pipeline_name}] Adding expectations...")
-            
+            self.logger.info(f"[{self.pipeline_name}] Set expectation suite name: {self.expectation_suite_name}")
+
+            self.logger.info(f"[{self.pipeline_name}] Adding expectations...")
+
             # Table-level expectations
             ge_df.expect_table_row_count_to_be_between(min_value=1, max_value=None)
             ge_df.expect_table_column_count_to_equal(value=len(df.columns))
@@ -192,31 +185,31 @@ class PipelineValidator:
                             )
                             expectations_added += 1
                     except Exception as e:
-                        logger.warning(f"   Could not add range expectation for {column}: {e}")
-            
-            logger.info(f"[{self.pipeline_name}] Added {expectations_added} expectations")
-            
+                        self.logger.warning(f"   Could not add range expectation for {column}: {e}")
+
+            self.logger.info(f"[{self.pipeline_name}] Added {expectations_added} expectations")
+
             # Get suite and save
             suite = ge_df.get_expectation_suite(discard_failed_expectations=False)
             suite_dict = suite.to_json_dict()
             
             # Save to GE artifacts expectations folder
             ge_suite_path = self.expectations_dir / f"{self.expectation_suite_name}.json"
-            logger.info(f"[{self.pipeline_name}] Saving suite to: {ge_suite_path}")
+            self.logger.info(f"[{self.pipeline_name}] Saving suite to: {ge_suite_path}")
             with open(ge_suite_path, "w") as f:
                 json.dump(suite_dict, f, indent=2)
-            logger.info(f"[{self.pipeline_name}] ✓ Saved to expectations folder")
-            
+            self.logger.info(f"[{self.pipeline_name}] ✓ Saved to expectations folder")
+
             # Save to version control folder
             project_root = self.ge_root_dir.parent.parent
             schema_dir = project_root / "data" / "schema"
             schema_dir.mkdir(parents=True, exist_ok=True)
             vc_suite_path = schema_dir / f"{self.pipeline_name}_expectations.json"
-            logger.info(f"[{self.pipeline_name}] Saving suite to version control: {vc_suite_path}")
+            self.logger.info(f"[{self.pipeline_name}] Saving suite to version control: {vc_suite_path}")
             with open(vc_suite_path, "w") as f:
                 json.dump(suite_dict, f, indent=2)
-            logger.info(f"[{self.pipeline_name}] ✓ Saved to version control")
-            
+            self.logger.info(f"[{self.pipeline_name}] ✓ Saved to version control")
+
             # Save metadata to uncommitted folder
             metadata = {
                 'created_at': datetime.now().isoformat(),
@@ -230,71 +223,69 @@ class PipelineValidator:
             metadata_path = self.uncommitted_dir / f"schema_metadata_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
-            logger.info(f"[{self.pipeline_name}] ✓ Saved metadata to uncommitted")
-            
-            logger.info(f"✅ [{self.pipeline_name}] Schema created successfully")
-            logger.info(f"   - Expectations: {len(suite_dict.get('expectations', []))}")
-            logger.info(f"   - GE artifacts: {ge_suite_path}")
-            logger.info(f"   - Version control: {vc_suite_path}")
-            logger.info(f"   - Metadata: {metadata_path}")
+            self.logger.info(f"[{self.pipeline_name}] ✓ Saved metadata to uncommitted")
+            self.logger.info(f"✅ [{self.pipeline_name}] Schema created successfully")
+            self.logger.info(f"   - Expectations: {len(suite_dict.get('expectations', []))}")
+            self.logger.info(f"   - GE artifacts: {ge_suite_path}")
+            self.logger.info(f"   - Version control: {vc_suite_path}")
+            self.logger.info(f"   - Metadata: {metadata_path}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ [{self.pipeline_name}] Schema creation failed: {e}")
-            import traceback
+            self.logger.error(f"❌ [{self.pipeline_name}] Schema creation failed: {e}")
             traceback.print_exc()
             raise
     
-    def _get_expectation_suite(self):
+    def get_expectation_suite(self):
         """Load expectation suite from file"""
         ge_suite_path = self.expectations_dir / f"{self.expectation_suite_name}.json"
         
         if not ge_suite_path.exists():
-            logger.info(f"[{self.pipeline_name}] Suite file not found: {ge_suite_path}")
+            self.logger.info(f"[{self.pipeline_name}] Suite file not found: {ge_suite_path}")
             return None
-        
-        logger.info(f"[{self.pipeline_name}] Loading suite from: {ge_suite_path}")
+
+        self.logger.info(f"[{self.pipeline_name}] Loading suite from: {ge_suite_path}")
         try:
             with open(ge_suite_path, 'r') as f:
                 suite_dict = json.load(f)
-            logger.info(f"[{self.pipeline_name}] ✓ Suite loaded with {len(suite_dict.get('expectations', []))} expectations")
+            self.logger.info(f"[{self.pipeline_name}] ✓ Suite loaded with {len(suite_dict.get('expectations', []))} expectations")
             return suite_dict
         except Exception as e:
-            logger.error(f"[{self.pipeline_name}] Error loading suite: {e}")
+            self.logger.error(f"[{self.pipeline_name}] Error loading suite: {e}")
             return None
     
     def validate_data(self, data_path: str, raise_on_error: bool = True) -> bool:
         """Validate data and save results"""
-        logger.info(f"🔍 [{self.pipeline_name}] Starting validation for: {data_path}")
+        self.logger.info(f"🔍 [{self.pipeline_name}] Starting validation for: {data_path}")
         
         # Check if data file exists
         if not os.path.exists(data_path):
             error_msg = f"Data file not found: {data_path}"
-            logger.error(f"❌ [{self.pipeline_name}] {error_msg}")
+            self.logger.error(f"❌ [{self.pipeline_name}] {error_msg}")
             if raise_on_error:
                 raise FileNotFoundError(error_msg)
             return False
         
         # Load expectation suite
-        suite_dict = self._get_expectation_suite()
+        suite_dict = self.get_expectation_suite()
         if not suite_dict:
             error_msg = f"Suite '{self.expectation_suite_name}' not found. Run create_schema() first!"
-            logger.error(f"❌ [{self.pipeline_name}] {error_msg}")
+            self.logger.error(f"❌ [{self.pipeline_name}] {error_msg}")
             if raise_on_error:
                 raise FileNotFoundError(error_msg)
             return False
 
         try:
             # Load data
-            logger.info(f"[{self.pipeline_name}] Loading data for validation...")
+            self.logger.info(f"[{self.pipeline_name}] Loading data for validation...")
             df = self._load_json_to_dataframe(data_path)
             
             # Create GE DataFrame with suite
-            logger.info(f"[{self.pipeline_name}] Creating GE DataFrame with suite...")
+            self.logger.info(f"[{self.pipeline_name}] Creating GE DataFrame with suite...")
             ge_df = ge.from_pandas(df, expectation_suite=suite_dict)
             
             # Run validation
-            logger.info(f"[{self.pipeline_name}] Running validation...")
+            self.logger.info(f"[{self.pipeline_name}] Running validation...")
             results = ge_df.validate()
             
             # Prepare result filename
@@ -302,14 +293,14 @@ class PipelineValidator:
             result_file = self.validations_dir / result_filename
             
             # Save results to validations folder
-            logger.info(f"[{self.pipeline_name}] Saving validation results to: {result_file}")
+            self.logger.info(f"[{self.pipeline_name}] Saving validation results to: {result_file}")
             try:
                 results_dict = results.to_json_dict()
                 with open(result_file, 'w') as f:
                     json.dump(results_dict, f, indent=2)
-                logger.info(f"[{self.pipeline_name}] ✓ Validation results saved ({os.path.getsize(result_file)} bytes)")
+                self.logger.info(f"[{self.pipeline_name}] ✓ Validation results saved ({os.path.getsize(result_file)} bytes)")
             except Exception as save_error:
-                logger.error(f"[{self.pipeline_name}] ❌ Failed to save validation results: {save_error}")
+                self.logger.error(f"[{self.pipeline_name}] ❌ Failed to save validation results: {save_error}")
                 # Continue - don't fail validation because of save error
             
             # Save summary to uncommitted folder
@@ -329,40 +320,39 @@ class PipelineValidator:
             try:
                 with open(summary_path, 'w') as f:
                     json.dump(summary, f, indent=2)
-                logger.info(f"[{self.pipeline_name}] ✓ Summary saved to uncommitted: {summary_path}")
+                self.logger.info(f"[{self.pipeline_name}] ✓ Summary saved to uncommitted: {summary_path}")
             except Exception as e:
-                logger.warning(f"[{self.pipeline_name}] Could not save summary: {e}")
-            
+                self.logger.warning(f"[{self.pipeline_name}] Could not save summary: {e}")
+
             # Check validation results
             if not results.success:
-                logger.error(f"❌ [{self.pipeline_name}] VALIDATION FAILED")
+                self.logger.error(f"❌ [{self.pipeline_name}] VALIDATION FAILED")
                 failed = [r for r in results.results if not r.success]
-                logger.error(f"   Failed expectations: {len(failed)}")
-                logger.error(f"   Success rate: {results.statistics.get('success_percent', 0):.1f}%")
-                
+                self.logger.error(f"   Failed expectations: {len(failed)}")
+                self.logger.error(f"   Success rate: {results.statistics.get('success_percent', 0):.1f}%")
+
                 # Log first few failures
                 for i, r in enumerate(failed[:5], 1):
                     exp_type = r.expectation_config.expectation_type
                     column = r.expectation_config.kwargs.get('column', 'TABLE')
-                    logger.error(f"   {i}. {column} - {exp_type}")
+                    self.logger.error(f"   {i}. {column} - {exp_type}")
                 
                 if len(failed) > 5:
-                    logger.error(f"   ... and {len(failed) - 5} more failures")
+                    self.logger.error(f"   ... and {len(failed) - 5} more failures")
                 
-                logger.error(f"   Full results in: {result_file}")
+                self.logger.error(f"   Full results in: {result_file}")
                 
                 if raise_on_error:
                     raise ValueError("Data validation failed.")
                 return False
             
-            logger.info(f"✅ [{self.pipeline_name}] Validation PASSED")
-            logger.info(f"   Success rate: {results.statistics.get('success_percent', 100):.1f}%")
-            logger.info(f"   Results file: {result_file}")
+            self.logger.info(f"✅ [{self.pipeline_name}] Validation PASSED")
+            self.logger.info(f"   Success rate: {results.statistics.get('success_percent', 100):.1f}%")
+            self.logger.info(f"   Results file: {result_file}")
             return True
             
         except Exception as e:
-            logger.error(f"❌ [{self.pipeline_name}] Validation error: {e}")
-            import traceback
+            self.logger.error(f"❌ [{self.pipeline_name}] Validation error: {e}")
             traceback.print_exc()
             
             # Save error info to uncommitted
@@ -385,9 +375,9 @@ class PipelineValidator:
     
     def generate_report(self, data_paths: Dict[str, str]) -> Dict:
         """Generate validation report for multiple datasets"""
-        logger.info(f"📝 [{self.pipeline_name}] Generating validation report")
+        self.logger.info(f"📝 [{self.pipeline_name}] Generating validation report")
         
-        suite_dict = self._get_expectation_suite()
+        suite_dict = self.get_expectation_suite()
         if not suite_dict:
             raise FileNotFoundError(f"Suite '{self.expectation_suite_name}' not found.")
         
@@ -400,7 +390,7 @@ class PipelineValidator:
         }
         
         for name, path in data_paths.items():
-            logger.info(f"   Checking {name}...")
+            self.logger.info(f"   Checking {name}...")
             try:
                 df = self._load_json_to_dataframe(path)
                 ge_df = ge.from_pandas(df, expectation_suite=suite_dict)
@@ -433,7 +423,7 @@ class PipelineValidator:
                     report_data['has_issues'] = True
                 
             except Exception as e:
-                logger.error(f"   Error processing {name}: {e}")
+                self.logger.error(f"   Error processing {name}: {e}")
                 report_data['datasets'][name] = {
                     'path': path,
                     'error': str(e)
@@ -444,8 +434,8 @@ class PipelineValidator:
         try:
             with open(report_path, 'w') as f:
                 json.dump(report_data, f, indent=2)
-            logger.info(f"[{self.pipeline_name}] ✓ Report saved to: {report_path}")
+            self.logger.info(f"[{self.pipeline_name}] ✓ Report saved to: {report_path}")
         except Exception as e:
-            logger.warning(f"[{self.pipeline_name}] Could not save report: {e}")
-        
+            self.logger.warning(f"[{self.pipeline_name}] Could not save report: {e}")
+
         return report_data

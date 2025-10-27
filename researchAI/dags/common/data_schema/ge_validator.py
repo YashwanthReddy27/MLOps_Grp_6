@@ -38,6 +38,7 @@ class PipelineValidator:
         
         # Add default directory options
         dir_options.extend([
+            Path('/opt/airflow/dags/common/data_schema'),  # DAGs directory
             Path('/opt/airflow/data/ge_artifacts'),  # Airflow data directory
             Path('/opt/airflow/ge_artifacts'),       # Alternative Airflow location
             Path('/tmp/ge_artifacts'),               # Temp directory (always writable)

@@ -1,17 +1,15 @@
 """
-Schema Creation Module for Great Expectations
-Import this in your pipeline DAGs to create explicit schemas
-Location: /app/common/create_schema.py
+Schema Creation Module for Great Expectations. Import in pipeline DAGs to create explicit schemas
 """
 
-from common.ge_validator import PipelineValidator
+from common.data_schema.ge_validator import PipelineValidator
 from common.send_email import AlertEmail
 from pathlib import Path
 from datetime import datetime
 import json
+import traceback
 
 alert_email = AlertEmail()
-
 
 def create_pipeline_schema(pipeline_name: str, training_data_path: str, **context):
     """
@@ -71,16 +69,13 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
         validator.create_schema(training_data_path)
         
         # Verify schema was created
-        suite = validator._get_expectation_suite()
+        suite = validator.get_expectation_suite()
         if not suite:
             raise Exception("Schema creation completed but suite file not found")
-        
         num_expectations = len(suite.get('expectations', []))
-        
         # Get file size
         schema_file = validator.expectations_dir / f"{validator.expectation_suite_name}.json"
         file_size_kb = schema_file.stat().st_size / 1024
-        
         result = {
             'status': 'success',
             'message': f'Schema created successfully with {num_expectations} expectations',
@@ -92,12 +87,9 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
             'file_size_kb': round(file_size_kb, 2),
             'created_at': datetime.now().isoformat()
         }
-        
         context['ti'].xcom_push(key='schema_creation_result', value=result)
-        
         # Send notification email
         send_schema_creation_notification(result)
-        
         print(f"[SCHEMA] ✅ Schema created successfully")
         print(f"[SCHEMA]    - Expectations: {num_expectations}")
         print(f"[SCHEMA]    - File size: {file_size_kb:.2f} KB")
@@ -107,9 +99,7 @@ def create_pipeline_schema(pipeline_name: str, training_data_path: str, **contex
         
     except Exception as e:
         print(f"[SCHEMA] ❌ Error creating schema: {e}")
-        import traceback
         traceback.print_exc()
-        
         error_result = {
             'status': 'error',
             'message': str(e),
@@ -129,31 +119,17 @@ def create_arxiv_schema(**context):
     Uses a specific training data file
     """
     pipeline_name = 'arxiv'
-    
-    # Get training file from DAG config or use default
-    if context.get('dag_run') and context['dag_run'].conf:
-        training_file = context['dag_run'].conf.get('training_file')
-    else:
-        training_file = None
-    
     # If no specific file provided, use most recent processed file
-    if not training_file:
-        data_dir = Path('/opt/airflow/data/cleaned')
-        files = sorted(
-            data_dir.glob('arxiv_papers_processed_*.json'),
-            key=lambda x: x.stat().st_mtime,
-            reverse=True
-        )
-        
-        if not files:
-            raise FileNotFoundError(
-                "No training data found. Please run the arXiv pipeline first to generate data, "
-                "or specify a training_file in the DAG run config."
-            )
-        
-        training_file = str(files[0])
-        print(f"[SCHEMA] Using most recent file: {training_file}")
-    
+    data_dir = Path('/opt/airflow/dags/common/data_schema/data')
+    files = sorted(
+        data_dir.glob('arxiv_papers_processed_*.json'),
+        key=lambda x: x.stat().st_mtime,
+        reverse=True
+    )
+    if not files: 
+        raise FileNotFoundError("No training data found for arXiv data schema creation.")
+    training_file = str(files[0])
+    print(f"[SCHEMA] Using most recent file: {training_file}")
     return create_pipeline_schema(pipeline_name, training_file, **context)
 
 
@@ -163,31 +139,16 @@ def create_news_schema(**context):
     Uses a specific training data file
     """
     pipeline_name = 'news_api'
-    
-    # Get training file from DAG config or use default
-    if context.get('dag_run') and context['dag_run'].conf:
-        training_file = context['dag_run'].conf.get('training_file')
-    else:
-        training_file = None
-    
-    # If no specific file provided, use most recent categorized file
-    if not training_file:
-        data_dir = Path('/opt/airflow/data/cleaned')
-        files = sorted(
-            data_dir.glob('tech_news_categorized_*.json'),
-            key=lambda x: x.stat().st_mtime,
-            reverse=True
-        )
-        
-        if not files:
-            raise FileNotFoundError(
-                "No training data found. Please run the News API pipeline first to generate data, "
-                "or specify a training_file in the DAG run config."
-            )
-        
-        training_file = str(files[0])
-        print(f"[SCHEMA] Using most recent file: {training_file}")
-    
+    data_dir = Path('/opt/airflow/dags/common/data_schema/data')
+    files = sorted(
+        data_dir.glob('tech_news_categorized_*.json'),
+        key=lambda x: x.stat().st_mtime,
+        reverse=True
+    )
+    if not files:
+        raise FileNotFoundError("No training data found for News API data schema creation.")
+    training_file = str(files[0])
+    print(f"[SCHEMA] Using most recent file: {training_file}") 
     return create_pipeline_schema(pipeline_name, training_file, **context)
 
 
@@ -195,7 +156,6 @@ def send_schema_creation_notification(result):
     """Send email notification after successful schema creation"""
     try:
         pipeline = result['pipeline']
-        
         body = f"""
                     📋 SCHEMA CREATED SUCCESSFULLY
 
@@ -223,17 +183,14 @@ def send_schema_creation_notification(result):
 
                     ═══════════════════════════════════════════════════════════
                     """
-        
         alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",
             subject=f"📋 Schema Created: {pipeline.upper()} Pipeline",
             body=body
         )
-        
-        print(f"[SCHEMA] Notification email sent")
-        
     except Exception as e:
-        print(f"[SCHEMA] Error sending notification: {e}")
+        logger = alert_email.get_logger()
+        logger.error(f"[SCHEMA] Error sending notification: {e}")
 
 
 def send_schema_error_notification(pipeline, error_message, training_file):
@@ -275,14 +232,11 @@ def send_schema_error_notification(pipeline, error_message, training_file):
             3. Verify schema files are created 
             4. Run validation pipeline to confirm
             """
-        
         alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",
             subject=f"❌ Schema Creation Failed: {pipeline.upper()}",
             body=body
         )
-        
-        print(f"[SCHEMA] Error notification sent")
-        
     except Exception as e:
-        print(f"[SCHEMA] Error sending error notification: {e}")
+        logger = alert_email.get_logger()
+        logger.error(f"[SCHEMA] Error sending error notification: {e}")

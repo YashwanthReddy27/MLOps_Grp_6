@@ -1,6 +1,6 @@
 """Great Expectations Data Validation Tasks for Airflow DAGs"""
 
-from common.ge_validator import PipelineValidator
+from common.data_schema.ge_validator import PipelineValidator
 from common.send_email import AlertEmail
 import json
 from datetime import datetime
@@ -403,73 +403,3 @@ Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
         
     except Exception as e:
         print(f"[ALERT] Error sending error alert: {e}")
-
-
-def generate_data_statistics_report(**context):
-    """Generate comprehensive data quality report"""
-    try:
-        dag_id = context['dag'].dag_id
-        pipeline_name = 'arxiv' if 'arxiv' in dag_id.lower() else 'news_api'
-        
-        print(f"[REPORT] Generating report for {pipeline_name}")
-        
-        validator = PipelineValidator(pipeline_name=pipeline_name)
-        
-        suite = validator.get_expectation_suite()
-        if not suite:
-            print("[REPORT] No schema found - cannot generate report")
-            context['ti'].xcom_push(key='report_result', value={
-                'status': 'error',
-                'message': 'No schema found. Run create_ge_schemas DAG first.'
-            })
-            return True
-        
-        if pipeline_name == 'arxiv':
-            data_dir = '/opt/airflow/data/cleaned'
-            file_prefix = 'arxiv_papers_processed_'
-        else:
-            data_dir = '/opt/airflow/data/cleaned'
-            file_prefix = 'tech_news_categorized_'
-        
-        data_dir_path = Path(data_dir)
-        if not data_dir_path.exists():
-            print(f"[REPORT] Data directory not found: {data_dir}")
-            return True
-        
-        files = sorted(
-            [f for f in data_dir_path.glob(f"{file_prefix}*.json")],
-            key=os.path.getmtime,
-            reverse=True
-        )[:3]
-        
-        if not files:
-            print("[REPORT] No processed files found")
-            return True
-        
-        data_paths = {f"batch_{i+1}": str(f) for i, f in enumerate(files)}
-        
-        print(f"[REPORT] Generating report for {len(data_paths)} batches")
-        report = validator.generate_report(data_paths)
-        
-        report_dir = validator.ge_root_dir / "reports"
-        report_dir.mkdir(exist_ok=True)
-        report_file = report_dir / f"summary_report_{context['execution_date'].strftime('%Y%m%d_%H%M%S')}.json"
-        
-        with open(report_file, 'w') as f:
-            json.dump(report, f, indent=2, default=str)
-        
-        print(f"[REPORT] Report saved to {report_file}")
-        
-        context['ti'].xcom_push(key='report_result', value={
-            'status': 'success',
-            'report_file': str(report_file),
-            'has_issues': report['has_issues']
-        })
-        
-        return True
-        
-    except Exception as e:
-        print(f"[REPORT] Error: {e}")
-        import traceback
-        traceback.print_exc()
-        return False

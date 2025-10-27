@@ -1,0 +1,22 @@
+{
+  "created_at": "2025-10-27T18:58:34.052102",
+  "suite_name": "news_api_suite",
+  "source_file": "/opt/airflow/dags/common/data_schema/data/tech_news_categorized_20251027_175547.json",
+  "num_expectations": 27,
+  "num_rows": 62,
+  "num_columns": 12,
+  "columns": [
+    "article_id",
+    "title",
+    "description",
+    "url",
+    "source_name",
+    "author",
+    "published_at",
+    "primary_category",
+    "all_categories",
+    "category_scores",
+    "overall_relevance",
+    "processed_at"
+  ]
+}

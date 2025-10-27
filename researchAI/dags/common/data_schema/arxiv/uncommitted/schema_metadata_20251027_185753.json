@@ -1,0 +1,27 @@
+{
+  "created_at": "2025-10-27T18:57:53.329924",
+  "suite_name": "arxiv_suite",
+  "source_file": "/opt/airflow/dags/common/data_schema/data/arxiv_papers_processed_20251027_175420.json",
+  "num_expectations": 38,
+  "num_rows": 25,
+  "num_columns": 17,
+  "columns": [
+    "arxiv_id",
+    "arxiv_id_with_version",
+    "title",
+    "abstract",
+    "authors",
+    "author_count",
+    "published_date",
+    "updated_date",
+    "arxiv_categories",
+    "primary_arxiv_category",
+    "pdf_url",
+    "html_url",
+    "primary_category",
+    "all_categories",
+    "category_scores",
+    "overall_relevance",
+    "processed_at"
+  ]
+}

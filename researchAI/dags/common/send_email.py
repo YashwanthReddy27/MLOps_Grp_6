@@ -52,3 +52,6 @@ class AlertEmail:
             self.logger.info(" Email sent successfully!")
         except Exception as e:
             self.logger.error(f" Error sending email: {e}")
+
+    def get_logger(self):
+        return self.logger

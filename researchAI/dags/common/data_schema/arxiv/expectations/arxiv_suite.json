@@ -112,7 +112,7 @@
       "kwargs": {
         "column": "author_count",
         "min_value": 0.5,
-        "max_value": 19.5,
+        "max_value": 58.5,
         "mostly": 0.95
       },
       "meta": {}
@@ -272,7 +272,7 @@
       "kwargs": {
         "column": "overall_relevance",
         "min_value": 0.0,
-        "max_value": 1.5,
+        "max_value": 0.75,
         "mostly": 0.95
       },
       "meta": {}

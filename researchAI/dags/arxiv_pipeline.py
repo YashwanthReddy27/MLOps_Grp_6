@@ -12,9 +12,9 @@ from airflow.utils.dates import days_ago
 from arxiv import ArxivPipeline
 
 # Import schema creation and validation functions
-from common.schema_creator_module import create_arxiv_schema
+from common.data_schema.schema_creator_module import create_arxiv_schema
 from common.data_validation import validate_data_quality
-from common.data_validation import generate_data_statistics_report
+
 
 arxiv = ArxivPipeline()
 
@@ -25,7 +25,7 @@ default_args = {
     'email_on_failure': True,
     'email_on_retry': True,
     'email': ['anirudhshrikanth65@gmail.com'],  
-    'retries': 1,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
 }
 
@@ -227,43 +227,3 @@ with DAG(
 
     # Set task dependencies - validation happens BEFORE database load
     fetch_papers_task >> process_task >> validate_task >> load_db_task >> cleanup_task
-
-
-# ============================================================================
-# WEEKLY REPORT DAG - Comparative Statistics
-# ============================================================================
-
-with DAG(
-    'arxiv_weekly_statistics_report',
-    default_args=default_args,
-    description='Generate weekly data quality statistics report for arXiv pipeline',
-    schedule_interval='0 9 * * 0',  # Run weekly on Sunday at 9 AM
-    start_date=days_ago(1),
-    catchup=False,
-    tags=['arxiv', 'ge', 'report', 'weekly'],
-    doc_md="""
-    ## Weekly Data Quality Report
-    
-    Generates comprehensive statistics report comparing recent data batches.
-    
-    **Requirements**:
-    - Schema must exist
-    - At least 3 processed data files should exist
-    
-    **Schedule**: Weekly on Sunday at 9 AM
-    """,
-) as report_dag:
-    
-    # Single task: Generate comprehensive report
-    generate_report_task = PythonOperator(
-        task_id='generate_statistics_report',
-        python_callable=generate_data_statistics_report,
-        provide_context=True,
-        doc_md="""
-        Generates weekly statistics report including:
-        - Validation success rates across batches
-        - Anomaly trends over time
-        - Column-level quality metrics
-        - Comparative analysis
-        """,
-    )

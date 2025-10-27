@@ -12,11 +12,8 @@ from airflow.utils.dates import days_ago
 from news_api import NewsAPIPipeline
 
 # Import schema creation and validation functions
-from common.schema_creator_module import create_news_schema
-from common.data_validation import (
-    validate_data_quality,
-    generate_data_statistics_report
-)
+from common.data_schema.schema_creator_module import create_news_schema
+from common.data_validation import validate_data_quality
 
 news_api = NewsAPIPipeline()
 
@@ -27,7 +24,7 @@ default_args = {
     'email_on_failure': True,
     'email_on_retry': True,
     'email': ['anirudhshrikanth65@gmail.com'],
-    'retries': 1,
+    'retries': 0,
     'retry_delay': timedelta(minutes=5),
 }
 
@@ -244,51 +241,3 @@ with DAG(
 
     # Define task dependencies
     extract_news >> categorize >> validate >> load_db >> cleanup
-
-
-# ============================================================================
-# WEEKLY STATISTICS REPORT DAG
-# ============================================================================
-
-with DAG(
-    'news_enrichment_weekly_report',
-    default_args=default_args,
-    description='Weekly statistics report for news enrichment pipeline',
-    schedule_interval='0 9 * * 0',  # Sundays at 9 AM
-    start_date=days_ago(1),
-    catchup=False,
-    tags=['news', 'report', 'statistics', 'weekly'],
-    doc_md="""
-    ## Weekly Data Quality Report
-    
-    Generates comprehensive statistics report for news enrichment pipeline.
-    
-    **Requirements**:
-    - Schema must exist
-    - At least 3 categorized data files should exist
-    
-    **Report Includes**:
-    - Enrichment success rates
-    - Content length statistics
-    - Category distributions
-    - Data quality metrics
-    - Anomaly trends
-    
-    **Schedule**: Weekly on Sunday at 9 AM
-    """,
-) as report_dag:
-    
-    # Generate comprehensive statistics report
-    generate_report = PythonOperator(
-        task_id='generate_statistics_report',
-        python_callable=generate_data_statistics_report,
-        provide_context=True,
-        doc_md="""
-        Generates weekly statistics report including:
-        - Enrichment success rates
-        - Average word counts
-        - Category distributions
-        - Data quality metrics
-        - Validation trends
-        """,
-    )

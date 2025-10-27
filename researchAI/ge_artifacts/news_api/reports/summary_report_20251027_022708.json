@@ -1,0 +1,33 @@
+{
+  "pipeline": "news_api",
+  "expectation_suite_name": "news_api_suite",
+  "generated_at": "2025-10-27T02:27:13.685159",
+  "datasets": {
+    "batch_1": {
+      "path": "/opt/airflow/data/cleaned/tech_news_categorized_20251027_022421.json",
+      "file_type": "json",
+      "num_examples": 55,
+      "num_columns": 12,
+      "has_anomalies": false,
+      "anomaly_count": 0,
+      "success_percent": 100.0,
+      "anomalies": {}
+    },
+    "batch_2": {
+      "path": "/opt/airflow/data/cleaned/tech_news_categorized_20251027_002852.json",
+      "file_type": "json",
+      "num_examples": 55,
+      "num_columns": 12,
+      "has_anomalies": true,
+      "anomaly_count": 1,
+      "success_percent": 96.29629629629629,
+      "anomalies": {
+        "description.expect_column_values_to_not_be_null": {
+          "short_description": "Failed: expect_column_values_to_not_be_null",
+          "result": "{'element_count': 55, 'unexpected_count': 19, 'unexpected_percent': 34.54545454545455, 'unexpected_percent_total': 34.54545454545455, 'partial_unexpected_list': []}"
+        }
+      }
+    }
+  },
+  "has_issues": true
+}

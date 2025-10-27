@@ -1,6 +1,6 @@
 """
 Great Expectations Data Validation Tasks for Airflow DAGs
-FIXED for Universal GE Validator
+UPDATED: Requires schema to exist - will NOT auto-create
 """
 
 from common.ge_validator import PipelineValidator
@@ -16,6 +16,7 @@ alert_email = AlertEmail()
 def validate_data_quality(**context):
     """
     Validate data quality using Great Expectations
+    Schema MUST exist - will fail if not found
     """
     try:
         # Determine which pipeline we're running
@@ -58,81 +59,77 @@ def validate_data_quality(**context):
             })
             return True
         
-        # Check if schema exists by looking for the suite file
+        # Check if schema exists
         suite = validator._get_expectation_suite()
-        schema_exists = suite is not None
         
-        if schema_exists:
-            print(f"[VALIDATION] Found existing schema: {validator.expectation_suite_name}")
-        else:
-            print(f"[VALIDATION] No existing schema found")
+        if not suite:
+            # Schema doesn't exist - FAIL the validation
+            error_msg = (
+                f"❌ VALIDATION FAILED: No schema found for {pipeline_name} pipeline.\n\n"
+                f"Schema file expected at: {validator.expectations_dir / f'{validator.expectation_suite_name}.json'}\n\n"
+                f"ACTION REQUIRED:\n"
+                f"1. Run the 'create_ge_schemas' DAG from Airflow UI\n"
+                f"2. Or manually create schema using PipelineValidator.create_schema()\n"
+                f"3. Ensure schema file exists before running validation\n\n"
+                f"Schema creation is a ONE-TIME setup step that must be done before validation."
+            )
+            
+            print(f"[VALIDATION] {error_msg}")
+            
+            context['ti'].xcom_push(key='validation_result', value={
+                'status': 'error',
+                'message': 'Schema not found. Run create_ge_schemas DAG first.',
+                'pipeline': pipeline_name,
+                'expected_schema_path': str(validator.expectations_dir / f'{validator.expectation_suite_name}.json')
+            })
+            
+            # Send alert about missing schema
+            send_schema_missing_alert(pipeline_name, validator, context)
+            
+            # Raise exception to fail the task
+            raise FileNotFoundError(error_msg)
         
-        if not schema_exists:
-            # First run - create baseline schema
-            print(f"[VALIDATION] Creating baseline schema from {data_file}")
-            try:
-                validator.create_schema(data_file)
-                
-                context['ti'].xcom_push(key='validation_result', value={
-                    'status': 'schema_created',
-                    'message': 'Baseline schema created from current data',
-                    'suite_name': validator.expectation_suite_name,
-                    'has_anomalies': False,
-                    'data_file': data_file
-                })
-                
-                # Send notification
-                send_schema_created_email(pipeline_name, validator, context)
-                
-                print("[VALIDATION] Schema created successfully")
-                return True
-                
-            except Exception as e:
-                print(f"[VALIDATION] Error creating schema: {e}")
-                import traceback
-                traceback.print_exc()
-                
-                send_error_alert(pipeline_name, f"Schema creation failed: {e}", context)
-                
-                context['ti'].xcom_push(key='validation_result', value={
-                    'status': 'error',
-                    'message': f'Schema creation failed: {e}'
-                })
-                return True
+        print(f"[VALIDATION] ✓ Found existing schema: {validator.expectation_suite_name}")
+        print(f"[VALIDATION] Validating against schema with {len(suite.get('expectations', []))} expectations")
         
         # Schema exists - validate data
-        print(f"[VALIDATION] Validating against schema: {validator.expectation_suite_name}")
-        
         try:
             # Use the validator's validate_data method
-            # It will raise an exception if validation fails and raise_on_error=True
             # We want to catch failures and continue, so use raise_on_error=False
             validation_passed = validator.validate_data(data_file, raise_on_error=False)
             
             if validation_passed:
-                print("[VALIDATION] Data validation PASSED")
+                print("[VALIDATION] Data validation PASSED ✓")
                 
                 context['ti'].xcom_push(key='validation_result', value={
                     'status': 'success',
                     'message': 'Data validation passed',
                     'has_anomalies': False,
-                    'data_file': data_file
+                    'data_file': data_file,
+                    'pipeline': pipeline_name
                 })
                 return True
             else:
                 # Validation failed - load the results to get details
-                print("[VALIDATION] Data validation FAILED - Anomalies detected")
+                print("[VALIDATION] Data validation FAILED - Anomalies detected ⚠️")
                 
                 # Load the most recent validation result
                 validations_dir = validator.validations_dir
-                validation_files = sorted(validations_dir.glob("validation_*.json"), key=os.path.getmtime, reverse=True)
+                validation_files = sorted(
+                    validations_dir.glob("validation_*.json"), 
+                    key=os.path.getmtime, 
+                    reverse=True
+                )
                 
                 if validation_files:
                     with open(validation_files[0], 'r') as f:
                         results_dict = json.load(f)
                     
                     # Extract failed expectations
-                    failed_expectations = [r for r in results_dict.get('results', []) if not r.get('success', True)]
+                    failed_expectations = [
+                        r for r in results_dict.get('results', []) 
+                        if not r.get('success', True)
+                    ]
                     
                     print(f"[VALIDATION] Found {len(failed_expectations)} failed expectations")
                     
@@ -175,7 +172,7 @@ def validate_data_quality(**context):
                     context['ti'].xcom_push(key='validation_result', value=anomaly_summary)
                 
                 # Continue pipeline but log the issues
-                print("[VALIDATION]  Continuing pipeline despite anomalies")
+                print("[VALIDATION] ⚠️  Continuing pipeline despite anomalies")
                 return True
                 
         except Exception as e:
@@ -186,12 +183,16 @@ def validate_data_quality(**context):
             context['ti'].xcom_push(key='validation_result', value={
                 'status': 'error',
                 'message': str(e),
-                'has_anomalies': False
+                'has_anomalies': False,
+                'pipeline': pipeline_name
             })
             
             send_error_alert(pipeline_name, str(e), context)
             return True
         
+    except FileNotFoundError:
+        # Re-raise schema missing error to fail the task
+        raise
     except Exception as e:
         print(f"[VALIDATION] Critical error: {e}")
         import traceback
@@ -205,70 +206,92 @@ def validate_data_quality(**context):
         return False
 
 
-def send_schema_created_email(pipeline, validator, context):
-    """Send email notification when a new schema is created"""
-    ge_dir = validator.ge_root_dir
-    ge_schema_path = ge_dir / "expectations" / f"{validator.expectation_suite_name}.json"
-    
-    project_root = ge_dir.parent.parent
-    vc_schema_path = project_root / "data" / "schema" / f"{pipeline}_expectations.json"
+def send_schema_missing_alert(pipeline, validator, context):
+    """Send email alert when schema is missing"""
+    ge_schema_path = validator.expectations_dir / f"{validator.expectation_suite_name}.json"
     
     try:
         body = f"""
-📋 NEW SCHEMA CREATED
+🚨 VALIDATION ERROR - Schema Not Found!
 
 Pipeline: {pipeline.upper()}
 Execution Date: {context['execution_date']}
-Created At: {datetime.now().isoformat()}
+Alert Time: {datetime.now().isoformat()}
 
 ═══════════════════════════════════════════════════════════
-INFORMATION
+PROBLEM
 ═══════════════════════════════════════════════════════════
-This is the first run of Great Expectations validation for 
-this pipeline. A baseline schema has been automatically 
-created from your current data.
+The validation task cannot run because no schema exists for
+the {pipeline} pipeline.
 
-This schema will be used to validate all future data batches.
-
-═══════════════════════════════════════════════════════════
-SCHEMA LOCATIONS
-═══════════════════════════════════════════════════════════
-1. GE Artifacts (runtime):
-   {ge_schema_path}
-
-2. Version Control (git tracked):
-   {vc_schema_path}
+Expected Schema Location:
+{ge_schema_path}
 
 ═══════════════════════════════════════════════════════════
-NEXT STEPS
+IMPACT
 ═══════════════════════════════════════════════════════════
-✓ Schema is now active
-✓ Future runs will validate data against this baseline
-✓ You'll receive alerts if data deviates from expectations
+❌ Validation task FAILED
+❌ Pipeline execution STOPPED
+❌ Data was NOT validated
+❌ Database load was NOT performed
 
-RECOMMENDED ACTIONS:
-1. Review the schema file
-2. Commit the schema to version control (data/schema/)
-3. Monitor future validation runs
+═══════════════════════════════════════════════════════════
+REQUIRED ACTION (Choose One)
+═══════════════════════════════════════════════════════════
+
+OPTION 1: Create Schema Using DAG (Recommended)
+----------------------------------------------
+1. Go to Airflow UI: http://localhost:8080
+2. Find the DAG: 'create_ge_schemas'
+3. Click "Trigger DAG"
+4. Wait for completion
+5. Re-run this pipeline
+
+OPTION 2: Create Schema Manually
+--------------------------------
+1. Run your data pipeline to generate training data
+2. Use Python:
+   ```python
+   from common.ge_validator import PipelineValidator
+   validator = PipelineValidator(pipeline_name='{pipeline}')
+   validator.create_schema('/path/to/training/data.json')
+   ```
+3. Verify schema file exists
+4. Re-run this pipeline
+
+═══════════════════════════════════════════════════════════
+WHY THIS HAPPENED
+═══════════════════════════════════════════════════════════
+Possible reasons:
+• First-time setup - schema was never created
+• Schema file was accidentally deleted
+• Running in a new environment
+• Volume/directory permissions issue
+
+═══════════════════════════════════════════════════════════
+PREVENTION
+═══════════════════════════════════════════════════════════
+• Commit schema to version control (data/schema/ folder)
+• Back up schema files regularly
+• Run create_ge_schemas DAG after major data changes
 
 ═══════════════════════════════════════════════════════════
 AIRFLOW DASHBOARD
 ═══════════════════════════════════════════════════════════
-View: http://localhost:8080/dags/{context['dag'].dag_id}/grid
-
-═══════════════════════════════════════════════════════════
+View Failed Run: http://localhost:8080/dags/{context['dag'].dag_id}/grid
+Create Schema: http://localhost:8080/dags/create_ge_schemas/grid
 """
         
         alert_email.send_email_with_attachment(
             recipient_email="anirudhshrikanth65@gmail.com",
-            subject=f"📋 New Schema Created: {pipeline.upper()} Pipeline",
+            subject=f"🚨 URGENT: Schema Missing for {pipeline.upper()} Pipeline",
             body=body
         )
         
-        print(f"[ALERT] Schema creation notification sent")
+        print(f"[ALERT] Schema missing notification sent")
         
     except Exception as e:
-        print(f"[ALERT] Error sending schema notification: {e}")
+        print(f"[ALERT] Error sending schema missing alert: {e}")
 
 
 def send_anomaly_alert(anomaly_info, context):
@@ -316,7 +339,8 @@ ACTION REQUIRED
 1. Review the anomalies above
 2. Check if your data source has changed
 3. Investigate unexpected patterns
-4. Update schema if changes are intentional
+4. Update schema if changes are intentional:
+   - Run 'create_ge_schemas' DAG with overwrite=true
 
 ═══════════════════════════════════════════════════════════
 PIPELINE STATUS
@@ -327,7 +351,7 @@ Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
         alert_email.send_email_with_attachment(
-            recipient_email=os.getenv('RECIPIENT_EMAIL'),
+            recipient_email=os.getenv('RECIPIENT_EMAIL', 'anirudhshrikanth65@gmail.com'),
             subject=f"🚨 Data Quality Alert: {pipeline.upper()} - {anomaly_count} Anomalies",
             body=body
         )
@@ -365,17 +389,15 @@ data quality was not verified.
 ACTION REQUIRED
 ═══════════════════════════════════════════════════════════
 1. Check Airflow task logs
-2. Verify GE setup
+2. Verify GE setup and schema existence
 3. Check data file format
-4. Fix the issue
+4. Fix the issue and re-run
 
 Airflow: http://localhost:8080/dags/{context['dag'].dag_id}/grid
 """
         
         alert_email.send_email_with_attachment(
-            sender_email="SENDER_EMAIL",
-            sender_password="SENDER_PASSWORD",
-            recipient_email="RECIPIENT_EMAIL",
+            recipient_email="anirudhshrikanth65@gmail.com",
             subject=f"⚠️ Validation Error: {pipeline.upper()} Pipeline",
             body=body
         )
@@ -398,10 +420,10 @@ def generate_data_statistics_report(**context):
         
         suite = validator._get_expectation_suite()
         if not suite:
-            print("[REPORT] No schema found")
+            print("[REPORT] No schema found - cannot generate report")
             context['ti'].xcom_push(key='report_result', value={
-                'status': 'skipped',
-                'message': 'No schema found'
+                'status': 'error',
+                'message': 'No schema found. Run create_ge_schemas DAG first.'
             })
             return True
         

@@ -18,7 +18,8 @@ class AlertEmail:
         recipient_email: str, 
         subject: str, 
         body: str, 
-        attachments=None
+        attachments=None,
+        smtp_server="smtp.gmail.com"
     ):
         # Create the email
         msg = EmailMessage()
@@ -45,7 +46,7 @@ class AlertEmail:
 
         # Send the email
         try:
-            with smtplib.SMTP(self.config['smtp_server'], self.config['smtp_port']) as smtp:
+            with smtplib.SMTP(smtp_server, self.config['smtp_port']) as smtp:
                 smtp.starttls()  # Secure connection
                 smtp.login(self.config['sender_email'], self.config['sender_password'])
                 smtp.send_message(msg)

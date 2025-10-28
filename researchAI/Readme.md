@@ -67,6 +67,7 @@ docker --version
 ## 6. Run Airflow with Docker Compose
 
 This guide explains how to initialize and run Apache Airflow using the provided `docker-compose.yaml` configuration file.
+**Create bias_reports folder in data if the data bias task fails when running the dag**
 
 ### Prerequisites
 - **Docker** and **Docker Compose** installed on your local machine  
@@ -192,3 +193,148 @@ Pipeline for collecting and processing news data from various sources.
 
 #### `news_pipeline.py`
 News pipeline with comprehensive validation checks to maintain data accuracy and reliability.
+
+## 8. Set Up DVC (Data Version Control)
+
+DVC manages dataset versioning and synchronization between local and cloud storage.
+
+Steps:
+
+#### Initialize DVC
+
+dvc init
+
+
+#### Add Remote Storage
+
+dvc remote add -d mygcp gs://citewise-dvc-store-8232761765
+dvc remote add gcs gs://citewise-dvc-store-54873845389/resilienceai-datapipeline
+
+#### Track and Push Data
+
+dvc add data/raw
+git add data/raw.dvc .dvc/config
+git commit -m "Add initial data version"
+dvc push
+
+
+#### Best Practices
+
+Commit only .dvc and config files to Git, not raw data.
+
+Regularly push to both primary (mygcp) and backup (gcs) remotes.
+
+Use .dvcignore to exclude temporary or large files.
+
+### Mitigation Challenges:
+
+We are unable to mitigate the data effectively, as any form of resampling would introduce synthetic papers into the dataset, potentially leading to inaccurate or misleading results.
+
+Similarly, adding synthetic news data is not a viable option, as it could introduce artificial or false information into the model pipeline, compromising data integrity.
+
+### Pipelines
+We employed Airflow to modularize our Data Pipeline
+
+![Arxiv Image](./imgs/arxiv_img.jpg)
+
+![News Image](./imgs/news_img.jpg)
+
+### Folder Structure
+<details>
+<summary>Project Structure</summary>
+
+```
+researchAI/
+│
+├── imgs/
+│
+├── config/
+│
+├── dags/
+│   ├── __pycache__/
+│   ├── common/
+│   │   ├── __pycache__/
+│   │   ├── config/
+│   │   │   └── email_config.yaml
+│   │   ├── data_schema/
+│   │   │   ├── arxiv/
+│   │   │   │   ├── expectations/
+│   │   │   │   │   └── arxiv_suite.json
+│   │   │   │   ├── uncommitted/
+│   │   │   │   │   ├── schema_metadata_20251027_185753.json
+│   │   │   │   │   ├── validation_summary_20251028_013713.json
+│   │   │   │   │   └── validation_summary_20251028_013715.json
+│   │   │   │   └── validations/
+│   │   │   │       ├── validation_20251028_013713.json
+│   │   │   │       └── validation_20251028_013715.json
+│   │   │   ├── news_api/
+│   │   │   │   ├── expectations/
+│   │   │   │   │   └── news_api_suite.json
+│   │   │   │   ├── uncommitted/
+│   │   │   │   │   ├── schema_metadata_20251027_185834.json
+│   │   │   │   │   └── validation_summary_20251028_020246.json
+│   │   │   │   └── validations/
+│   │   │   │       └── validation_20251028_020245.json
+│   │   │   └── train_data/
+│   │   │       ├── arxiv_papers_processed_20251027_175420.json
+│   │   │       └── tech_news_categorized_20251027_175547.json
+│   │   ├── __init__.py
+│   │   ├── bias_detection_fair_learn.py
+│   │   ├── bias_detector.py
+│   │   ├── data_cleaning.py
+│   │   ├── data_enrichment.py
+│   │   ├── data_validation.py
+│   │   ├── data_validator.py
+│   │   ├── database_utils.py
+│   │   ├── deduplication.py
+│   │   ├── file_management.py
+│   │   ├── ge_validator.py
+│   │   ├── schema_creator_module.py
+│   │   └── send_email.py
+│   ├── __init__.py
+│   ├── arxiv.py
+│   ├── arxiv_pipeline.py
+│   ├── news_api.py
+│   └── news_pipeline.py
+│
+├── data/
+│   ├── cleaned/
+│   ├── data/
+│   ├── ge_artifacts/
+│   ├── hashes/
+│   ├── raw/
+│   └── schema/
+│
+├── logs/
+│
+├── plugins/
+│
+├── providers/
+│
+├── scripts/
+│
+├── tests/
+│   ├── __pycache__/
+│   ├── .pytest_cache/
+│   ├── tests/
+│   ├── pytest.ini
+│   ├── requirements-test.txt
+│   ├── test_data_cleaning.py
+│   ├── test_data_enrichment.py
+│   ├── test_data_validator.py
+│   ├── test_database_utils.py
+│   ├── test_deduplication.py
+│   ├── test_file_management.py
+│   └── test_runner_config.py
+│
+├── .dvcignore
+├── .env
+├── .gitignore
+├── docker-compose.yaml
+├── image.png
+├── README.md
+├── Readme.md
+└── requirements.txt
+```
+
+</details>

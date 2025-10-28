@@ -67,6 +67,7 @@ docker --version
 ## 6. Run Airflow with Docker Compose
 
 This guide explains how to initialize and run Apache Airflow using the provided `docker-compose.yaml` configuration file.
+
 **Create bias_reports folder in data if the data bias task fails when running the dag**
 
 ### Prerequisites
@@ -235,8 +236,10 @@ Similarly, adding synthetic news data is not a viable option, as it could introd
 ### Pipelines
 We employed Airflow to modularize our Data Pipeline
 
+**Arxiv Pipeline**
 ![Arxiv Image](./imgs/arxiv_img.jpg)
 
+**News Pipeline**
 ![News Image](./imgs/news_img.jpg)
 
 ### Folder Structure

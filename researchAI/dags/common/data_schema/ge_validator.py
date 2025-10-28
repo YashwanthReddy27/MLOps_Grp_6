@@ -53,9 +53,11 @@ class PipelineValidator:
                 self.ge_root_dir.mkdir(parents=True, exist_ok=True)
                 self.expectations_dir = self.ge_root_dir / "expectations"
                 self.expectations_dir.mkdir(parents=True, exist_ok=True)
-                self.validations_dir = self.ge_root_dir / "validations"
+
+                self.validations_dir = Path('/opt/airflow/data/ge_artifacts') / pipeline_name / "validations"
                 self.validations_dir.mkdir(parents=True, exist_ok=True)
-                self.uncommitted_dir = self.ge_root_dir / "uncommitted"
+
+                self.uncommitted_dir = Path('/opt/airflow/data/ge_artifacts') / pipeline_name / "uncommitted"
                 self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
                 
                 # If we get here, directories were created successfully

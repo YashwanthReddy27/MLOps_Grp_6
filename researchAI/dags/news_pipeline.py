@@ -14,6 +14,13 @@ from news_api import NewsAPIPipeline
 # Import schema creation and validation functions
 from common.data_schema.schema_creator_module import create_news_schema
 from common.data_validation import validate_data_quality
+from common.bias_detector import BiasDetector
+
+bias_detector = BiasDetector(
+    data_path="/opt/airflow/data/cleaned/",
+    output_dir="/opt/airflow/data/bias_reports/",
+    data_type="tech_news"
+)
 
 news_api = NewsAPIPipeline()
 
@@ -211,6 +218,13 @@ with DAG(
         - XCom key: 'validation_result' with status and anomaly details
         """,
     )
+
+    detect_bias_task = PythonOperator(
+        task_id='detect_bias_in_data',
+        python_callable=bias_detector.detect_bias,
+        provide_context=True,
+        doc_md="""Detects bias in the processed data using Fairlearn.""",
+    )
     
     # Task 5: Load to PostgreSQL
     load_db = PythonOperator(
@@ -240,4 +254,4 @@ with DAG(
     )
 
     # Define task dependencies
-    extract_news >> categorize >> validate >> load_db >> cleanup
+    extract_news >> categorize >> validate >> detect_bias_task >> load_db >> cleanup

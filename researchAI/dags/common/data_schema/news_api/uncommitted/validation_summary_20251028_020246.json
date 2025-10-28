@@ -1,0 +1,17 @@
+{
+  "validated_at": "2025-10-28T02:02:46.003589",
+  "data_file": "/opt/airflow/data/cleaned/tech_news_categorized_20251028_020234.json",
+  "suite_name": "news_api_suite",
+  "success": true,
+  "statistics": {
+    "evaluated_expectations": 27,
+    "successful_expectations": 27,
+    "unsuccessful_expectations": 0,
+    "success_percent": 100.0
+  },
+  "results_evaluated": 27,
+  "results_passed": 27,
+  "results_failed": 0,
+  "num_rows": 33,
+  "num_columns": 12
+}

@@ -9,7 +9,7 @@ class AlertEmail:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        with open("dags/common/email_config.yaml", "r") as f:
+        with open("dags/common/config/email_config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
             self.logger.info("Email configuration loaded successfully.")
 

@@ -14,7 +14,14 @@ from arxiv import ArxivPipeline
 # Import schema creation and validation functions
 from common.data_schema.schema_creator_module import create_arxiv_schema
 from common.data_validation import validate_data_quality
+from common.bias_detector import BiasDetector
 
+
+bias_detector = BiasDetector(
+    data_path="/opt/airflow/data/cleaned/",
+    output_dir="/opt/airflow/data/bias_reports",
+    data_type="arxiv"
+)
 
 arxiv = ArxivPipeline()
 
@@ -202,6 +209,14 @@ with DAG(
         - XCom key: 'validation_result' with status and anomaly details
         """,
     )
+
+    detect_bias_task = PythonOperator(
+        task_id='detect_bias_in_data',
+        python_callable=bias_detector.detect_bias,
+        provide_context=True,
+        doc_md="""Detects bias in the processed data using Fairlearn.""",
+    )
+
     
     # Task 4: Load to PostgreSQL
     load_db_task = PythonOperator(
@@ -226,4 +241,4 @@ with DAG(
     )
 
     # Set task dependencies - validation happens BEFORE database load
-    fetch_papers_task >> process_task >> validate_task >> load_db_task >> cleanup_task
+    fetch_papers_task >> process_task >> validate_task >> detect_bias_task >> load_db_task >> cleanup_task

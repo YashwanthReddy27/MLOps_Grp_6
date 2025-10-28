@@ -4,6 +4,7 @@ import json
 import requests
 import logging
 from bs4 import BeautifulSoup
+import yaml
 
 import re
 from airflow.models import Variable
@@ -20,6 +21,8 @@ class NewsAPIPipeline:
     News API Pipeline to fetch, process, categorize, and store tech news articles.
     """
     def __init__(self):
+        with open('dags/common/config/secrets.yaml') as f:
+            self.config = yaml.safe_load(f)
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
         self.deduplication_manager = DeduplicationManager('news')
@@ -151,12 +154,12 @@ class NewsAPIPipeline:
             # NewsAPI endpoint and parameters
             url = 'https://newsapi.org/v2/everything'
             params = {
-                'apiKey': "f9756ab031a94ffc9a4241993518a5b5",
+                'apiKey': self.config['news_api'],
                 'q': search_query,
                 'language': 'en',
                 'sortBy': 'publishedAt',
                 'pageSize': 100,  # Increased to get more articles
-                'domains': 'techcrunch.com,theverge.com,wired.com,arstechnica.com,zdnet.com,bleepingcomputer.com,securityweek.com,thehackernews.com,venturebeat.com,thenextweb.com',
+                'domains': "techcrunch.com,theverge.com,wired.com,arstechnica.com,zdnet.com,bleepingcomputer.com,securityweek.com,thehackernews.com,venturebeat.com,thenextweb.com",
                 'from': (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')  # Last 3 days
             }
             

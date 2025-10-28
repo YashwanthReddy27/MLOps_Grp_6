@@ -6,7 +6,7 @@ Please follow these two essential steps:
 To download this repository, use the following commands depending on your operating system.
 ### On Mac & Windows 
 Open a terminal and run:
-```bash
+``` bash
 git clone https://github.com/YashwanthReddy27/MLOps_Grp_6.git
 ```
 This will create a local copy of the repository on your machine.
@@ -28,7 +28,7 @@ source venv/bin/activate
 ### 3. Install All Required Libraries
 Next, activate your virtual environment and install the necessary libraries in one swift command:
 
-```bash
+``` bash
 # Install all dependencies
 pip install -r requirements.txt
 pip install -r requirements-test.txt 
@@ -46,15 +46,16 @@ install the requirements in the tests folder if those packages are not there in 
   
 3. Verify Installation:
    Run the following command to check if Docker is installed correctly:
-```bash
+``` bash
 docker --version
 ```
 
-### 5. Set Up Email Notifications
-1. Navigate to the email_config.yaml file in the repository
-2. Update the following fields: 
-   ```bash
-   smtp_server = smtp.gmail.com
+### 5. Set Up project config and Email Notifications
+1. Ensure you have secrets.yaml and email_config.yaml file under dags/common/config folder
+2. Navigate to the email_config.yaml file
+3. Update the following fields: 
+   ``` bash
+   smtp_server = "smtp.gmail.com"
    sender_email = <your gmail ID>
    sender_password = <your Gmail authenticated app password>
    smtp_port = 587
@@ -63,6 +64,9 @@ docker --version
    - sender_email: Your full Gmail email address (e.g., youremail@gmail.com).
    - sender_password: Your Gmail authenticated app password. Ensure you have enabled App Passwords in your Google account settings.
    - smtp_port: Use 587 
+4. Navigate to secrets.yaml file
+5. Update news_api with news api key
+6. Go to keys-protected.pdf and that will have the news api key, email password, and GCP SA key. Get the pdf password from the repo maintainer.
    
 ## 6. Run Airflow with Docker Compose
 
@@ -118,19 +122,19 @@ docker compose down -v
 
 ## 7. Run the tests
 To get the setup run
-''' python
+``` python
 python test_runner_config.py --setup
-'''
+```
 
 If you want to focus on fixing one module at a time
-'''bash
+``` bash
 python test_runner.py --module #Module_name# example: python test_runner.py --module data_validator
-'''
+```
 
 Run all th tests at once amek sure you are in tests directory when you run this command
-'''bash
+``` bash 
 python test_runner_config.py
-'''
+```
 
 # Code Structure and Explanation
 
@@ -202,34 +206,43 @@ DVC manages dataset versioning and synchronization between local and cloud stora
 Steps:
 
 #### Initialize DVC
-
+``` bash 
 dvc init
-
+``` 
 
 #### Add Remote Storage
 
-dvc remote add -d mygcp gs://citewise-dvc-store-8232761765
-dvc remote add gcs gs://citewise-dvc-store-54873845389/resilienceai-datapipeline
+``` bash 
+dvc remote add -d myremote gs://mlops-gcp-dvc
+```
+
+``` bash
+dvc remote modify --local myremote credentialpath <path_to_GCP_SA_credentials_key_json_file>
+```
+
+Note: You need GCP service account to push files to gcp bucket using dvc
 
 #### Track and Push Data
 
-dvc add data/raw
-git add data/raw.dvc .dvc/config
-git commit -m "Add initial data version"
+``` bash 
+dvc add data
+git add data.dvc .dvc/config
+git commit -m "Data updated with dvc"
 dvc push
+```
 
 
 #### Best Practices
 
 Commit only .dvc and config files to Git, not raw data.
 
-Regularly push to both primary (mygcp) and backup (gcs) remotes.
+Regularly push to gcp or remote.
 
 Use .dvcignore to exclude temporary or large files.
 
 ### Mitigation Challenges:
 
-We are unable to mitigate the data effectively, as any form of resampling would introduce synthetic papers into the dataset, potentially leading to inaccurate or misleading results.
+We are unable to mitigate the bias effectively, as any form of resampling would introduce synthetic papers into the dataset, potentially leading to inaccurate or misleading results.
 
 Similarly, adding synthetic news data is not a viable option, as it could introduce artificial or false information into the model pipeline, compromising data integrity.
 
@@ -263,21 +276,9 @@ researchAI/
 │   │   │   ├── arxiv/
 │   │   │   │   ├── expectations/
 │   │   │   │   │   └── arxiv_suite.json
-│   │   │   │   ├── uncommitted/
-│   │   │   │   │   ├── schema_metadata_20251027_185753.json
-│   │   │   │   │   ├── validation_summary_20251028_013713.json
-│   │   │   │   │   └── validation_summary_20251028_013715.json
-│   │   │   │   └── validations/
-│   │   │   │       ├── validation_20251028_013713.json
-│   │   │   │       └── validation_20251028_013715.json
 │   │   │   ├── news_api/
 │   │   │   │   ├── expectations/
 │   │   │   │   │   └── news_api_suite.json
-│   │   │   │   ├── uncommitted/
-│   │   │   │   │   ├── schema_metadata_20251027_185834.json
-│   │   │   │   │   └── validation_summary_20251028_020246.json
-│   │   │   │   └── validations/
-│   │   │   │       └── validation_20251028_020245.json
 │   │   │   └── train_data/
 │   │   │       ├── arxiv_papers_processed_20251027_175420.json
 │   │   │       └── tech_news_categorized_20251027_175547.json
@@ -304,6 +305,19 @@ researchAI/
 │   ├── cleaned/
 │   ├── data/
 │   ├── ge_artifacts/
+│   │   ├── arxiv/
+|   │   │   ├── uncommitted/
+|   │   │   │   ├── schema_metadata_20251027_185753.json
+|   │   │   │   ├── validation_summary_20251028_013713.json
+│   │   │   └── validations/
+│   │   │       ├── validation_20251028_013713.json
+│   │   │       └── validation_20251028_013715.json
+│   │   ├── news_api/
+|   │   │   ├── uncommitted/
+|   │   │   │   ├── schema_metadata_20251027_185834.json
+|   │   │   │   ├── validation_summary_20251028_020246.json
+│   │   │   └── validations/
+│   │   │       ├── validation_20251028_020245.json
 │   ├── hashes/
 │   ├── raw/
 │   └── schema/

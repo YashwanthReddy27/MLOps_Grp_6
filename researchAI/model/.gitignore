@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environments
+venv/
+env/
+ENV/
+model-env/
+rag-env/
+
+# IDE
+.vscode/
+
+# Environment Variables
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Distribution
+/dist
+
+# Project Specific
+faiss_indexes/
+bm25_indexes/
+cache/
+logs/
+*.log
+*.pkl
+*.faiss
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Temporary files
+*.tmp
+*.bak
+*~

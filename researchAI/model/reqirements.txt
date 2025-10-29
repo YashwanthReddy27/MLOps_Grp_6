@@ -1,0 +1,37 @@
+# requirements-py313-chromadb.txt
+
+# Core packages
+numpy>=1.26.0
+pandas>=2.1.0
+python-dateutil==2.9.0
+
+# PyTorch
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.1.0
+
+# Transformers
+transformers>=4.35.0
+sentence-transformers>=2.3.0
+
+# Google Gemini
+google-generativeai>=0.4.0
+
+# ChromaDB instead of FAISS
+chromadb>=0.4.18
+
+# BM25
+rank-bm25>=0.2.2
+
+# NLTK
+nltk>=3.8.1
+
+# MLflow
+mlflow>=2.9.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+tenacity>=8.2.0
+
+# Testing
+pytest>=7.4.0

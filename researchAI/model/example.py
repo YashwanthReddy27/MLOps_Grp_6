@@ -90,8 +90,7 @@ def main():
     print("Setting up Tech Trends RAG Pipeline with Fairness Detection...")
     
     pipeline = TechTrendsRAGPipeline(
-        enable_cache=False,
-        enable_tracking=True  # Enable MLflow tracking to log fairness metrics
+        enable_tracking=True
     )
     
     # Load pre-built indexes or build new ones
@@ -102,14 +101,18 @@ def main():
         print("⚠️  No existing indexes found. Building new indexes...")
         
         # Load your data
-        papers_path = '/Users/sairakshithavadhanims/Documents/Rakshith/Personal/Northeastern University/Semester 3/MLOps/Project/MLOps_Grp_6/researchAI/model/data/cleaned/arxiv_papers_processed_20251018_203954.json'
+        papers_path = 'datafile_path_here'
+        news_path = 'datafile_path_here'
         
         with open(papers_path, 'r') as f:
             papers_data = json.load(f)
             papers = papers_data.get('papers', [])
+        with open(news_path, 'r') as f:
+            news_data = json.load(f)
+            news = news_data.get('articles', [])
         
         # Build indexes (using subset for demo)
-        pipeline.index_documents(papers=papers[:100])
+        pipeline.index_documents(papers=papers[:100], news=news[:100])
         print("✅ Indexes built successfully")
     
     run_queries(pipeline, [

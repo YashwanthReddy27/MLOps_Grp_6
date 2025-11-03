@@ -65,7 +65,6 @@ def main():
     
     # Initialize pipeline
     pipeline = TechTrendsRAGPipeline(
-        enable_cache=not args.no_cache,
         enable_tracking=not args.no_tracking
     )
     

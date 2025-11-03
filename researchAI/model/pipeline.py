@@ -10,7 +10,6 @@ from generation.response_validator import ResponseValidator
 from evaluation.model_bias_detector import RAGBiasDetector
 from evaluation.metrics import RAGMetrics
 from evaluation.experiment_tracker import ExperimentTracker
-from utils.cache import get_cache
 from utils.logger import setup_logging
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 class TechTrendsRAGPipeline:
     """Complete RAG pipeline for technology trends"""
     
-    def __init__(self, enable_cache: bool = True, enable_tracking: bool = True):
+    def __init__(self, enable_tracking: bool = True):
         """
         Initialize RAG pipeline
         
@@ -40,7 +39,7 @@ class TechTrendsRAGPipeline:
         self.validator = ResponseValidator()
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
-        self.cache = get_cache() if enable_cache else None
+        # self.cache = get_cache() if enable_cache else None
         self.tracker = ExperimentTracker() if enable_tracking else None
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
 
@@ -126,15 +125,6 @@ class TechTrendsRAGPipeline:
             Response dictionary
         """
         start_time = time.time()
-        
-        # Check cache
-        if self.cache:
-            cache_key = f"query:{query}"
-            cached_result = self.cache.get(cache_key)
-            if cached_result:
-                self.logger.info("Returning cached result")
-                cached_result['from_cache'] = True
-                return cached_result
         
         self.logger.info(f"Processing query: {query}")
         
@@ -233,10 +223,6 @@ class TechTrendsRAGPipeline:
                 bias_report=bias_report
             )
             self.tracker.end_run()
-        
-        # Cache result
-        if self.cache:
-            self.cache.set(cache_key, final_result)
         
         self.logger.info(f"Query completed in {response_time:.2f}s")
         return final_result

@@ -1,5 +1,7 @@
 pandas
 scikit-learn
+torch
+transformers
 kneed
 requests
 apache-airflow-providers-postgres

@@ -43,8 +43,6 @@ class TechTrendsRAGPipeline:
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
 
         self.logger.info("Pipeline initialized successfully")
-
-
     
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
@@ -278,3 +276,62 @@ class TechTrendsRAGPipeline:
             sources.add(source)
         
         return len(sources) / len(retrieved_docs)
+    
+    def push_to_artifact_registry(
+        self,
+        project_id: Optional[str] = None,
+        location: Optional[str] = None,
+        repository: Optional[str] = None,
+        version: Optional[str] = None,
+        metrics: Optional[Dict[str, Any]] = None,
+        bias_report: Optional[Dict[str, Any]] = None,
+        description: Optional[str] = None
+    ) -> str:
+        """
+        Push model to Google Cloud Artifact Registry
+        
+        Args:
+            project_id: GCP project ID (uses config if not provided)
+            location: GCP location (uses config if not provided)
+            repository: Repository name (uses config if not provided)
+            version: Version name (optional, uses timestamp if not provided)
+            metrics: Model performance metrics
+            bias_report: Bias evaluation report
+            description: Optional description
+            
+        Returns:
+            Artifact Registry path where model was uploaded
+        """
+        from deployment.artifact_registry_pusher import ArtifactRegistryPusher
+        from config.settings import config
+        
+        # Use config values if not provided
+        project_id = project_id or config.gcp.project_id
+        location = location or config.gcp.location
+        repository = repository or config.gcp.artifact_repository
+        
+        if not project_id:
+            raise ValueError("GCP project_id is required. Set via --project-id or GCP_PROJECT_ID env var")
+        
+        self.logger.info(
+            f"Pushing model to Artifact Registry: "
+            f"{location}-generic.pkg.dev/{project_id}/{repository}"
+        )
+        
+        # Initialize pusher
+        pusher = ArtifactRegistryPusher(
+            project_id=project_id,
+            location=location,
+            repository=repository
+        )
+        
+        # Push artifacts
+        artifact_path = pusher.push(
+            version=version,
+            metrics=metrics,
+            bias_report=bias_report,
+            description=description
+        )
+        
+        self.logger.info(f"Model successfully pushed to: {artifact_path}")
+        return artifact_path

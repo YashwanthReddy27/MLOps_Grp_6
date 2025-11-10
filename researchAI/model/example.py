@@ -1,7 +1,9 @@
 """
-Example usage of the RAG pipeline with Fairness Detection
+Example usage of the RAG pipeline with Fairness Detection and Artifact Registry
 """
 import json
+import os
+import argparse
 from pipeline import TechTrendsRAGPipeline
 
 def print_separator(title=""):
@@ -82,6 +84,7 @@ def print_fairness_report(bias_report):
     print("-"*80)
 
 def run_queries(pipeline, queries):
+    """Run queries and display results"""
     for query in queries:
         print(f"Query: {query}\n")
         
@@ -92,7 +95,7 @@ def run_queries(pipeline, queries):
         
         # Display sources
         print(f"Sources ({len(result['sources'])}):")
-        for source in result['sources']:  # Show top 5 sources
+        for source in result['sources']:  # Show all sources
             print(f"  [{source['number']}] {source.get('title', 'Untitled')}")
             print(f"      {source.get('source', 'Unknown')} - {str(source.get('date',''))[:10]}")
             if source.get('url'):
@@ -106,10 +109,32 @@ def run_queries(pipeline, queries):
         
         # Display fairness report
         print_fairness_report(result['bias_report'])
-    
-        
 
 def main():
+    parser = argparse.ArgumentParser(description='RAG Pipeline Example with Artifact Registry')
+    
+    # Data loading options
+    parser.add_argument('--papers', type=str, help='Path to papers JSON file')
+    parser.add_argument('--news', type=str, help='Path to news JSON file')
+    parser.add_argument('--load-existing', action='store_true', 
+                       help='Load existing indexes instead of building new ones')
+    
+    # Artifact Registry options
+    parser.add_argument('--push-to-registry', action='store_true',
+                       help='Push model to Artifact Registry after queries')
+    parser.add_argument('--project-id', type=str,
+                       help='GCP project ID (default: from config/env)')
+    parser.add_argument('--location', type=str, default='us-central1',
+                       help='GCP location (default: us-central1)')
+    parser.add_argument('--repository', type=str, default='rag-models',
+                       help='Artifact Registry repository (default: rag-models)')
+    parser.add_argument('--version', type=str,
+                       help='Model version (default: auto-generated)')
+    parser.add_argument('--description', type=str,
+                       help='Version description')
+    
+    args = parser.parse_args()
+    
     # Initialize pipeline
     print_separator("INITIALIZING RAG PIPELINE")
     print("Setting up Tech Trends RAG Pipeline with Fairness Detection...")
@@ -118,32 +143,112 @@ def main():
         enable_tracking=True
     )
     
-    # Load pre-built indexes or build new ones
-    print("\nLoading pre-built indexes...")
-    if pipeline.load_indexes():
-        print("✅ Indexes loaded successfully")
+    # Load or build indexes
+    if args.load_existing:
+        print("\nLoading pre-built indexes...")
+        if pipeline.load_indexes():
+            print("SUCCESS: Indexes loaded successfully!!")
+        else:
+            print("No existing indexes found. Please build indexes first.")
+            return
     else:
-        print("⚠️  No existing indexes found. Building new indexes...")
+        print("\nBuilding new indexes...")
         
-        # Load your data
-        papers_path = 'data_file_path'
-        news_path = 'data_file_path'
+        # Get data paths
+        papers_path = args.papers or 'data/arxiv_papers_processed_20251028_140608.json'
+        news_path = args.news or 'data/tech_news_summarized.json'
         
-        with open(papers_path, 'r') as f:
-            papers_data = json.load(f)
-            papers = papers_data.get('papers', [])
-        with open(news_path, 'r') as f:
-            news_data = json.load(f)
-            news = news_data.get('articles', [])
+        # Check if paths are placeholders
+        if papers_path == 'datafile_path_here' or news_path == 'datafile_path_here':
+            print("  Please provide data file paths using --papers and --news arguments")
+            print("  Example: python example.py --papers data/papers.json --news data/news.json")
+            return
         
-        # Build indexes (using subset for demo)
-        pipeline.index_documents(papers=papers[:100], news=news[:100])
-        print("✅ Indexes built successfully")
+        # Load data
+        try:
+            with open(papers_path, 'r') as f:
+                papers_data = json.load(f)
+                papers = papers_data.get('papers', [])
+            print(f"Loaded {len(papers)} papers")
+        except FileNotFoundError:
+            print(f"Error: Papers file not found: {papers_path}")
+            return
+        
+        try:
+            with open(news_path, 'r') as f:
+                news_data = json.load(f)
+                news = news_data.get('articles', [])
+            print(f"Loaded {len(news)} news articles")
+        except FileNotFoundError:
+            print(f"Error: News file not found: {news_path}")
+            return
+        
+        # Build indexes (using subset for demo if too large)
+        max_docs = 100
+        if len(papers) > max_docs or len(news) > max_docs:
+            print(f"\nNote: Using first {max_docs} documents from each source for demo")
+            papers = papers[:max_docs]
+            news = news[:max_docs]
+        
+        pipeline.index_documents(papers=papers, news=news)
+        print("SUCCESS: Indexes built successfully!!")
     
-    run_queries(pipeline, [
-        "What are the latest developments in reinforcement learning for large language models?"
-        # "How is retrieval augmented generation being used in modern AI systems?"
-    ])
+    # Run example queries
+    print_separator("RUNNING EXAMPLE QUERIES")
+    
+    queries = [
+        "What are the latest developments in reinforcement learning for large language models?",
+        "How is retrieval augmented generation being used in modern AI systems?"
+    ]
+    
+    run_queries(pipeline, queries)
+    
+    # Push to Artifact Registry if requested
+    if args.push_to_registry:
+        print_separator("PUSHING TO ARTIFACT REGISTRY")
+        
+        # Get project ID
+        project_id = args.project_id or os.getenv('GCP_PROJECT_ID')
+        if not project_id:
+            print("Error: GCP project ID required. Use --project-id or set GCP_PROJECT_ID env var")
+            return
+        
+        # Get a sample query result for metrics
+        print("Running validation query to collect metrics...")
+        test_result = pipeline.query("What are the latest trends in AI?")
+        
+        validation_score = test_result['validation']['overall_score']
+        fairness_score = test_result['bias_report'].get('overall_fairness_score', 0.0)
+        
+        print(f"Validation Score: {validation_score:.2f}")
+        print(f"Fairness Score: {fairness_score:.3f}")
+        
+        if validation_score:
+            try:
+                print("\nPushing to Artifact Registry...")
+                
+                artifact_path = pipeline.push_to_artifact_registry(
+                    project_id=project_id,
+                    location=args.location,
+                    repository=args.repository,
+                    version=args.version,
+                    metrics=test_result['metrics'],
+                    bias_report=test_result['bias_report'],
+                    description=args.description or f"RAG model with validation score {validation_score:.2f}"
+                )
+                
+                print_separator("PUSH SUCCESSFUL")
+                print(f"Artifact Path: {artifact_path}")
+                print(f"Version: {args.version or 'auto-generated'}")
+                
+            except Exception as e:
+                print_separator("PUSH FAILED")
+                print(f"Error: {e}")
+        else:
+            print(f"\n Validation score too low ({validation_score:.2f}). Not pushing to registry.")
+            print("   Improve model or use a lower threshold.")
+    
+    print_separator("EXAMPLE COMPLETED")
 
 if __name__ == "__main__":
     main()

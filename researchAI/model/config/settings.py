@@ -96,6 +96,18 @@ class BiasDetectionConfig(BaseModel):
     min_source_diversity: int = 3
     min_temporal_span_days: int = 7
 
+class GCPConfig(BaseModel):
+    """GCP configuration for Artifact Registry"""
+    project_id: str = Field(
+        default_factory=lambda: os.getenv("GCP_PROJECT_ID", "")
+    )
+    location: str = Field(
+        default_factory=lambda: os.getenv("GCP_LOCATION", "us-central1")
+    )
+    artifact_repository: str = Field(
+        default_factory=lambda: os.getenv("GCP_ARTIFACT_REPOSITORY", "rag-models")
+    )
+
 class RAGConfig(BaseModel):
     """Main RAG pipeline configuration"""
     embedding: EmbeddingConfig = EmbeddingConfig()

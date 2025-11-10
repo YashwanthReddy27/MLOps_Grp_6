@@ -116,7 +116,6 @@ with DAG(
     create_schema_task = PythonOperator(
         task_id='create_news_schema',
         python_callable=create_news_schema,
-        
         doc_md="""
         Creates Great Expectations schema for News API pipeline.
         
@@ -144,7 +143,6 @@ with DAG(
     default_args=default_args,
     description='Fetch tech news, enrich with full article content, categorize, validate, and store',
     schedule='0 */6 * * *',  # Every 6 hours
-    
     catchup=False,
     max_active_runs=1,  # Prevent overlapping runs
     tags=['tech', 'news', 'enrichment', 'web-scraping', 'validation'],

@@ -139,6 +139,7 @@ with DAG(
     description='Fetch and categorize AI research papers from arXiv with Great Expectations validation',
     schedule='0 0 * * *',  # Run daily at midnight
     catchup=False,
+    max_active_runs=1,
     tags=['arxiv', 'research', 'ai', 'papers', 'automated', 'ge', 'validation'],
     doc_md="""
     ## arXiv AI Research Pipeline with Data Validation

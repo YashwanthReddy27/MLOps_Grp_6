@@ -6,7 +6,6 @@ Location: /app/dags/arxiv_pipeline_with_validation.py
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 
 # Import pipeline functions
 from arxiv import ArxivPipeline
@@ -45,8 +44,7 @@ with DAG(
     'arxiv_create_schema',
     default_args=default_args,
     description='Create/Update Great Expectations schema for arXiv pipeline (Run manually)',
-    schedule_interval=None,  # Manual trigger only - no automatic schedule
-    start_date=days_ago(1),
+    schedule=None,  # Manual trigger only - no automatic schedule
     catchup=False,
     tags=['arxiv', 'schema', 'great-expectations', 'setup', 'manual'],
     doc_md="""
@@ -113,7 +111,6 @@ with DAG(
     create_schema_task = PythonOperator(
         task_id='create_arxiv_schema',
         python_callable=create_arxiv_schema,
-        provide_context=True,
         doc_md="""
         Creates Great Expectations schema for arXiv pipeline.
         
@@ -140,9 +137,9 @@ with DAG(
     'arxiv_ai_research_with_validation',
     default_args=default_args,
     description='Fetch and categorize AI research papers from arXiv with Great Expectations validation',
-    schedule_interval='0 0 * * *',  # Run daily at midnight
-    start_date=days_ago(1),
+    schedule='0 0 * * *',  # Run daily at midnight
     catchup=False,
+    max_active_runs=1,
     tags=['arxiv', 'research', 'ai', 'papers', 'automated', 'ge', 'validation'],
     doc_md="""
     ## arXiv AI Research Pipeline with Data Validation
@@ -170,7 +167,7 @@ with DAG(
     fetch_papers_task = PythonOperator(
         task_id='fetch_arxiv_papers',
         python_callable=arxiv.fetch_arxiv_papers,
-        provide_context=True,
+        
         doc_md="""
         Fetches recent AI research papers from arXiv API.
         
@@ -183,7 +180,7 @@ with DAG(
     process_task = PythonOperator(
         task_id='process_and_categorize_papers',
         python_callable=arxiv.process_and_categorize_papers,
-        provide_context=True,
+        
         doc_md="""
         Processes papers and categorizes using LLM.
         
@@ -196,7 +193,7 @@ with DAG(
     validate_task = PythonOperator(
         task_id='validate_data_quality',
         python_callable=validate_data_quality,
-        provide_context=True,
+        
         doc_md="""
         Validates data quality using Great Expectations.
         
@@ -213,7 +210,7 @@ with DAG(
     detect_bias_task = PythonOperator(
         task_id='detect_bias_in_data',
         python_callable=bias_detector.detect_bias,
-        provide_context=True,
+        
         doc_md="""Detects bias in the processed data using Fairlearn.""",
     )
 
@@ -222,19 +219,15 @@ with DAG(
     load_db_task = PythonOperator(
         task_id='load_to_postgresql',
         python_callable=arxiv.load_to_postgresql,
-        provide_context=True,
-        doc_md="""
-        Loads validated data to PostgreSQL database.
         
-        Only runs if validation succeeds.
-        """,
+        doc_md=""" Loads validated data to PostgreSQL database. Only runs if validation succeeds.""",
     )
     
     # Task 5: Cleanup old files
     cleanup_task = PythonOperator(
         task_id='cleanup_old_files',
         python_callable=arxiv.cleanup_old_files,
-        provide_context=True,
+        
         doc_md="""
         Removes files older than retention period.
         """,

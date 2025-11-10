@@ -3,10 +3,9 @@ News API Pipeline with Explicit Schema Creation
 Location: /app/dags/news_api_pipeline_with_validation.py
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 
 # Import pipeline functions
 from news_api import NewsAPIPipeline
@@ -44,8 +43,8 @@ with DAG(
     'news_create_schema',
     default_args=default_args,
     description='Create/Update Great Expectations schema for News API pipeline (Run manually)',
-    schedule_interval=None,  # Manual trigger only
-    start_date=days_ago(1),
+    schedule=None,  # Manual trigger only
+    
     catchup=False,
     tags=['news', 'schema', 'great-expectations', 'setup', 'manual'],
     doc_md="""
@@ -117,7 +116,6 @@ with DAG(
     create_schema_task = PythonOperator(
         task_id='create_news_schema',
         python_callable=create_news_schema,
-        provide_context=True,
         doc_md="""
         Creates Great Expectations schema for News API pipeline.
         
@@ -144,8 +142,7 @@ with DAG(
     'tech_news_enriched_with_validation',
     default_args=default_args,
     description='Fetch tech news, enrich with full article content, categorize, validate, and store',
-    schedule_interval='0 */6 * * *',  # Every 6 hours
-    start_date=days_ago(1),
+    schedule='0 */6 * * *',  # Every 6 hours
     catchup=False,
     max_active_runs=1,  # Prevent overlapping runs
     tags=['tech', 'news', 'enrichment', 'web-scraping', 'validation'],
@@ -176,7 +173,7 @@ with DAG(
     extract_news = PythonOperator(
         task_id='extract_tech_news',
         python_callable=news_api.fetch_tech_news,
-        provide_context=True,
+        
         doc_md="""
         Fetches tech news articles from News API.
         Filters duplicates and saves new articles.
@@ -190,7 +187,7 @@ with DAG(
     categorize = PythonOperator(
         task_id='extract_keywords_and_categorize',
         python_callable=news_api.extract_keywords_and_categorize,
-        provide_context=True,
+        
         doc_md="""
         Categorizes articles using full content.
         Assigns categories, relevance scores, and extracts keywords.
@@ -204,8 +201,6 @@ with DAG(
     validate = PythonOperator(
         task_id='validate_data_quality',
         python_callable=validate_data_quality,
-        trigger_rule='none_failed_or_skipped',
-        provide_context=True,
         doc_md="""
         Validates data quality using Great Expectations.
         
@@ -222,7 +217,6 @@ with DAG(
     detect_bias_task = PythonOperator(
         task_id='detect_bias_in_data',
         python_callable=bias_detector.detect_bias,
-        provide_context=True,
         doc_md="""Detects bias in the processed data using Fairlearn.""",
     )
     
@@ -230,7 +224,6 @@ with DAG(
     load_db = PythonOperator(
         task_id='load_to_postgresql',
         python_callable=news_api.load_to_postgresql,
-        provide_context=True,
         doc_md="""
         Loads validated data to PostgreSQL database.
         Stores full content, categories, and enrichment metadata.
@@ -243,8 +236,6 @@ with DAG(
     cleanup = PythonOperator(
         task_id='cleanup_old_files',
         python_callable=news_api.cleanup_old_files,
-        trigger_rule='none_failed_or_skipped',
-        provide_context=True,
         doc_md="""
         Cleans up old JSON files based on retention policy.
         Default: 7 days retention.

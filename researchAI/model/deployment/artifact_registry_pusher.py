@@ -84,7 +84,7 @@ class ArtifactRegistryPusher:
         """
         # Generate version if not provided
         if version is None:
-            version = datetime.now().strftime("v%Y%m%d_%H%M%S")
+            version = datetime.now().strftime("v%Y%m%d-%H%M%S")
         
         # Clean version string (Artifact Registry requirements)
         version = self._clean_version(version)

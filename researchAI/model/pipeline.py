@@ -39,35 +39,12 @@ class TechTrendsRAGPipeline:
         self.validator = ResponseValidator()
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
-        # self.cache = get_cache() if enable_cache else None
         self.tracker = ExperimentTracker() if enable_tracking else None
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
 
         self.logger.info("Pipeline initialized successfully")
-    
-    def index_document(self, document: Dict[str, Any], document_type: str):
-        """
-        Index a single document into the RAG system
-        
-        Args:
-            document: Document to index
-            document_type: Type of document (e.g., 'paper', 'news')
-        """
-        self.logger.info(f"Indexing document: {document['title']}")
-        
-        # Process document
-        processed_doc = self.doc_processor.process(document, document_type)
-        
-        # Create chunks
-        doc_chunks = self.chunker.create_chunks(processed_doc)
-        
-        # Generate embeddings
-        doc_chunks = self.embedder.embed_chunks(doc_chunks)
-        
-        # Index
-        self.retriever.index_documents(doc_chunks, document_type)
-        
-        self.logger.info(f"Indexed {len(doc_chunks)} chunks")
+
+
     
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
@@ -79,16 +56,42 @@ class TechTrendsRAGPipeline:
             news: List of news articles
         """
         self.logger.info("Starting document indexing")
-        
+        self.logger.info(f"Indexing document: arxiv papers")
         # Process and index papers
         if papers:
             for paper in papers:
-                self.index_document(paper, 'paper')
+            # Process document
+                processed_doc = self.doc_processor.process_arxiv_paper(paper)
+                
+                # Create chunks
+                doc_chunks = self.chunker.create_chunks(processed_doc)
+                
+                # Generate embeddings
+                doc_chunks = self.embedder.embed_chunks(doc_chunks)
+                
+                # Index
+                self.retriever.index_documents(doc_chunks, 'paper')
+                
+                self.logger.info(f"Indexed {len(doc_chunks)} chunks")
         
         # Process and index news
         if news:
+            self.logger.info(f"Indexing document: news articles")
             for news in news:
-                self.index_document(news, 'news')
+        
+            # Process document
+                processed_doc = self.doc_processor.process_news_article(news)
+                
+                # Create chunks
+                doc_chunks = self.chunker.create_chunks(processed_doc)
+                
+                # Generate embeddings
+                doc_chunks = self.embedder.embed_chunks(doc_chunks)
+                
+                # Index
+                self.retriever.index_documents(doc_chunks, 'news')
+                
+                self.logger.info(f"Indexed {len(doc_chunks)} chunks")
         
         # Save indexes
         self.retriever.save_indexes()
@@ -109,10 +112,10 @@ class TechTrendsRAGPipeline:
             self.logger.info(f"Indexes loaded: {stats}")
         
         return success
-    
+
     def query(self, query: str, 
-             filters: Optional[Dict[str, Any]] = None,
-             enable_streaming: bool = False) -> Dict[str, Any]:
+         filters: Optional[Dict[str, Any]] = None,
+         enable_streaming: bool = False) -> Dict[str, Any]:
         """
         Query the RAG system
         
@@ -139,7 +142,7 @@ class TechTrendsRAGPipeline:
             query=query,
             filters=filters
         )
-        # self.logger.info(f"[Sources] : {retrieved_docs}")
+        
         if not retrieved_docs:
             return {
                 'query': query,
@@ -150,26 +153,7 @@ class TechTrendsRAGPipeline:
         
         self.logger.info(f"Retrieved {len(retrieved_docs)} documents")
         
-        # Step 2: Fairness check on retrieved documents
-        self.logger.info("Checking for fairness in retrieval")
-        
-        # Prepare quick fairness check data
-        quick_evaluation_data = [{
-            'query': query,
-            'retrieved_docs': retrieved_docs,
-            'response': '',
-            'performance_metrics': {
-                'retrieval_score': self._calculate_retrieval_score(retrieved_docs),
-                'response_quality': 0.0, 
-                'source_diversity': self._calculate_source_diversity(retrieved_docs),
-                'response_time': 0.0
-            }
-        }]
-        
-        # Run lightweight fairness check
-        bias_report = self.fairness_detector.evaluate_bias_comprehension(quick_evaluation_data)
-        
-        # Step 3: Generation
+        # Step 2: Generation
         self.logger.info("Generating response")
         if enable_streaming:
             return self.streaming_generator.generate_response_stream(
@@ -182,7 +166,7 @@ class TechTrendsRAGPipeline:
                 retrieved_docs=retrieved_docs
             )
         
-        # Step 4: Validation
+        # Step 3: Validation
         self.logger.info("Validating response")
         validation = self.validator.validate(
             query=query,
@@ -190,13 +174,37 @@ class TechTrendsRAGPipeline:
             retrieved_docs=retrieved_docs
         )
         
-        # Step 5: Calculate metrics
+        # Step 4: Calculate metrics
         response_time = time.time() - start_time
         metrics = self.metrics_calculator.calculate_end_to_end_metrics(
             query=query,
             response=result['response'],
             retrieved_docs=retrieved_docs,
             response_time=response_time
+        )
+
+        # Step 5: Lightweight fairness check with Fairlearn
+        self.logger.info("Checking retrieval fairness with Fairlearn")
+
+        # Normalize retrieval scores to [0, 1] range for fairness evaluation
+        normalized_retrieval_score = self._normalize_retrieval_score(retrieved_docs)
+
+        # Prepare single-query fairness check data
+        fairness_evaluation_data = {
+            'query': query,
+            'retrieved_docs': retrieved_docs,
+            'response': result['response'],
+            'performance_metrics': {
+                'retrieval_score': normalized_retrieval_score,
+                'response_quality': validation['overall_score'],
+                'source_diversity': self._calculate_source_diversity(retrieved_docs),
+                'response_time': response_time
+            }
+        }
+
+        # Run Fairlearn-based single-query fairness check
+        fairness_report = self.fairness_detector.evaluate_single_query_fairness_with_fairlearn(
+            fairness_evaluation_data
         )
         
         # Compile final result
@@ -206,7 +214,7 @@ class TechTrendsRAGPipeline:
             'sources': result['sources'],
             'num_sources': result['num_sources'],
             'retrieved_docs': retrieved_docs,
-            'bias_report': bias_report,
+            'bias_report': fairness_report,
             'validation': validation,
             'metrics': metrics,
             'response_time': response_time,
@@ -220,21 +228,44 @@ class TechTrendsRAGPipeline:
                 response=result['response'],
                 metrics=metrics,
                 retrieved_docs=retrieved_docs,
-                bias_report=bias_report
+                bias_report=fairness_report
             )
             self.tracker.end_run()
         
         self.logger.info(f"Query completed in {response_time:.2f}s")
         return final_result
-    
-    def _calculate_retrieval_score(self, retrieved_docs: List[Dict[str, Any]]) -> float:
-        """Calculate average retrieval score from retrieved documents"""
+
+    def _normalize_retrieval_score(self, retrieved_docs: List[Dict[str, Any]]) -> float:
+        """
+        Normalize retrieval scores to [0, 1] range
+        
+        Args:
+            retrieved_docs: Retrieved documents with scores
+            
+        Returns:
+            Normalized average score in [0, 1]
+        """
         if not retrieved_docs:
             return 0.0
         
         scores = [doc.get('score', 0.0) for doc in retrieved_docs]
-        return sum(scores) / len(scores) if scores else 0.0
+        
+        if not scores:
+            return 0.0
+        
+        min_score = min(scores)
+        max_score = max(scores)
+        
+        # Handle case where all scores are the same
+        if max_score == min_score:
+            return 0.5
+        
+        # Min-max normalization to [0, 1]
+        normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
+        
+        return sum(normalized_scores) / len(normalized_scores)
     
+
     def _calculate_source_diversity(self, retrieved_docs: List[Dict[str, Any]]) -> float:
         """Calculate source diversity score"""
         if not retrieved_docs:
@@ -242,7 +273,8 @@ class TechTrendsRAGPipeline:
         
         sources = set()
         for doc in retrieved_docs:
-            source = doc.get('metadata', {}).get('source_name', 'unknown')
+            source = doc.get('metadata', {}).get('source_name') or \
+                    doc.get('metadata', {}).get('arxiv_id', 'unknown')
             sources.add(source)
         
         return len(sources) / len(retrieved_docs)

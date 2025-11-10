@@ -63,284 +63,522 @@ class RAGBiasDetector:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.slice_definitions = SLICE_DEFINITIONS
-    
-    def evaluate_bias_comprehension(self, evaluation_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Comprehensive bias detection across all defined slices
-        
-        Args:
-            evaluation_data: List with query, retrieved_docs, response, user_context, performance_metrics
-            
-        Returns:
-            Comprehensive bias report with metrics, analysis, recommendations
-        """
-        self.logger.info(f"Starting comprehensive bias detection on {len(evaluation_data)} samples")
-        
-        # Slice and analyze data
-        sliced_data = self._slice_evaluation_data(evaluation_data)
-        slice_metrics = self._calculate_slice_metrics(sliced_data)
-        bias_analysis = self._analyze_bias_across_slices(slice_metrics)
-        
-        # FairLearn analysis if available
-        fairlearn_analysis = {}
-        if FAIRLEARN_AVAILABLE:
-            fairlearn_analysis = self._fairlearn_analysis(evaluation_data)
-        
-        
-        return {
-            'slice_metrics': slice_metrics,
-            'bias_analysis': bias_analysis,
-            'fairlearn_analysis': fairlearn_analysis,
-            'overall_fairness_score': self._calculate_fairness_score(bias_analysis),
-            'timestamp': datetime.now().isoformat()
-        } 
 
-    def _slice_evaluation_data(self, evaluation_data: List[Dict[str, Any]]) -> Dict[str, Dict[str, List]]:
-        """Slice evaluation data according to defined dimensions"""
-        sliced_data = {slice_name: defaultdict(list) for slice_name in self.slice_definitions.keys()}
+    def _analyze_retrieval_diversity(self, retrieved_docs: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze diversity of retrieved documents
         
-        for record in evaluation_data:
-            query = record.get('query', '').lower()
-            user_context = record.get('user_context', {})
-            retrieved_docs = record.get('retrieved_docs', [])
-            
-            for slice_name, slice_categories in self.slice_definitions.items():
-                category = self._assign_to_category(query, user_context, retrieved_docs, slice_categories)
-                if category:
-                    sliced_data[slice_name][category].append(record)
-        
-        return sliced_data
-    
-    def _assign_to_category(self, query: str, user_context: Dict, 
-                           retrieved_docs: List, categories: Dict[str, List[str]]) -> Optional[str]:
-        """Assign record to appropriate category based on keywords"""
-        query_lower = query.lower()
-        
-        for category, keywords in categories.items():
-            if any(keyword in query_lower for keyword in keywords):
-                return category
-        
-        # Check user context
-        if user_context:
-            context_str = str(user_context).lower()
-            for category, keywords in categories.items():
-                if any(keyword in context_str for keyword in keywords):
-                    return category
-        
-        # Check retrieved docs metadata
-        if retrieved_docs:
-            for doc in retrieved_docs[:3]:  # Check top 3 docs
-                doc_text = str(doc.get('metadata', {})).lower()
-                for category, keywords in categories.items():
-                    if any(keyword in doc_text for keyword in keywords):
-                        return category
-        
-        return None
-    
-    def _calculate_slice_metrics(self, sliced_data: Dict[str, Dict[str, List]]) -> Dict[str, Dict]:
-        """Calculate performance metrics for each slice"""
-        slice_metrics = {}
-        
-        for slice_name, categories in sliced_data.items():
-            slice_metrics[slice_name] = {}
-            
-            for category, records in categories.items():
-                if not records:
-                    continue
-                
-                # Extract and average metrics
-                retrieval_scores = []
-                response_qualities = []
-                source_diversities = []
-                response_times = []
-                
-                for record in records:
-                    perf = record.get('performance_metrics', {})
-                    retrieval_scores.append(perf.get('retrieval_score', 0.0))
-                    response_qualities.append(perf.get('response_quality', 0.0))
-                    source_diversities.append(perf.get('source_diversity', 0.0))
-                    response_times.append(perf.get('response_time', 0.0))
-                
-                slice_metrics[slice_name][category] = {
-                    'sample_size': len(records),
-                    'metrics': {
-                        'avg_retrieval_score': np.mean(retrieval_scores) if retrieval_scores else 0.0,
-                        'avg_response_quality': np.mean(response_qualities) if response_qualities else 0.0,
-                        'source_diversity': np.mean(source_diversities) if source_diversities else 0.0,
-                        'response_time': np.mean(response_times) if response_times else 0.0
-                    },
-                    'statistical_significance': self._test_significance(len(records))
-                }
-        
-        return slice_metrics
-    
-    def _test_significance(self, sample_size: int) -> Dict[str, Any]:
-        """Test if sample size is statistically significant"""
-        return {
-            'sample_size': sample_size,
-            'sufficient_sample': sample_size >= 30,
-            'confidence_level': 0.95 if sample_size >= 30 else 0.8
-        }
-    
-    def _analyze_bias_across_slices(self, slice_metrics: Dict[str, Dict]) -> Dict[str, Any]:
-        """Analyze bias patterns across slices"""
-        significant_biases = []
-        slice_disparities = {}
-        
-        for slice_name, categories in slice_metrics.items():
-            if len(categories) < 2:
-                continue
-            
-            disparities = self._calculate_disparities(categories)
-            slice_disparities[slice_name] = disparities
-            
-            # Detect significant biases
-            for metric_name, disparity in disparities.items():
-                bias = self._check_bias_significance(slice_name, metric_name, disparity)
-                if bias:
-                    significant_biases.append(bias)
-        
-        return {
-            'slice_disparities': slice_disparities,
-            'significant_biases': significant_biases,
-            'fairness_violations': [b for b in significant_biases if b['severity'] == 'high']
-        }
-    
-    def _calculate_disparities(self, categories: Dict[str, Dict]) -> Dict[str, Dict]:
-        """Calculate performance disparities between categories"""
-        disparities = {}
-        
-        for metric_name in ['avg_retrieval_score', 'avg_response_quality', 'source_diversity']:
-            category_values = {cat: data['metrics'].get(metric_name, 0.0) 
-                             for cat, data in categories.items()}
-            
-            if category_values:
-                min_val = min(category_values.values())
-                max_val = max(category_values.values())
-                ratio = min_val / max_val if max_val > 0 else 1.0
-                
-                disparities[metric_name] = {
-                    'min_value': min_val,
-                    'max_value': max_val,
-                    'ratio': ratio,
-                    'absolute_difference': max_val - min_val,
-                    'category_values': category_values
-                }
-        
-        return disparities
-    
-    def _check_bias_significance(self, slice_name: str, metric_name: str, 
-                                 disparity: Dict) -> Optional[Dict[str, Any]]:
-        """Check if disparity indicates significant bias"""
-        ratio = disparity['ratio']
-        abs_diff = disparity['absolute_difference']
-        
-        # Thresholds for bias detection
-        if ratio < 0.7 or abs_diff > 0.3:
-            severity = 'high' if (ratio < 0.6 or abs_diff > 0.4) else 'medium'
-            
-            category_values = disparity['category_values']
-            min_cat = min(category_values, key=category_values.get)
-            max_cat = max(category_values, key=category_values.get)
-            
+        Returns diversity metrics for sources, categories, and temporal distribution
+        """
+        if not retrieved_docs:
             return {
-                'slice': slice_name,
-                'bias_type': metric_name,
-                'severity': severity,
-                'affected_groups': {
-                    'disadvantaged': min_cat,
-                    'advantaged': max_cat
-                },
-                'groups': {'disadvantaged': min_cat, 'advantaged': max_cat},
-                'metric_details': disparity
+                'num_unique_sources': 0,
+                'num_unique_categories': 0,
+                'source_diversity_ratio': 0.0,
+                'category_diversity_ratio': 0.0,
+                'source_distribution': {},
+                'category_distribution': {}
             }
         
-        return None
-    
-    def _fairlearn_analysis(self, evaluation_data: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Perform FairLearn-based bias analysis"""
-        try:
-            df = self._prepare_fairlearn_data(evaluation_data)
-            if df.empty:
-                return {'error': 'Insufficient data'}
-            
-            sensitive_features = ['domain_type', 'query_complexity', 'user_experience']
-            available = [f for f in sensitive_features if f in df.columns]
-            
-            if not available:
-                return {'error': 'No sensitive features available'}
-            
-            fairness_results = {}
-            y_true = (df['performance_score'] > df['performance_score'].median()).astype(int)
-            y_pred = y_true
-            
-            for feature in available:
-                try:
-                    mf = MetricFrame(
-                        metrics={'accuracy': accuracy_score, 'selection_rate': selection_rate},
-                        y_true=y_true, y_pred=y_pred, sensitive_features=df[feature]
-                    )
-                    
-                    fairness_results[feature] = {
-                        'overall_metrics': mf.overall.to_dict(),
-                        'by_group_metrics': mf.by_group.to_dict(),
-                        'difference_metrics': {
-                            'demographic_parity_diff': demographic_parity_difference(
-                                y_true, y_pred, sensitive_features=df[feature]
-                            ),
-                            'demographic_parity_ratio': demographic_parity_ratio(
-                                y_true, y_pred, sensitive_features=df[feature]
-                            )
-                        }
-                    }
-                except Exception as e:
-                    self.logger.warning(f"FairLearn analysis failed for {feature}: {e}")
-                    fairness_results[feature] = {'error': str(e)}
-            
-            return fairness_results
-        except Exception as e:
-            self.logger.error(f"FairLearn analysis failed: {e}")
-            return {'error': str(e)}
-    
-    def _prepare_fairlearn_data(self, evaluation_data: List[Dict[str, Any]]) -> pd.DataFrame:
-        """Prepare data for FairLearn analysis"""
-        records = []
+        sources = []
+        categories = []
         
-        for record in evaluation_data:
-            query = record.get('query', '').lower()
-            perf = record.get('performance_metrics', {})
+        for doc in retrieved_docs:
+            metadata = doc.get('metadata', {})
             
-            # Assign to slices
-            domain = self._assign_to_category(query, {}, [], self.slice_definitions['domain_type'])
-            complexity = self._assign_to_category(query, {}, [], self.slice_definitions['query_complexity'])
-            experience = self._assign_to_category(query, {}, [], self.slice_definitions['user_experience'])
+            # Extract source
+            source = metadata.get('source_name') or metadata.get('arxiv_id', 'unknown')
+            sources.append(source)
             
-            # Calculate composite score
-            performance_score = np.mean([
-                perf.get('retrieval_score', 0.5),
-                perf.get('response_quality', 0.5),
-                perf.get('source_diversity', 0.5)
-            ])
-            
-            records.append({
-                'query': query,
-                'domain_type': domain or 'unknown',
-                'query_complexity': complexity or 'unknown',
-                'user_experience': experience or 'unknown',
-                'performance_score': performance_score
+            # Extract categories
+            doc_categories = metadata.get('categories', [])
+            categories.extend(doc_categories)
+        
+        unique_sources = set(sources)
+        unique_categories = set(categories)
+        
+        # Calculate diversity ratios
+        source_diversity_ratio = len(unique_sources) / len(retrieved_docs)
+        category_diversity_ratio = len(unique_categories) / max(len(retrieved_docs), 1)
+        
+        # Source distribution
+        from collections import Counter
+        source_counts = Counter(sources)
+        source_distribution = {src: count/len(sources) for src, count in source_counts.items()}
+        
+        # Category distribution
+        category_counts = Counter(categories)
+        category_distribution = {cat: count/len(categories) for cat, count in category_counts.items()} if categories else {}
+        
+        return {
+            'num_unique_sources': len(unique_sources),
+            'num_unique_categories': len(unique_categories),
+            'source_diversity_ratio': source_diversity_ratio,
+            'category_diversity_ratio': category_diversity_ratio,
+            'source_distribution': source_distribution,
+            'category_distribution': category_distribution,
+            'total_docs': len(retrieved_docs)
+        }
+
+    def _classify_query(self, query: str) -> Dict[str, Any]:
+        """
+        Classify query characteristics for context in fairness evaluation
+        """
+        query_lower = query.lower()
+        
+        # Detect query complexity
+        complexity = 'unknown'
+        for complexity_level, keywords in self.slice_definitions['query_complexity'].items():
+            if any(keyword in query_lower for keyword in keywords):
+                complexity = complexity_level
+                break
+        
+        # Detect domain
+        domain = 'unknown'
+        for domain_type, keywords in self.slice_definitions['domain_type'].items():
+            if any(keyword in query_lower for keyword in keywords):
+                domain = domain_type
+                break
+        
+        # Detect experience level
+        experience = 'unknown'
+        for exp_level, keywords in self.slice_definitions['user_experience'].items():
+            if any(keyword in query_lower for keyword in keywords):
+                experience = exp_level
+                break
+        
+        return {
+            'complexity': complexity,
+            'domain': domain,
+            'experience_level': experience
+        }
+
+    def _generate_fairness_warnings(self, 
+                                    indicators: Dict[str, float],
+                                    diversity_metrics: Dict[str, Any],
+                                    query_characteristics: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate warnings for potential fairness issues
+        """
+        warnings = []
+        
+        # Warning: Low source diversity
+        if indicators['source_diversity_score'] < 0.3:
+            warnings.append({
+                'type': 'low_source_diversity',
+                'severity': 'medium',
+                'message': f"Low source diversity: Only {diversity_metrics['num_unique_sources']} unique sources in {diversity_metrics['total_docs']} documents",
+                'recommendation': "Consider retrieving from more diverse sources"
             })
         
-        return pd.DataFrame(records)
+        # Warning: Single source dominance
+        if diversity_metrics['source_distribution']:
+            max_source_ratio = max(diversity_metrics['source_distribution'].values())
+            if max_source_ratio > 0.7:
+                warnings.append({
+                    'type': 'source_dominance',
+                    'severity': 'high',
+                    'message': f"Single source dominates with {max_source_ratio*100:.1f}% of results",
+                    'recommendation': "Diversify retrieval to include more sources"
+                })
+        
+        # Warning: Low retrieval quality
+        if indicators['retrieval_quality_score'] < 0.4:
+            warnings.append({
+                'type': 'low_retrieval_quality',
+                'severity': 'medium',
+                'message': f"Low retrieval quality score: {indicators['retrieval_quality_score']:.2f}",
+                'recommendation': "Retrieved documents may not be highly relevant to the query"
+            })
+        
+        # Warning: Low response quality
+        if indicators['response_quality_score'] < 0.5:
+            warnings.append({
+                'type': 'low_response_quality',
+                'severity': 'high',
+                'message': f"Low response quality score: {indicators['response_quality_score']:.2f}",
+                'recommendation': "Response validation indicates potential issues with generated answer"
+            })
+        
+        return warnings
     
-    
-    def _calculate_fairness_score(self, bias_analysis: Dict[str, Any]) -> float:
-        """Calculate overall fairness score (0-1, higher is better)"""
-        significant_biases = bias_analysis.get('significant_biases', [])
+    def evaluate_single_query_fairness_with_fairlearn(self, evaluation_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Single-query fairness evaluation using Fairlearn metrics.
         
-        if not significant_biases:
-            return 1.0
+        Uses a synthetic approach where we create a small evaluation dataset by:
+        1. Analyzing retrieved documents as individual samples
+        2. Treating document sources/categories as sensitive features
+        3. Using Fairlearn to measure demographic parity across these groups
         
-        penalty = sum(0.3 if b['severity'] == 'high' else 0.2 if b['severity'] == 'medium' else 0.1
-                     for b in significant_biases)
+        Args:
+            evaluation_data: Single query evaluation data
+                
+        Returns:
+            Fairness report with Fairlearn metrics
+        """
+        self.logger.info("Running single-query fairness evaluation with Fairlearn")
         
-        return max(0.0, 1.0 - penalty)
+        if not FAIRLEARN_AVAILABLE:
+            self.logger.warning("Fairlearn not available. Falling back to basic fairness evaluation.")
+            return self.evaluate_single_query_fairness(evaluation_data)
+        
+        query = evaluation_data.get('query', '')
+        retrieved_docs = evaluation_data.get('retrieved_docs', [])
+        response = evaluation_data.get('response', '')
+        perf_metrics = evaluation_data.get('performance_metrics', {})
+        
+        # 1. Analyze retrieval diversity (basic metrics)
+        diversity_metrics = self._analyze_retrieval_diversity(retrieved_docs)
+        
+        # 2. Classify query characteristics
+        query_characteristics = self._classify_query(query)
+        
+        # 3. Prepare Fairlearn evaluation data from retrieved documents
+        fairlearn_results = self._fairlearn_single_query_analysis(
+            retrieved_docs, 
+            query_characteristics
+        )
+        
+        # 4. Calculate fairness indicators
+        retrieval_score = perf_metrics.get('retrieval_score', 0.0)
+        response_quality = perf_metrics.get('response_quality', 0.0)
+        
+        fairness_indicators = {
+            'source_diversity_score': diversity_metrics['source_diversity_ratio'],
+            'category_diversity_score': diversity_metrics['category_diversity_ratio'],
+            'retrieval_quality_score': retrieval_score,
+            'response_quality_score': response_quality,
+        }
+        
+        # 5. Combine Fairlearn metrics with fairness indicators
+        if fairlearn_results and 'error' not in fairlearn_results:
+            # Incorporate Fairlearn demographic parity into overall score
+            fairlearn_fairness_score = self._calculate_fairlearn_fairness_score(
+                fairlearn_results
+            )
+            fairness_indicators['fairlearn_fairness_score'] = fairlearn_fairness_score
+        else:
+            fairness_indicators['fairlearn_fairness_score'] = 0.5  # Neutral if unavailable
+        
+        # 6. Calculate overall fairness score (now including Fairlearn)
+        overall_fairness = self._calculate_single_query_fairness_score_with_fairlearn(
+            fairness_indicators
+        )
+        
+        # 7. Generate warnings
+        warnings = self._generate_fairness_warnings_with_fairlearn(
+            fairness_indicators,
+            diversity_metrics,
+            query_characteristics,
+            fairlearn_results
+        )
+        
+        return {
+            'overall_fairness_score': overall_fairness,
+            'query_characteristics': query_characteristics,
+            'diversity_metrics': diversity_metrics,
+            'fairness_indicators': fairness_indicators,
+            'fairlearn_analysis': fairlearn_results,
+            'warnings': warnings,
+            'timestamp': datetime.now().isoformat(),
+            'evaluation_type': 'single_query_fairlearn'
+        }
+
+    def _fairlearn_single_query_analysis(self, 
+                                        retrieved_docs: List[Dict[str, Any]],
+                                        query_characteristics: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Perform Fairlearn analysis on retrieved documents for a single query.
+        
+        Strategy:
+        - Treat each retrieved document as a sample
+        - Use document source and category as sensitive features
+        - Use retrieval rank/score as the outcome to measure
+        - Check if high-quality results are equitably distributed across sources
+        
+        Returns:
+            Fairlearn metrics including demographic parity
+        """
+        if not retrieved_docs or len(retrieved_docs) < 2:
+            return {'error': 'Insufficient documents for Fairlearn analysis'}
+        
+        try:
+            # Prepare data: each document is a sample
+            sources = []
+            categories = []
+            scores = []
+            high_quality_flags = []  # Binary: is this a high-quality result?
+            
+            # Calculate score threshold (top 50% of results are "high quality")
+            all_scores = [doc.get('score', 0.0) for doc in retrieved_docs]
+            if not all_scores:
+                return {'error': 'No scores available'}
+            
+            median_score = np.median(all_scores)
+            
+            for doc in retrieved_docs:
+                metadata = doc.get('metadata', {})
+                score = doc.get('score', 0.0)
+                
+                # Extract source
+                source = metadata.get('source_name') or metadata.get('source', 'unknown')
+                sources.append(source)
+                
+                # Extract primary category
+                doc_categories = metadata.get('categories', [])
+                category = doc_categories[0] if doc_categories else 'unknown'
+                categories.append(category)
+                
+                # Score
+                scores.append(score)
+                
+                # Binary outcome: is this a high-quality result?
+                high_quality = 1 if score >= median_score else 0
+                high_quality_flags.append(high_quality)
+            
+            # Convert to arrays
+            y_true = np.array(high_quality_flags)
+            y_pred = np.array(high_quality_flags)  # Using same as true for selection rate analysis
+            
+            # Analyze fairness across SOURCE dimension
+            source_fairness = self._analyze_fairlearn_dimension(
+                y_true, y_pred, sources, 'source'
+            )
+            
+            # Analyze fairness across CATEGORY dimension
+            category_fairness = self._analyze_fairlearn_dimension(
+                y_true, y_pred, categories, 'category'
+            )
+            
+            # Calculate overall Fairlearn-based fairness
+            fairlearn_summary = {
+                'source_analysis': source_fairness,
+                'category_analysis': category_fairness,
+                'num_documents_analyzed': len(retrieved_docs),
+                'median_score': float(median_score),
+                'score_distribution': {
+                    'min': float(min(all_scores)),
+                    'max': float(max(all_scores)),
+                    'mean': float(np.mean(all_scores)),
+                    'std': float(np.std(all_scores))
+                }
+            }
+            
+            return fairlearn_summary
+            
+        except Exception as e:
+            self.logger.error(f"Fairlearn single-query analysis failed: {e}")
+            return {'error': str(e)}
+
+    def _analyze_fairlearn_dimension(self, 
+                                    y_true: np.ndarray, 
+                                    y_pred: np.ndarray,
+                                    sensitive_features: List[str],
+                                    dimension_name: str) -> Dict[str, Any]:
+        """
+        Analyze fairness along a specific dimension (source or category) using Fairlearn
+        
+        Returns:
+            Dictionary with demographic parity metrics
+        """
+        try:
+            # Handle case with only one unique group
+            unique_groups = set(sensitive_features)
+            if len(unique_groups) < 2:
+                return {
+                    'warning': f'Only one unique {dimension_name} group found',
+                    'unique_groups': len(unique_groups),
+                    'groups': list(unique_groups)
+                }
+            
+            # Calculate MetricFrame
+            mf = MetricFrame(
+                metrics={
+                    'selection_rate': selection_rate,
+                },
+                y_true=y_true,
+                y_pred=y_pred,
+                sensitive_features=np.array(sensitive_features)
+            )
+            
+            # Calculate demographic parity metrics
+            dp_diff = demographic_parity_difference(
+                y_true, y_pred, 
+                sensitive_features=np.array(sensitive_features)
+            )
+            
+            dp_ratio = demographic_parity_ratio(
+                y_true, y_pred,
+                sensitive_features=np.array(sensitive_features)
+            )
+            
+            # Get per-group metrics
+            by_group = mf.by_group.to_dict()
+            
+            # Identify advantaged and disadvantaged groups
+            group_rates = by_group.get('selection_rate', {})
+            if group_rates:
+                max_group = max(group_rates, key=group_rates.get)
+                min_group = min(group_rates, key=group_rates.get)
+            else:
+                max_group = min_group = 'unknown'
+            
+            return {
+                'demographic_parity_difference': float(dp_diff),
+                'demographic_parity_ratio': float(dp_ratio) if not np.isnan(dp_ratio) else 0.0,
+                'overall_selection_rate': float(mf.overall['selection_rate']),
+                'by_group_selection_rates': {k: float(v) for k, v in group_rates.items()},
+                'advantaged_group': max_group,
+                'disadvantaged_group': min_group,
+                'num_groups': len(unique_groups),
+                'groups': list(unique_groups),
+                'fairness_assessment': self._assess_fairlearn_fairness(dp_diff, dp_ratio)
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"Fairlearn analysis for {dimension_name} failed: {e}")
+            return {'error': str(e)}
+
+    def _assess_fairlearn_fairness(self, dp_diff: float, dp_ratio: float) -> str:
+        """
+        Assess fairness based on Fairlearn demographic parity metrics
+        
+        Demographic Parity Difference (DP Diff): 
+            - Closer to 0 is better (ideal = 0)
+            - Range: [0, 1]
+            - Threshold: < 0.1 is fair, > 0.2 is unfair
+        
+        Demographic Parity Ratio (DP Ratio):
+            - Closer to 1 is better (ideal = 1)
+            - Range: [0, 1]
+            - Threshold: > 0.8 is fair, < 0.6 is unfair
+        """
+        if abs(dp_diff) < 0.1 and (np.isnan(dp_ratio) or dp_ratio > 0.8):
+            return 'FAIR'
+        elif abs(dp_diff) < 0.2 and (np.isnan(dp_ratio) or dp_ratio > 0.6):
+            return 'MODERATE'
+        else:
+            return 'UNFAIR'
+
+    def _calculate_fairlearn_fairness_score(self, fairlearn_results: Dict[str, Any]) -> float:
+        """
+        Calculate a fairness score [0, 1] from Fairlearn results
+        
+        Higher is better (1.0 = perfectly fair)
+        """
+        if 'error' in fairlearn_results:
+            return 0.5  # Neutral score if error
+        
+        scores = []
+        
+        # Source fairness score
+        source_analysis = fairlearn_results.get('source_analysis', {})
+        if 'demographic_parity_difference' in source_analysis:
+            dp_diff = abs(source_analysis['demographic_parity_difference'])
+            # Convert to score: 0 diff = 1.0 score, 1.0 diff = 0.0 score
+            source_score = max(0.0, 1.0 - dp_diff)
+            scores.append(source_score)
+        
+        # Category fairness score
+        category_analysis = fairlearn_results.get('category_analysis', {})
+        if 'demographic_parity_difference' in category_analysis:
+            dp_diff = abs(category_analysis['demographic_parity_difference'])
+            category_score = max(0.0, 1.0 - dp_diff)
+            scores.append(category_score)
+        
+        if not scores:
+            return 0.5
+        
+        return np.mean(scores)
+
+    def _calculate_single_query_fairness_score_with_fairlearn(self, 
+                                                            indicators: Dict[str, float]) -> float:
+        """
+        Calculate overall fairness score including Fairlearn metrics
+        
+        Weighted combination:
+        - Source diversity (20%)
+        - Category diversity (15%)
+        - Retrieval quality (20%)
+        - Response quality (20%)
+        - Fairlearn fairness (25%) - NEW!
+        """
+        weights = {
+            'source_diversity_score': 0.20,
+            'category_diversity_score': 0.15,
+            'retrieval_quality_score': 0.20,
+            'response_quality_score': 0.20,
+            'fairlearn_fairness_score': 0.25
+        }
+        
+        fairness_score = sum(
+            indicators.get(key, 0.0) * weight 
+            for key, weight in weights.items()
+        )
+        
+        return min(1.0, max(0.0, fairness_score))
+
+    def _generate_fairness_warnings_with_fairlearn(self,
+                                                indicators: Dict[str, float],
+                                                diversity_metrics: Dict[str, Any],
+                                                query_characteristics: Dict[str, Any],
+                                                fairlearn_results: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Generate warnings including Fairlearn-based insights
+        """
+        warnings = []
+        
+        # Existing warnings (from base method)
+        warnings.extend(self._generate_fairness_warnings(
+            indicators, diversity_metrics, query_characteristics
+        ))
+        
+        # Fairlearn-specific warnings
+        if fairlearn_results and 'error' not in fairlearn_results:
+            
+            # Source fairness warnings
+            source_analysis = fairlearn_results.get('source_analysis', {})
+            if 'fairness_assessment' in source_analysis:
+                assessment = source_analysis['fairness_assessment']
+                
+                if assessment == 'UNFAIR':
+                    dp_diff = source_analysis.get('demographic_parity_difference', 0)
+                    disadvantaged = source_analysis.get('disadvantaged_group', 'unknown')
+                    advantaged = source_analysis.get('advantaged_group', 'unknown')
+                    
+                    warnings.append({
+                        'type': 'fairlearn_source_bias',
+                        'severity': 'high',
+                        'message': f"Fairlearn detected unfair source distribution (DP Diff: {dp_diff:.3f}). "
+                                f"Source '{advantaged}' is over-represented vs '{disadvantaged}'",
+                        'recommendation': "Adjust retrieval to balance representation across sources"
+                    })
+                
+                elif assessment == 'MODERATE':
+                    warnings.append({
+                        'type': 'fairlearn_source_concern',
+                        'severity': 'medium',
+                        'message': "Fairlearn detected moderate source imbalance",
+                        'recommendation': "Monitor source distribution in future queries"
+                    })
+            
+            # Category fairness warnings
+            category_analysis = fairlearn_results.get('category_analysis', {})
+            if 'fairness_assessment' in category_analysis:
+                assessment = category_analysis['fairness_assessment']
+                
+                if assessment == 'UNFAIR':
+                    dp_diff = category_analysis.get('demographic_parity_difference', 0)
+                    disadvantaged = category_analysis.get('disadvantaged_group', 'unknown')
+                    advantaged = category_analysis.get('advantaged_group', 'unknown')
+                    
+                    warnings.append({
+                        'type': 'fairlearn_category_bias',
+                        'severity': 'high',
+                        'message': f"Fairlearn detected unfair category distribution (DP Diff: {dp_diff:.3f}). "
+                                f"Category '{advantaged}' is over-represented vs '{disadvantaged}'",
+                        'recommendation': "Diversify retrieval across topic categories"
+                    })
+        
+        return warnings

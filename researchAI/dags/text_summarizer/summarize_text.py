@@ -2,7 +2,7 @@ from transformers import T5ForConditionalGeneration, T5Tokenizer
 import torch
 
 class Summarize:
-    def summarize_news_descriptions(content, model_repo="anirudhsayya/t5-small-xsum-finetuned"):
+    def summarize_news_descriptions(self, content, model_repo="anirudhsayya/t5-small-xsum-finetuned"):
         """
         Summarizes the 'description' field for all articles in news_data.
         

@@ -3,7 +3,7 @@ name: Simple RAG Model CI/CD
 on:
   push:
     branches:
-      - main
+      - feat/model-building
     paths:
       - 'faiss_indexes/**'
       - 'bm25_indexes/**'

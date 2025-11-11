@@ -12,7 +12,7 @@ from typing import Dict, Any, List
 import sys
 import os
 
-from pipeline import TechTrendsRAGPipeline
+from ..pipeline import TechTrendsRAGPipeline
 from utils.logger import setup_logging
 
 logger = logging.getLogger(__name__)

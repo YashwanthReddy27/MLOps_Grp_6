@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - feat/model-building
-    paths:
-      - 'faiss_indexes/**'
-      - 'bm25_indexes/**'
-      - 'test_queries.csv'
+    # paths:
+    #   - 'faiss_indexes/**'
+    #   - 'bm25_indexes/**'
+    #   - 'test_queries.csv'
   workflow_dispatch:
 
 env:
@@ -34,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r researchAI/model/requirements.txt
       
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
@@ -70,7 +70,7 @@ jobs:
             echo "ℹ️  No previous report - first run"
           fi
           
-          python evaluation/simple_evaluate.py \
+          python researchAI/model/evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
             --output evaluation_report.json \
             --validation-threshold 0.7 \

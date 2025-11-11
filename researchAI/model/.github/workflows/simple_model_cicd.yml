@@ -1,0 +1,212 @@
+name: Simple RAG Model CI/CD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'faiss_indexes/**'
+      - 'bm25_indexes/**'
+      - 'test_queries.csv'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_LOCATION: 'us-central1'
+  GCP_REPOSITORY: 'rag-models'
+
+jobs:
+  evaluate-and-push:
+    name: Evaluate Model & Push to Registry
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Setup
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+      
+      # Step 2: Download previous report (if exists)
+      - name: Download previous evaluation report
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: simple_model_cicd.yml
+          name: evaluation-report
+          path: ./previous_reports/
+          search_artifacts: true
+          if_no_artifact_found: warn
+      
+      # Steps 2-6: Run evaluation (generates responses, computes metrics, compares, pushes)
+      - name: Run Complete Evaluation Pipeline
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          PREVIOUS_REPORT=""
+          if [ -f ./previous_reports/evaluation_report.json ]; then
+            PREVIOUS_REPORT="--previous-report ./previous_reports/evaluation_report.json"
+            echo "✅ Found previous report for comparison"
+          else
+            echo "ℹ️  No previous report - first run"
+          fi
+          
+          python evaluation/simple_evaluate.py \
+            --test-data test_queries_with_expected.csv \
+            --output evaluation_report.json \
+            --validation-threshold 0.7 \
+            --fairness-threshold 0.6 \
+            --push-to-registry \
+            --project-id ${{ env.GCP_PROJECT_ID }} \
+            --location ${{ env.GCP_LOCATION }} \
+            --repository ${{ env.GCP_REPOSITORY }} \
+            --version "v$(date +%Y%m%d-%H%M%S)" \
+            $PREVIOUS_REPORT
+        id: evaluation
+      
+      # Save artifacts
+      - name: Upload evaluation report
+        uses: actions/upload-artifact@v3
+        with:
+          name: evaluation-report
+          path: evaluation_report.json
+          retention-days: 90
+      
+      - name: Upload artifact path
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact-info
+          path: artifact_path.txt
+          retention-days: 30
+      
+      # Step 7: Send email notification
+      - name: Read evaluation metrics
+        if: always()
+        id: read_metrics
+        run: |
+          if [ -f evaluation_report.json ]; then
+            STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
+            VALIDATION=$(jq -r '.aggregate_metrics.avg_validation_score' evaluation_report.json)
+            FAIRNESS=$(jq -r '.aggregate_metrics.avg_fairness_score' evaluation_report.json)
+            
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+            echo "validation=$VALIDATION" >> $GITHUB_OUTPUT
+            echo "fairness=$FAIRNESS" >> $GITHUB_OUTPUT
+          else
+            echo "status=FAILED" >> $GITHUB_OUTPUT
+            echo "validation=0.0" >> $GITHUB_OUTPUT
+            echo "fairness=0.0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Read artifact path
+        if: success()
+        id: read_artifact
+        run: |
+          if [ -f artifact_path.txt ]; then
+            ARTIFACT_PATH=$(cat artifact_path.txt)
+            echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+          else
+            echo "artifact_path=N/A" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "✅ RAG Model Deployed - v${{ github.run_number }}"
+          to: ${{ secrets.DEVELOPER_EMAIL }}
+          from: RAG Model CI/CD
+          body: |
+            New RAG model version has been successfully deployed!
+            
+            📊 Model Metrics:
+            - Validation Score: ${{ steps.read_metrics.outputs.validation }}
+            - Fairness Score: ${{ steps.read_metrics.outputs.fairness }}
+            - Status: ${{ steps.read_metrics.outputs.status }}
+            
+            📦 Artifact Location:
+            ${{ steps.read_artifact.outputs.artifact_path }}
+            
+            🔗 Details:
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            The model has passed all validation and fairness checks and is better than the previous version.
+      
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "❌ RAG Model Deployment Failed - v${{ github.run_number }}"
+          to: ${{ secrets.DEVELOPER_EMAIL }}
+          from: RAG Model CI/CD
+          body: |
+            RAG model deployment failed.
+            
+            📊 Model Metrics:
+            - Validation Score: ${{ steps.read_metrics.outputs.validation }}
+            - Fairness Score: ${{ steps.read_metrics.outputs.fairness }}
+            - Status: ${{ steps.read_metrics.outputs.status }}
+            
+            ❌ Failure Reasons (possible):
+            - Validation score below 0.7
+            - Fairness score below 0.6
+            - Model regressed compared to previous version
+            - Less than 80% queries passed checks
+            
+            🔗 Details:
+            - Commit: ${{ github.sha }}
+            - Branch: ${{ github.ref_name }}
+            - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            Please review the evaluation report and fix the issues.
+      
+      # Optional: Slack notification
+      - name: Send Slack Notification
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "${{ steps.evaluation.outcome == 'success' && '✅' || '❌' }} Model Evaluation ${{ steps.evaluation.outcome == 'success' && 'Succeeded' || 'Failed' }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*RAG Model CI/CD - ${{ steps.evaluation.outcome == 'success' && 'SUCCESS ✅' || 'FAILED ❌' }}*\n\n*Metrics:*\n• Validation: ${{ steps.read_metrics.outputs.validation }}\n• Fairness: ${{ steps.read_metrics.outputs.fairness }}\n\n*Commit:* ${{ github.sha }}\n*View Details:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow Run>"
+                  }
+                }
+              ]
+            }
+        continue-on-error: true

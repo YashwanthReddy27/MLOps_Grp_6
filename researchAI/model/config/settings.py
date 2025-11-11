@@ -47,7 +47,7 @@ class RetrievalConfig(BaseModel):
 
 class GenerationConfig(BaseModel):
     """LLM generation configuration"""
-    model_name: str = "gemini-2.0-flash-exp" 
+    model_name: str = "gemini-2.0-flash-001" 
     temperature: float = 0.3
     max_tokens: int = 1000
     top_p: float = 0.9
@@ -57,7 +57,7 @@ class GenerationConfig(BaseModel):
 class VectorStoreConfig(BaseModel):
     """FAISS vector database configuration"""
     provider: str = "faiss"
-    persist_directory: str = "./faiss_indexes"
+    persist_directory: str = "faiss_indexes"
     papers_index_name: str = "tech-papers"
     news_index_name: str = "tech-news"
     
@@ -77,7 +77,7 @@ class VectorStoreConfig(BaseModel):
 
 class BM25Config(BaseModel):
     """BM25 configuration"""
-    persist_directory: str = "./bm25_indexes"
+    persist_directory: str = "bm25_indexes"
     k1: float = 1.5
     b: float = 0.75
     tokenizer: str = "nltk"

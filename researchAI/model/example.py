@@ -155,8 +155,8 @@ def main():
         print("\nBuilding new indexes...")
         
         # Get data paths
-        papers_path = args.papers or 'data/arxiv_papers_processed_20251028_140608.json'
-        news_path = args.news or 'data/tech_news_summarized.json'
+        papers_path = args.papers or 'path'
+        news_path = args.news or 'path'
         
         # Check if paths are placeholders
         if papers_path == 'datafile_path_here' or news_path == 'datafile_path_here':

@@ -12,7 +12,10 @@ from typing import Dict, Any, List
 import sys
 import os
 
-from ..pipeline import TechTrendsRAGPipeline
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from pipeline import TechTrendsRAGPipeline
 from utils.logger import setup_logging
 
 logger = logging.getLogger(__name__)

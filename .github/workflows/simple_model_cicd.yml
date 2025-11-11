@@ -78,6 +78,8 @@ jobs:
           fi
           
           pwd
+          sudo chmod +777 /faiss_indexes
+          sudo chmod +777 /bm25_indexes
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \

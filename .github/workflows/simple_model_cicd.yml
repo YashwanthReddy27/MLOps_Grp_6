@@ -49,10 +49,13 @@ jobs:
       # Step 2: Download previous report (if exists)
       - name: Download previous evaluation report
         continue-on-error: true
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: simple_model_cicd.yml
           name: evaluation-report
           path: ./previous_reports/
+          search_artifacts: true
+          if_no_artifact_found: warn
       
       # Steps 2-6: Run evaluation (generates responses, computes metrics, compares, pushes)
       - name: Run Complete Evaluation Pipeline

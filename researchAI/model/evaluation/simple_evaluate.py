@@ -5,6 +5,7 @@ Assumes indexes are already built
 import json
 import logging
 import pandas as pd
+import numpy as np
 import argparse
 from pathlib import Path
 from datetime import datetime
@@ -232,12 +233,33 @@ class SimpleModelEvaluator:
     
     def save_report(self, results: Dict[str, Any], output_path: str):
         """Save evaluation report"""
+        # Convert numpy types to Python types for JSON serialization
+        def convert_to_serializable(obj):
+            """Recursively convert numpy types to Python types"""
+            if isinstance(obj, dict):
+                return {k: convert_to_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_serializable(item) for item in obj]
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
+            elif isinstance(obj, (np.int_, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.float_, np.float16, np.float32, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return obj
+        
+        # Convert results to serializable format
+        serializable_results = convert_to_serializable(results)
+        
         with open(output_path, 'w') as f:
-            json.dump(results, f, indent=2)
+            json.dump(serializable_results, f, indent=2)
         
         self.logger.info(f"Saved report to {output_path}")
         
-        # Print summary
+        # Print summary (use original results for display)
         agg = results['aggregate_metrics']
         print("\n" + "="*80)
         print("EVALUATION SUMMARY")
@@ -249,7 +271,6 @@ class SimpleModelEvaluator:
             print(f"Response Similarity: {agg['avg_response_similarity']:.3f}")
         print(f"Pass Rates: Validation {agg['validation_pass_rate']*100:.0f}%, Fairness {agg['fairness_pass_rate']*100:.0f}%")
         print("="*80 + "\n")
-
 
 def push_to_artifact_registry(pipeline, project_id: str, location: str, 
                               repository: str, version: str, 

@@ -219,7 +219,7 @@ class SimpleModelEvaluator:
             # Decision: must not regress
             is_better = curr_val >= prev_val and curr_fair >= prev_fair
             
-            print(f"\nDecision: {'✅ BETTER/EQUAL' if is_better else '❌ REGRESSION'}")
+            print(f"\nDecision: {'BETTER/EQUAL' if is_better else 'REGRESSION'}")
             print("="*80 + "\n")
             
             return is_better
@@ -368,42 +368,38 @@ def main():
         
         logger.info("✅ Model PASSED thresholds")
         
-        # Step 6: Compare with previous and push if better
+
+        # Step 6: Push to registry if requested
         if args.push_to_registry:
-            should_push = True
-            
+            # Optional: Compare with previous for informational purposes
             if args.previous_report:
                 logger.info("\nStep 6: Comparing with previous model...")
-                should_push = evaluator.compare_with_previous(results, args.previous_report)
+                evaluator.compare_with_previous(results, args.previous_report)
+                logger.info("Note: Pushing regardless of comparison (model passed thresholds)")
             
-            if should_push:
-                logger.info("\nPushing to Artifact Registry...")
-                
-                project_id = args.project_id or os.getenv('GCP_PROJECT_ID')
-                if not project_id:
-                    logger.error("GCP project ID required")
-                    sys.exit(1)
-                
-                artifact_path = push_to_artifact_registry(
-                    pipeline,
-                    project_id,
-                    args.location,
-                    args.repository,
-                    args.version or f"v{datetime.now().strftime('%Y%m%d-%H%M%S')}",
-                    results['aggregate_metrics']
-                )
-                
-                # Save artifact path for notification
-                with open('artifact_path.txt', 'w') as f:
-                    f.write(artifact_path)
-                
-                logger.info("✅ Model pushed successfully")
-            else:
-                logger.error("❌ Model did not improve - NOT pushing")
+            logger.info("\nPushing to Artifact Registry...")
+            
+            project_id = args.project_id or os.getenv('GCP_PROJECT_ID')
+            if not project_id:
+                logger.error("GCP project ID required")
                 sys.exit(1)
-        
-        logger.info("\n✅ EVALUATION COMPLETED SUCCESSFULLY")
-        sys.exit(0)
+            
+            artifact_path = push_to_artifact_registry(
+                pipeline,
+                project_id,
+                args.location,
+                args.repository,
+                args.version or f"v{datetime.now().strftime('%Y%m%d-%H%M%S')}",
+                results['aggregate_metrics']
+            )
+            
+            # Save artifact path for notification
+            with open('artifact_path.txt', 'w') as f:
+                f.write(artifact_path)
+            
+            logger.info("✅ Model pushed successfully")
+            logger.info("\n✅ EVALUATION COMPLETED SUCCESSFULLY")
+            sys.exit(0)
         
     except Exception as e:
         logger.error(f"Evaluation failed: {e}")

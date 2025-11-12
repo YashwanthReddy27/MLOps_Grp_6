@@ -29,13 +29,13 @@ rag-env/
 /dist
 
 # Project Specific
-faiss_indexes/
-bm25_indexes/
+# faiss_indexes/
+# bm25_indexes/
 cache/
 logs/
 *.log
-*.pkl
-*.faiss
+# *.pkl
+# *.faiss
 
 # MLflow
 mlruns/

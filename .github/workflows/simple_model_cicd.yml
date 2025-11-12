@@ -73,13 +73,8 @@ jobs:
             echo "ℹ️  No previous report - first run"
           fi
           
-          PUSH_FLAG=""
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            PUSH_FLAG="--push-to-registry"
-            echo "🚀 Main branch: Will push to Artifact Registry if passed"
-          else
-            echo "🔍 Feature branch: Will evaluate only (no push to registry)"
-          fi
+          PUSH_FLAG="--push-to-registry"
+          echo "🚀 Will push to Artifact Registry if passed"
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \

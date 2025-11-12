@@ -77,10 +77,6 @@ jobs:
             echo "🔍 Feature branch: Will evaluate only (no push to registry)"
           fi
           
-          pwd
-          sudo chmod 777 /faiss_indexes
-          sudo chmod 777 /bm25_indexes
-
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
             --output evaluation_report.json \

@@ -122,55 +122,33 @@ jobs:
             STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
             VALIDATION=$(jq -r '.aggregate_metrics.avg_validation_score' evaluation_report.json)
             FAIRNESS=$(jq -r '.aggregate_metrics.avg_fairness_score' evaluation_report.json)
+            VAL_THRESHOLD=$(jq -r '.aggregate_metrics.thresholds.validation' evaluation_report.json)
+            FAIR_THRESHOLD=$(jq -r '.aggregate_metrics.thresholds.fairness' evaluation_report.json)
+            VAL_PASS_RATE=$(jq -r '.aggregate_metrics.validation_pass_rate' evaluation_report.json)
+            FAIR_PASS_RATE=$(jq -r '.aggregate_metrics.fairness_pass_rate' evaluation_report.json)
             
             echo "status=$STATUS" >> $GITHUB_OUTPUT
             echo "validation=$VALIDATION" >> $GITHUB_OUTPUT
             echo "fairness=$FAIRNESS" >> $GITHUB_OUTPUT
+            echo "val_threshold=$VAL_THRESHOLD" >> $GITHUB_OUTPUT
+            echo "fair_threshold=$FAIR_THRESHOLD" >> $GITHUB_OUTPUT
+            echo "val_pass_rate=$VAL_PASS_RATE" >> $GITHUB_OUTPUT
+            echo "fair_pass_rate=$FAIR_PASS_RATE" >> $GITHUB_OUTPUT
+            
+            # Calculate gaps
+            VAL_GAP=$(echo "$VAL_THRESHOLD - $VALIDATION" | bc)
+            FAIR_GAP=$(echo "$FAIR_THRESHOLD - $FAIRNESS" | bc)
+            echo "val_gap=$VAL_GAP" >> $GITHUB_OUTPUT
+            echo "fair_gap=$FAIR_GAP" >> $GITHUB_OUTPUT
           else
             echo "status=FAILED" >> $GITHUB_OUTPUT
             echo "validation=0.0" >> $GITHUB_OUTPUT
             echo "fairness=0.0" >> $GITHUB_OUTPUT
+            echo "val_threshold=0.7" >> $GITHUB_OUTPUT
+            echo "fair_threshold=0.6" >> $GITHUB_OUTPUT
+            echo "val_gap=0.7" >> $GITHUB_OUTPUT
+            echo "fair_gap=0.6" >> $GITHUB_OUTPUT
           fi
-      
-      - name: Read artifact path
-        if: success() && github.ref == 'refs/heads/main'
-        id: read_artifact
-        run: |
-          if [ -f artifact_path.txt ]; then
-            ARTIFACT_PATH=$(cat artifact_path.txt)
-            echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
-          else
-            echo "artifact_path=N/A" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Send Success Email
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 587
-          username: ${{ secrets.EMAIL_USERNAME }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "✅ RAG Model Evaluation Passed - Branch: ${{ github.ref_name }}"
-          to: ${{ secrets.DEVELOPER_EMAIL }}
-          from: RAG Model CI/CD
-          body: |
-            RAG model evaluation succeeded on branch: ${{ github.ref_name }}
-            
-            📊 Model Metrics:
-            - Validation Score: ${{ steps.read_metrics.outputs.validation }}
-            - Fairness Score: ${{ steps.read_metrics.outputs.fairness }}
-            - Status: ${{ steps.read_metrics.outputs.status }}
-            
-            ${{ github.ref == 'refs/heads/main' && format('📦 Artifact Location: {0}', steps.read_artifact.outputs.artifact_path) || '🔍 Feature Branch - No artifact push' }}
-            
-            🔗 Details:
-            - Commit: ${{ github.sha }}
-            - Branch: ${{ github.ref_name }}
-            - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            
-            ${{ github.ref == 'refs/heads/main' && 'The model has passed all checks and has been pushed to Artifact Registry.' || 'Model evaluated successfully. Merge to main to push to Artifact Registry.' }}
-        continue-on-error: true
       
       - name: Send Failure Email
         if: failure()
@@ -180,28 +158,42 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "❌ RAG Model Evaluation Failed - Branch: ${{ github.ref_name }}"
+          subject: "❌ RAG Model Evaluation FAILED - ${{ github.ref_name }}"
           to: ${{ secrets.DEVELOPER_EMAIL }}
           from: RAG Model CI/CD
           body: |
-            RAG model evaluation failed on branch: ${{ github.ref_name }}
+            ❌ RAG Model Evaluation FAILED
             
-            📊 Model Metrics:
-            - Validation Score: ${{ steps.read_metrics.outputs.validation }}
-            - Fairness Score: ${{ steps.read_metrics.outputs.fairness }}
-            - Status: ${{ steps.read_metrics.outputs.status }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
             
-            ❌ Failure Reasons (possible):
-            - Validation score below 0.7
-            - Fairness score below 0.6
-            - Model regressed compared to previous version
-            - Less than 80% queries passed checks
-            - Missing indexes (faiss_indexes/ and bm25_indexes/)
+            📊 METRICS THAT FAILED:
             
-            🔗 Details:
-            - Commit: ${{ github.sha }}
-            - Branch: ${{ github.ref_name }}
-            - Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Validation Score:
+              • Achieved: ${{ steps.read_metrics.outputs.validation }}
+              • Required: ${{ steps.read_metrics.outputs.val_threshold }}
+              • Gap: ${{ steps.read_metrics.outputs.val_gap }} below threshold
+              • Pass Rate: ${{ steps.read_metrics.outputs.val_pass_rate }}
             
-            Please review the evaluation report and fix the issues.
+            Fairness Score:
+              • Achieved: ${{ steps.read_metrics.outputs.fairness }}
+              • Required: ${{ steps.read_metrics.outputs.fair_threshold }}
+              • Gap: ${{ steps.read_metrics.outputs.fair_gap }} below threshold
+              • Pass Rate: ${{ steps.read_metrics.outputs.fair_pass_rate }}
+            
+            ⚠️ POSSIBLE REASONS FOR FAILURE:
+            1. Validation score below 0.7 threshold
+            2. Fairness score below 0.6 threshold
+            3. Model regressed compared to previous version
+            4. Less than 80% of queries passed validation checks
+            5. Less than 80% of queries passed fairness checks
+            
+            🔧 NEXT STEPS:
+            • Review the evaluation report artifact in GitHub Actions
+            • Check if indexes are properly loaded
+            • Verify test queries in test_queries_with_expected.csv
+            • Improve retrieval or generation parameters if needed
+            
+            🔗 View Full Details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         continue-on-error: true

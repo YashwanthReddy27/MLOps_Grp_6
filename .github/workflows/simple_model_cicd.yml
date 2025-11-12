@@ -36,6 +36,14 @@ jobs:
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
       
+      - name: Run Indexing Script
+        env:
+          PYTHONPATH: ${{ github.workspace }}/researchAI/model
+        run: |
+          cd researchAI/model
+          python indexing_script.py
+          cd ../..
+      
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:

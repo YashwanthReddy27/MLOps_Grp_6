@@ -335,3 +335,62 @@ class TechTrendsRAGPipeline:
         
         self.logger.info(f"Model successfully pushed to: {artifact_path}")
         return artifact_path
+    
+    def update_indexes(self, papers: List[Dict[str, Any]] = None,
+                   news: List[Dict[str, Any]] = None):
+        """
+        Update existing indexes with new documents
+        
+        Args:
+            papers: List of new arXiv papers
+            news: List of new news articles
+        """
+        self.logger.info("Starting incremental index update")
+        
+        # Try to load existing indexes first
+        indexes_loaded = self.load_indexes()
+        
+        if not indexes_loaded:
+            self.logger.warning("No existing indexes found. Creating new indexes...")
+            self.index_documents(papers=papers, news=news)
+            return
+        
+        # Process and update papers
+        if papers:
+            self.logger.info(f"Updating indexes with {len(papers)} new papers")
+            for paper in papers:
+                # Process document
+                processed_doc = self.doc_processor.process_arxiv_paper(paper)
+                
+                # Create chunks
+                doc_chunks = self.chunker.create_chunks(processed_doc)
+                
+                # Generate embeddings
+                doc_chunks = self.embedder.embed_chunks(doc_chunks)
+                
+                # Update indexes
+                self.retriever.update_indexes(doc_chunks, 'paper')
+                
+                self.logger.info(f"Updated with {len(doc_chunks)} paper chunks")
+        
+        # Process and update news
+        if news:
+            self.logger.info(f"Updating indexes with {len(news)} new articles")
+            for article in news:
+                # Process document
+                processed_doc = self.doc_processor.process_news_article(article)
+                
+                # Create chunks
+                doc_chunks = self.chunker.create_chunks(processed_doc)
+                
+                # Generate embeddings
+                doc_chunks = self.embedder.embed_chunks(doc_chunks)
+                
+                # Update indexes
+                self.retriever.update_indexes(doc_chunks, 'news')
+                
+                self.logger.info(f"Updated with {len(doc_chunks)} news chunks")
+        
+        # Save updated indexes
+        self.retriever.save_indexes()
+        self.logger.info("Index update completed and saved")

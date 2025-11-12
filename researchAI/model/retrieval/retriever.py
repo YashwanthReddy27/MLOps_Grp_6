@@ -336,3 +336,29 @@ class HybridRetriever:
                 }
             }
         }
+    
+    def update_indexes(self, chunks: List[Dict[str, Any]], doc_type: str):
+        """
+        Update existing indexes with new chunks
+        
+        Args:
+            chunks: List of chunks with embeddings
+            doc_type: 'paper' or 'news'
+        """
+        self.logger.info(f"Updating indexes with {len(chunks)} {doc_type} chunks")
+        
+        # Select appropriate indexes
+        if doc_type == 'paper':
+            dense_index = self.paper_dense
+            sparse_index = self.paper_sparse
+        else:
+            dense_index = self.news_dense
+            sparse_index = self.news_sparse
+        
+        # Update FAISS
+        dense_index.update(chunks)
+        
+        # Update BM25
+        sparse_index.update(chunks)
+        
+        self.logger.info(f"Updated {len(chunks)} {doc_type} chunks in indexes")

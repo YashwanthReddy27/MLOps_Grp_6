@@ -237,3 +237,41 @@ class FAISSVectorStore:
             'dimension': self.dimension,
             'is_trained': self.index.is_trained if hasattr(self.index, 'is_trained') else True
         }
+    
+    def update(self, chunks: List[Dict[str, Any]]):
+        """
+        Update existing index with new chunks
+        
+        Args:
+            chunks: List of new chunks with embeddings
+        """
+        if self.index is None:
+            self.logger.warning("No existing index found. Creating new index...")
+            self.create_index()
+        
+        # Extract embeddings
+        embeddings = np.array([chunk['embedding'] for chunk in chunks]).astype('float32')
+        
+        # Normalize for cosine similarity
+        faiss.normalize_L2(embeddings)
+        
+        # Train if needed (for IVF indexes)
+        if self.config.index_type == "IVFFlat" and not self.index.is_trained:
+            self.train_index(embeddings)
+        
+        # Add to existing index
+        self.index.add(embeddings)
+        
+        # Append metadata
+        for chunk in chunks:
+            self.chunk_ids.append(chunk['chunk_id'])
+            self.metadata.append({
+                'chunk_id': chunk['chunk_id'],
+                'doc_id': chunk['doc_id'],
+                'doc_type': chunk['doc_type'],
+                'text': chunk['text'],
+                'chunk_index': chunk['chunk_index'],
+                **chunk.get('metadata', {})
+            })
+        
+        self.logger.info(f"Updated index with {len(chunks)} new chunks (total: {len(self.chunk_ids)})")

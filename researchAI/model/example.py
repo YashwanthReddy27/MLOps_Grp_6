@@ -132,8 +132,14 @@ def main():
                        help='Model version (default: auto-generated)')
     parser.add_argument('--description', type=str,
                        help='Version description')
+
+    parser.add_argument('--update', action='store_true',
+                   help='Update existing indexes instead of building new ones')
     
     args = parser.parse_args()
+
+
+
     
     # Initialize pipeline
     print_separator("INITIALIZING RAG PIPELINE")
@@ -151,6 +157,44 @@ def main():
         else:
             print("No existing indexes found. Please build indexes first.")
             return
+    elif args.update:
+        print("\nUpdating existing indexes with new data...")
+        
+        # Get data paths
+        papers_path = args.papers or 'datafile_path_here'
+        news_path = args.news or 'datafile_path_here'
+        
+        # Check if paths are placeholders
+        if papers_path == 'datafile_path_here' or news_path == 'datafile_path_here':
+            print("  Please provide data file paths using --papers and --news arguments")
+            return
+        
+        # Load data
+        try:
+            with open(papers_path, 'r') as f:
+                papers_data = json.load(f)
+                papers = papers_data.get('papers', [])
+            print(f"Loaded {len(papers)} new papers")
+        except FileNotFoundError:
+            papers = []
+            print(f"No papers file found at: {papers_path}")
+        
+        try:
+            with open(news_path, 'r') as f:
+                news_data = json.load(f)
+                news = news_data.get('articles', [])
+            print(f"Loaded {len(news)} new articles")
+        except FileNotFoundError:
+            news = []
+            print(f"No news file found at: {news_path}")
+        
+        if not papers and not news:
+            print("No new data to update. Exiting.")
+            return
+        
+        # Update indexes
+        pipeline.update_indexes(papers=papers, news=news)
+        print("SUCCESS: Indexes updated successfully!!")
     else:
         print("\nBuilding new indexes...")
         

@@ -239,3 +239,55 @@ class BM25Index:
         except Exception as e:
             self.logger.error(f"Error loading BM25 index: {e}")
             return False
+
+    def update(self, chunks: List[Dict[str, Any]]):
+        """
+        Update existing BM25 index with new chunks
+        
+        Args:
+            chunks: List of new chunk dictionaries
+        """
+        self.logger.info(f"Updating BM25 index with {len(chunks)} new chunks")
+        
+        # If no existing index, build from scratch
+        if self.bm25 is None:
+            self.logger.warning("No existing BM25 index found. Building new index...")
+            self.build_index(chunks)
+            return
+        
+        # Tokenize new documents
+        new_tokenized_corpus = []
+        for chunk in chunks:
+            tokens = self.tokenize(chunk['text'])
+            new_tokenized_corpus.append(tokens)
+            
+            # Store metadata
+            self.chunk_ids.append(chunk['chunk_id'])
+            self.chunks_metadata.append({
+                'chunk_id': chunk['chunk_id'],
+                'doc_id': chunk['doc_id'],
+                'text': chunk['text'],
+                **chunk.get('metadata', {})
+            })
+        
+        # Rebuild BM25 with combined corpus (BM25 doesn't support incremental updates)
+        # Get existing tokenized corpus
+        existing_corpus = []
+        if hasattr(self.bm25, 'corpus_size'):
+            # Reconstruct corpus from existing data
+            for i in range(self.bm25.corpus_size):
+                # Re-tokenize existing documents
+                existing_text = self.chunks_metadata[i]['text']
+                existing_corpus.append(self.tokenize(existing_text))
+        
+        # Combine corpora
+        combined_corpus = existing_corpus + new_tokenized_corpus
+        
+        # Rebuild BM25 index with combined corpus
+        self.bm25 = BM25Okapi(
+            combined_corpus,
+            k1=self.config.k1,
+            b=self.config.b
+        )
+        
+        self.logger.info(f"Updated BM25 index. Total documents: {len(self.chunk_ids)}")

@@ -49,6 +49,7 @@ jobs:
       - name : DVC fetch data
         run: |
           dvc pull
+          echo "Trying to run DVC Pull"
 
       - name: Run Indexing Script
         env:

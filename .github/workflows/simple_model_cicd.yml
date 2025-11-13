@@ -43,7 +43,7 @@ jobs:
 
       - name: Configure DVC remote
         run: |
-          dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
+          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
           dvc remote modify --local myremote credentialpath gcp-credentials.json
 
       - name : DVC fetch data

@@ -35,7 +35,21 @@ jobs:
       - name: Download NLTK data
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
-      
+
+      - name: Create GCP credentials file
+        env:
+          GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
+        run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
+
+      - name: Configure DVC remote
+        run: |
+          dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
+          dvc remote modify --local myremote credentialpath gcp-credentials.json
+
+      - name : DVC fetch data
+        run: |
+          dvc pull
+
       - name: Run Indexing Script
         env:
           PYTHONPATH: ${{ github.workspace }}/researchAI/model

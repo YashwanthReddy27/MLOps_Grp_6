@@ -43,10 +43,10 @@ jobs:
 
       - name: Configure DVC remote
         run: |
-          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
-          dvc remote modify --local myremote credentialpath gcp-credentials.json
+          dvc remote add myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote modify --local myremote credentialpath "$PWD/gcp-credentials.json"
 
-      - name : DVC fetch data
+      - name: DVC fetch data
         run: |
           dvc pull
           echo "Trying to run DVC Pull"

@@ -40,10 +40,11 @@ jobs:
         env:
           GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
         run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
-
+      - name: Dump
+        run: echo "$GCP_SA_DVC_KEY"
       - name: Configure DVC remote
         run: |
-          dvc remote add myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote add -f myremote ${{ secrets.GCP_DVC_BUCKET }}
           dvc remote modify --local myremote credentialpath "$PWD/gcp-credentials.json"
 
       - name: DVC fetch data

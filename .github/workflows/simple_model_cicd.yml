@@ -39,9 +39,8 @@ jobs:
       - name: Create GCP credentials file
         env:
           GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
-        run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
-      - name: Dump
-        run: echo "$GCP_SA_DVC_KEY"
+        run: echo ${{ secrets.GCP_SA_DVC_KEY }} > gcp-credentials.json
+        
       - name: Configure DVC remote
         run: |
           dvc remote add -f myremote ${{ secrets.GCP_DVC_BUCKET }}

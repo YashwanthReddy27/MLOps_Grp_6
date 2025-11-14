@@ -51,9 +51,11 @@ jobs:
         run: | 
           cd researchAI
           dvc pull
+          cd data
+          ls -alth
       - name: data check
         run: | 
-          cd data/cleaned
+          cd cleaned
           ls -alth
 
       - name: Run Indexing Script

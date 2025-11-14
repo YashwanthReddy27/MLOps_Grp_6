@@ -9,7 +9,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_ARTIFACT_PROJECT_ID }}  # Project for Artifact Registry
   GCP_LOCATION: 'us-central1'
   GCP_REPOSITORY: 'rag-models'
 
@@ -36,37 +36,56 @@ jobs:
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
 
-      # - name: Create GCP credentials file
-      #   env:
-      #     GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
-      #   run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
-
-      # - name: Configure DVC remote
-      #   run: |
-      #     dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
-      #     dvc remote modify --local myremote credentialpath gcp-credentials.json
-
-      # - name : DVC fetch data
-      #   run: |
-      #     export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gcp-credentials.json"
-      #     dvc pull
-      #     echo "Trying to run DVC Pull"
-
-      - name: Create GCP credentials file
+      # ============================================
+      # STEP 1: Setup DVC Authentication (Account A)
+      # ============================================
+      - name: Create DVC GCP credentials file
         env:
           GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
-        run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
+        run: |
+          echo "$GCP_SA_DVC_KEY" > $HOME/dvc-credentials.json
+          echo "✅ DVC credentials file created"
+
+      - name: Authenticate DVC to Google Cloud
+        run: |
+          gcloud auth activate-service-account --key-file=$HOME/dvc-credentials.json
+          echo "✅ DVC service account authenticated"
 
       - name: Configure DVC remote
         run: |
-          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
-          dvc remote modify myremote gcp_credentials_file gcp-credentials.json
-
-      - name: DVC pull
+          dvc remote modify myremote url ${{ secrets.GCP_DVC_BUCKET }}
+          echo "✅ DVC remote configured"
+          
+      - name: DVC pull data
         run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gcp-credentials.json"
           dvc pull
+          echo "✅ DVC pull completed successfully"
 
+      # ============================================
+      # STEP 2: Switch to Artifact Registry Authentication (Account B)
+      # ============================================
+      - name: Create Artifact Registry GCP credentials file
+        env:
+          GCP_SA_ARTIFACT_KEY: ${{ secrets.GCP_SA_ARTIFACT_KEY }}
+        run: |
+          echo "$GCP_SA_ARTIFACT_KEY" > $HOME/artifact-credentials.json
+          echo "✅ Artifact Registry credentials file created"
+
+      - name: Authenticate to Artifact Registry Google Cloud
+        run: |
+          gcloud auth activate-service-account --key-file=$HOME/artifact-credentials.json
+          gcloud config set project ${{ secrets.GCP_ARTIFACT_PROJECT_ID }}
+          echo "✅ Artifact Registry service account authenticated"
+      
+      - name: Verify Artifact Registry Authentication
+        run: |
+          gcloud auth list
+          gcloud config list project
+          echo "✅ Authentication verification complete"
+
+      # ============================================
+      # STEP 3: Run Model Pipeline
+      # ============================================
       - name: Run Indexing Script
         env:
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
@@ -74,18 +93,6 @@ jobs:
           cd researchAI/model
           python indexing_script.py
           cd ../..
-      
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-        continue-on-error: true
-      
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-        continue-on-error: true
       
       - name: Download previous evaluation report
         continue-on-error: true
@@ -101,6 +108,8 @@ jobs:
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
+          # Make Artifact Registry project ID available to Python code
+          GCP_PROJECT_ID: ${{ secrets.GCP_ARTIFACT_PROJECT_ID }}
         run: |
           cd researchAI/model
           
@@ -121,7 +130,7 @@ jobs:
             --validation-threshold 0.7 \
             --fairness-threshold 0.6 \
             $PUSH_FLAG \
-            --project-id ${{ env.GCP_PROJECT_ID }} \
+            --project-id ${{ secrets.GCP_ARTIFACT_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
             --repository ${{ env.GCP_REPOSITORY }} \
             --version "v$(date +%Y%m%d-%H%M%S)" \
@@ -175,6 +184,16 @@ jobs:
             echo "val_gap=0.7" >> $GITHUB_OUTPUT
             echo "fair_gap=0.6" >> $GITHUB_OUTPUT
           fi
+      
+      # ============================================
+      # STEP 4: Cleanup & Notifications
+      # ============================================
+      - name: Cleanup credentials
+        if: always()
+        run: |
+          rm -f $HOME/dvc-credentials.json
+          rm -f $HOME/artifact-credentials.json
+          echo "✅ Credentials cleaned up"
       
       - name: Send Failure Email
         if: failure()

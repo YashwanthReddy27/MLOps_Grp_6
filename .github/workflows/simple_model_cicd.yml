@@ -36,21 +36,37 @@ jobs:
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
 
+      # - name: Create GCP credentials file
+      #   env:
+      #     GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
+      #   run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
+
+      # - name: Configure DVC remote
+      #   run: |
+      #     dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
+      #     dvc remote modify --local myremote credentialpath gcp-credentials.json
+
+      # - name : DVC fetch data
+      #   run: |
+      #     export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gcp-credentials.json"
+      #     dvc pull
+      #     echo "Trying to run DVC Pull"
+
       - name: Create GCP credentials file
         env:
           GCP_SA_DVC_KEY: ${{ secrets.GCP_SA_DVC_KEY }}
         run: echo "$GCP_SA_DVC_KEY" > gcp-credentials.json
 
-      - name: Configure DVC remote
+      - name: Configure DVC remote for GCS
         run: |
-          dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
-          dvc remote modify --local myremote credentialpath gcp-credentials.json
+          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote modify myremote type gcs
+          dvc remote modify myremote gcp_credentials_file gcp-credentials.json
 
-      - name : DVC fetch data
+      - name : DVC pull
         run: |
           export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gcp-credentials.json"
           dvc pull
-          echo "Trying to run DVC Pull"
 
       - name: Run Indexing Script
         env:

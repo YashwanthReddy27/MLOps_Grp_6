@@ -17,6 +17,7 @@ jobs:
   evaluate-and-push:
     name: Evaluate Model & Push to Registry
     runs-on: ubuntu-latest
+    environment: mlops
     
     steps:
       - name: Checkout code

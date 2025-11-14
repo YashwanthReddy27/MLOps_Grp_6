@@ -18,8 +18,8 @@ class IndexUpdater:
     """Handles updating RAG indexes with new cleaned data"""
     
     def __init__(self, 
-                 cleaned_dir: str = "./data/cleaned",
-                 processed_dir: str = "./data/processed"):
+                 cleaned_dir: str = "../data/cleaned",
+                 processed_dir: str = "../data/processed"):
         """
         Initialize Index Updater
         

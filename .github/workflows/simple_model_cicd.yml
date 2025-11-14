@@ -55,6 +55,8 @@ jobs:
           ls -alth
       - name: data check
         run: | 
+          cd researchAI
+          cd data
           cd cleaned
           ls -alth
 

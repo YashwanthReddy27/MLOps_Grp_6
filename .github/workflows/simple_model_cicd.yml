@@ -43,21 +43,32 @@ jobs:
           ${{ secrets.GCP_SA_DVC_KEY }}
           EOF
 
+      - name: Verify credentials file
+        run: |
+          echo "Checking if credentials file exists:"
+          ls -la gcp-credentials.json
+          echo "First few lines:"
+          head -n 3 gcp-credentials.json
+
       - name: Configure DVC remote
         run: |
           dvc remote remove myremote || true
           dvc remote add -d myremote ${{ secrets.GCP_DVC_BUCKET }}
-          dvc remote modify myremote credentialpath gcp-credentials.json
-          
+          dvc remote modify myremote credentialpath $(pwd)/gcp-credentials.json
+
       - name: Verify DVC configuration
         run: |
-          cat .dvc/config
-          cat .dvc/config.local
+          echo "=== .dvc/config ==="
+          cat .dvc/config || echo "No .dvc/config"
+          echo "=== .dvc/config.local ==="
+          cat .dvc/config.local || echo "No .dvc/config.local"
 
       - name: Pull data from DVC
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: gcp-credentials.json
-        run: dvc pull
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ github.workspace }}/gcp-credentials.json
+        run: |
+          echo "Using credentials: $GOOGLE_APPLICATION_CREDENTIALS"
+          dvc pull -v
 
       - name: Cleanup credentials
         if: always()

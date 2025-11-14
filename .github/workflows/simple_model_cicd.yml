@@ -43,14 +43,12 @@ jobs:
 
       - name: Configure DVC remote
         run: |
-          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote add -d -f myremote ${{secrets.GCP_DVC_BUCKET}}
           dvc remote modify --local myremote credentialpath gcp-credentials.json
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-         credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name : DVC fetch data
         run: |
+          export GOOGLE_APPLICATION_CREDENTIALS="$PWD/gcp-credentials.json"
           dvc pull
           echo "Trying to run DVC Pull"
 

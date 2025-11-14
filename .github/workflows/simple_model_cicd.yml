@@ -48,7 +48,7 @@ jobs:
       
       - name: Configure DVC remote
         run: |
-          dvc remote add -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote add -f myremote "${{ secrets.GCP_DVC_BUCKET }}"
           dvc remote modify --local myremote credentialpath  $HOME/gcp-key.json
 
       - name: DVC Pull

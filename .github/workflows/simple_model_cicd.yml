@@ -64,12 +64,16 @@ jobs:
       - name: Check if data folder exists
         run: |
           if [ ! -d "researchAI/model/data/cleaned" ] || [ -z "$(ls -A researchAI/model/data/cleaned)" ]; then
-            echo "No data files found in cleaned folder. Nothing to index."
-            exit 78
+            echo "⚠️ No data files found in cleaned folder. Nothing to index."
+            echo "has_data=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Data folder exists with files. Proceeding with indexing..."
+            echo "has_data=true" >> $GITHUB_OUTPUT
           fi
-          echo "✅ Data folder exists with files. Proceeding with indexing..."
+        id: check_data
 
       - name: Run Indexing Script
+        if: steps.check_data.outputs.has_data == 'true'
         env:
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
         run: |
@@ -78,18 +82,21 @@ jobs:
           cd ../..
       
       - name: Authenticate to Google Cloud
+        if: steps.check_data.outputs.has_data == 'true'
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
         continue-on-error: true
       
       - name: Set up Google Cloud SDK
+        if: steps.check_data.outputs.has_data == 'true'
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
         continue-on-error: true
       
       - name: Download previous evaluation report
+        if: steps.check_data.outputs.has_data == 'true'
         continue-on-error: true
         uses: dawidd6/action-download-artifact@v3
         with:
@@ -100,6 +107,7 @@ jobs:
           if_no_artifact_found: warn
       
       - name: Run Complete Evaluation Pipeline
+        if: steps.check_data.outputs.has_data == 'true'
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
@@ -136,6 +144,7 @@ jobs:
         id: evaluation
       
       - name: Upload evaluation report
+        if: steps.check_data.outputs.has_data == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: evaluation-report
@@ -143,7 +152,7 @@ jobs:
           retention-days: 90
       
       - name: Read evaluation metrics
-        if: always()
+        if: steps.check_data.outputs.has_data == 'true'
         id: read_metrics
         run: |
           if [ -f evaluation_report.json ]; then
@@ -179,6 +188,7 @@ jobs:
           fi
       
       - name: Send Failure Email
+        if: steps.check_data.outputs.has_data == 'true'
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:

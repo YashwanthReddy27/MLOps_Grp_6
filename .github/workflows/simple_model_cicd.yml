@@ -188,8 +188,7 @@ jobs:
           fi
       
       - name: Send Failure Email
-        if: steps.check_data.outputs.has_data == 'true'
-        if: failure()
+        if: steps.check_data.outputs.has_data == 'true' && failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com

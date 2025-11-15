@@ -80,6 +80,23 @@ jobs:
           cd researchAI/model
           python indexing_script.py
           cd ../..
+
+      - name: Push updated indexes to repository
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          git lfs install
+          git lfs track "researchAI/model/bm25_indexes/**"
+          git lfs track "researchAI/model/faiss_indexes/**"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add .gitattributes
+          git add researchAI/model/bm25_indexes/
+          git add researchAI/model/faiss_indexes/
+          echo "Staged changes:"
+          git diff --staged --name-status
+          git diff --staged --quiet || git commit -m "Update indexes after indexing [skip ci]"
+          git lfs push origin ${{ github.ref_name }}
+          git push
       
       - name: DVC Push after Indexing
         run: |

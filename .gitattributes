@@ -1,0 +1,2 @@
+researchAI/model/bm25_indexes/** filter=lfs diff=lfs merge=lfs -text
+researchAI/model/faiss_indexes/** filter=lfs diff=lfs merge=lfs -text

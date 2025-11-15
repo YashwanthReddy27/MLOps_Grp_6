@@ -65,8 +65,7 @@ jobs:
         run: |
           if [ ! -d "researchAI/model/data/cleaned" ] || [ -z "$(ls -A researchAI/model/data/cleaned)" ]; then
             echo "No data files found in cleaned folder. Nothing to index."
-            echo "Exiting gracefully..."
-            exit 0
+            exit 78
           fi
           echo "✅ Data folder exists with files. Proceeding with indexing..."
 

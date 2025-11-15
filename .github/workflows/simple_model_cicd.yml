@@ -81,6 +81,13 @@ jobs:
           python indexing_script.py
           cd ../..
       
+      - name: DVC Push after Indexing
+        run: |
+          cd researchAI
+          chmod +x dvc/dvc.sh
+          ./dvc/dvc.sh
+        continue-on-error: false
+
       - name: Authenticate to Google Cloud
         if: steps.check_data.outputs.has_data == 'true'
         uses: google-github-actions/auth@v1

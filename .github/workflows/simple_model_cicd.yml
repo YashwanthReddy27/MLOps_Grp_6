@@ -63,7 +63,7 @@ jobs:
 
       - name: Check if data folder exists
         run: |
-          if [ ! -d "researchAI/model/data/cleaned" ] || [ -z "$(ls -A researchAI/model/data/cleaned)" ]; then
+          if [ ! -d "researchAI/data/cleaned" ] || [ -z "$(ls -A researchAI/data/cleaned)" ]; then
             echo "⚠️ No data files found in cleaned folder. Nothing to index."
             echo "has_data=false" >> $GITHUB_OUTPUT
           else

@@ -53,12 +53,22 @@ jobs:
           dvc pull
           cd data
           ls -alth
+
       - name: data check
         run: | 
           cd researchAI
           cd data
           cd cleaned
           ls -alth
+
+      - name: Check if data folder exists
+        run: |
+          if [ ! -d "researchAI/model/data/cleaned" ] || [ -z "$(ls -A researchAI/model/data/cleaned)" ]; then
+            echo "No data files found in cleaned folder. Nothing to index."
+            echo "Exiting gracefully..."
+            exit 0
+          fi
+          echo "✅ Data folder exists with files. Proceeding with indexing..."
 
       - name: Run Indexing Script
         env:

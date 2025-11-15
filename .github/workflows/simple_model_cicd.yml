@@ -13,6 +13,9 @@ env:
   GCP_LOCATION: 'us-central1'
   GCP_REPOSITORY: 'rag-models'
 
+permissions:
+  contents: write
+
 jobs:
   evaluate-and-push:
     name: Evaluate Model & Push to Registry

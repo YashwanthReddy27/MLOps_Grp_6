@@ -107,6 +107,16 @@ jobs:
           chmod +x dvc/dvc.sh
           ./dvc/dvc.sh
         continue-on-error: false
+      
+      - name: Dvc file add to git repo
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          cd researchAI
+          git add data.dvc
+          git add logs.dvc
+          git commit -m "Updated dvc ref"
+          git push
 
       - name: Authenticate to Google Cloud
         if: steps.check_data.outputs.has_data == 'true'

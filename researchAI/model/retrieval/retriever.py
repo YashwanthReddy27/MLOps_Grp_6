@@ -1,6 +1,5 @@
 from typing import List, Dict, Any, Optional
 import logging
-
 from data_processing.embedding import HybridEmbedder
 from retrieval.vector_store import FAISSVectorStore
 from retrieval.bm25_index import BM25Index
@@ -8,7 +7,6 @@ from retrieval.reranker import Reranker
 from config.settings import config
 
 logger = logging.getLogger(__name__)
-
 
 class HybridRetriever:
     """Hybrid retrieval combining FAISS (dense) and BM25 (sparse)"""
@@ -18,15 +16,12 @@ class HybridRetriever:
         self.config = config.retrieval
         self.logger = logging.getLogger(__name__)
         
-        # Initialize vector stores
         self.paper_dense = FAISSVectorStore(config.vector_store.papers_index_name)
         self.news_dense = FAISSVectorStore(config.vector_store.news_index_name)
         
-        # Initialize BM25 indexes
         self.paper_sparse = BM25Index(config.vector_store.papers_index_name)
         self.news_sparse = BM25Index(config.vector_store.news_index_name)
         
-        # Initialize reranker
         self.reranker = Reranker()
         
         self.logger.info("Initialized Hybrid Retriever (FAISS + BM25)")
@@ -41,7 +36,6 @@ class HybridRetriever:
         """
         self.logger.info(f"Indexing {len(chunks)} {doc_type} chunks")
         
-        # Select appropriate indexes
         if doc_type == 'paper':
             dense_index = self.paper_dense
             sparse_index = self.paper_sparse
@@ -49,10 +43,8 @@ class HybridRetriever:
             dense_index = self.news_dense
             sparse_index = self.news_sparse
         
-        # Add to FAISS
         dense_index.add(chunks)
         
-        # Build BM25
         sparse_index.build_index(chunks)
         
         self.logger.info(f"Indexed {len(chunks)} {doc_type} chunks")
@@ -108,27 +100,22 @@ class HybridRetriever:
         
         self.logger.info(f"Retrieving for query: {query}")
         
-        # Stage 1: Dense retrieval (FAISS)
         dense_results = self._dense_search(query, top_k, filters)
         
-        # Stage 2: Sparse retrieval (BM25)
         sparse_results = self._sparse_search(query, top_k, filters)
         
-        # Stage 3: Hybrid fusion
         fused_results = self._fuse_results(dense_results, sparse_results, top_k * 2)
         
         if not fused_results:
             self.logger.warning("No results found")
             return []
         
-        # Stage 4: Reranking
         reranked = self.reranker.rerank(
             query=query,
             candidates=fused_results,
             top_k=self.config.rerank_top_k
         )
         
-        # Stage 5: Diversity filtering
         diverse_results = self._diversify(reranked, self.config.diversity_top_k)
         
         self.logger.info(f"Retrieved {len(diverse_results)} results")
@@ -137,12 +124,10 @@ class HybridRetriever:
     def _dense_search(self, query: str, top_k: int,
                      filters: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Dense retrieval using FAISS"""
-        # Generate query embedding
         query_embedding = self.embedder.get_query_embedding(query)
         
         results = []
         
-        # Search papers
         try:
             paper_results = self.paper_dense.search(
                 query_embedding=query_embedding,
@@ -156,7 +141,6 @@ class HybridRetriever:
         except Exception as e:
             self.logger.error(f"Error in dense search (papers): {e}")
         
-        # Search news
         try:
             news_results = self.news_dense.search(
                 query_embedding=query_embedding,
@@ -178,7 +162,6 @@ class HybridRetriever:
         """Sparse retrieval using BM25"""
         results = []
         
-        # Search papers
         try:
             paper_results = self.paper_sparse.search(
                 query=query,
@@ -192,7 +175,6 @@ class HybridRetriever:
         except Exception as e:
             self.logger.error(f"Error in sparse search (papers): {e}")
         
-        # Search news
         try:
             news_results = self.news_sparse.search(
                 query=query,
@@ -216,7 +198,6 @@ class HybridRetriever:
         fused_scores = {}
         k = 60 
         
-        # Process dense results
         for rank, result in enumerate(dense_results):
             chunk_id = result['chunk_id']
             rrf_score = 1.0 / (k + rank + 1)
@@ -233,7 +214,6 @@ class HybridRetriever:
             
             fused_scores[chunk_id]['rrf_score'] += rrf_score * self.config.dense_weight
         
-        # Process sparse results
         for rank, result in enumerate(sparse_results):
             chunk_id = result['chunk_id']
             rrf_score = 1.0 / (k + rank + 1)
@@ -253,14 +233,12 @@ class HybridRetriever:
             
             fused_scores[chunk_id]['rrf_score'] += rrf_score * self.config.sparse_weight
         
-        # Sort by fused score
         sorted_results = sorted(
             fused_scores.values(),
             key=lambda x: x['rrf_score'],
             reverse=True
         )[:top_k]
         
-        # Format results
         final_results = []
         for item in sorted_results:
             result = item['result'].copy()
@@ -289,12 +267,9 @@ class HybridRetriever:
         for result in results:
             metadata = result['metadata']
             
-            # Get source identifier
             source = metadata.get('source_name') or metadata.get('arxiv_id', '')
-            # Get categories
             categories = set(metadata.get('categories', []))
             
-            # Add if from new source or has new category
             is_new_source = source not in seen_sources
             has_new_category = len(categories - seen_categories) > 0
             
@@ -306,7 +281,6 @@ class HybridRetriever:
                 if len(diverse_results) >= top_k:
                     break
         
-        # Fill remaining slots if needed, without checking if they are contributing to the diversity
         if len(diverse_results) < top_k:
             for result in results:
                 if result not in diverse_results:
@@ -347,7 +321,6 @@ class HybridRetriever:
         """
         self.logger.info(f"Updating indexes with {len(chunks)} {doc_type} chunks")
         
-        # Select appropriate indexes
         if doc_type == 'paper':
             dense_index = self.paper_dense
             sparse_index = self.paper_sparse
@@ -355,10 +328,8 @@ class HybridRetriever:
             dense_index = self.news_dense
             sparse_index = self.news_sparse
         
-        # Update FAISS
         dense_index.update(chunks)
         
-        # Update BM25
         sparse_index.update(chunks)
         
         self.logger.info(f"Updated {len(chunks)} {doc_type} chunks in indexes")

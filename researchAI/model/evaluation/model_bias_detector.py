@@ -1,7 +1,5 @@
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import numpy as np
-import pandas as pd
-from collections import defaultdict
 import logging
 from datetime import datetime
 import warnings
@@ -15,8 +13,6 @@ try:
 except ImportError:
     warnings.warn("FairLearn not installed. Install with: pip install fairlearn")
     FAIRLEARN_AVAILABLE = False
-
-from sklearn.metrics import accuracy_score
 
 logger = logging.getLogger(__name__)
 
@@ -86,27 +82,22 @@ class RAGBiasDetector:
         for doc in retrieved_docs:
             metadata = doc.get('metadata', {})
             
-            # Extract source
             source = metadata.get('source_name') or metadata.get('arxiv_id', 'unknown')
             sources.append(source)
             
-            # Extract categories
             doc_categories = metadata.get('categories', [])
             categories.extend(doc_categories)
         
         unique_sources = set(sources)
         unique_categories = set(categories)
         
-        # Calculate diversity ratios
         source_diversity_ratio = len(unique_sources) / len(retrieved_docs)
         category_diversity_ratio = len(unique_categories) / max(len(retrieved_docs), 1)
         
-        # Source distribution
         from collections import Counter
         source_counts = Counter(sources)
         source_distribution = {src: count/len(sources) for src, count in source_counts.items()}
         
-        # Category distribution
         category_counts = Counter(categories)
         category_distribution = {cat: count/len(categories) for cat, count in category_counts.items()} if categories else {}
         
@@ -126,21 +117,18 @@ class RAGBiasDetector:
         """
         query_lower = query.lower()
         
-        # Detect query complexity
         complexity = 'unknown'
         for complexity_level, keywords in self.slice_definitions['query_complexity'].items():
             if any(keyword in query_lower for keyword in keywords):
                 complexity = complexity_level
                 break
         
-        # Detect domain
         domain = 'unknown'
         for domain_type, keywords in self.slice_definitions['domain_type'].items():
             if any(keyword in query_lower for keyword in keywords):
                 domain = domain_type
                 break
         
-        # Detect experience level
         experience = 'unknown'
         for exp_level, keywords in self.slice_definitions['user_experience'].items():
             if any(keyword in query_lower for keyword in keywords):
@@ -162,7 +150,6 @@ class RAGBiasDetector:
         """
         warnings = []
         
-        # Warning: Low source diversity
         if indicators['source_diversity_score'] < 0.3:
             warnings.append({
                 'type': 'low_source_diversity',
@@ -171,7 +158,6 @@ class RAGBiasDetector:
                 'recommendation': "Consider retrieving from more diverse sources"
             })
         
-        # Warning: Single source dominance
         if diversity_metrics['source_distribution']:
             max_source_ratio = max(diversity_metrics['source_distribution'].values())
             if max_source_ratio > 0.7:
@@ -182,7 +168,6 @@ class RAGBiasDetector:
                     'recommendation': "Diversify retrieval to include more sources"
                 })
         
-        # Warning: Low retrieval quality
         if indicators['retrieval_quality_score'] < 0.4:
             warnings.append({
                 'type': 'low_retrieval_quality',
@@ -191,7 +176,6 @@ class RAGBiasDetector:
                 'recommendation': "Retrieved documents may not be highly relevant to the query"
             })
         
-        # Warning: Low response quality
         if indicators['response_quality_score'] < 0.5:
             warnings.append({
                 'type': 'low_response_quality',
@@ -228,19 +212,15 @@ class RAGBiasDetector:
         response = evaluation_data.get('response', '')
         perf_metrics = evaluation_data.get('performance_metrics', {})
         
-        # 1. Analyze retrieval diversity (basic metrics)
         diversity_metrics = self._analyze_retrieval_diversity(retrieved_docs)
         
-        # 2. Classify query characteristics
         query_characteristics = self._classify_query(query)
         
-        # 3. Prepare Fairlearn evaluation data from retrieved documents
         fairlearn_results = self._fairlearn_single_query_analysis(
             retrieved_docs, 
             query_characteristics
         )
         
-        # 4. Calculate fairness indicators
         retrieval_score = perf_metrics.get('retrieval_score', 0.0)
         response_quality = perf_metrics.get('response_quality', 0.0)
         
@@ -251,22 +231,18 @@ class RAGBiasDetector:
             'response_quality_score': response_quality,
         }
         
-        # 5. Combine Fairlearn metrics with fairness indicators
         if fairlearn_results and 'error' not in fairlearn_results:
-            # Incorporate Fairlearn demographic parity into overall score
             fairlearn_fairness_score = self._calculate_fairlearn_fairness_score(
                 fairlearn_results
             )
             fairness_indicators['fairlearn_fairness_score'] = fairlearn_fairness_score
         else:
-            fairness_indicators['fairlearn_fairness_score'] = 0.5  # Neutral if unavailable
+            fairness_indicators['fairlearn_fairness_score'] = 0.5  
         
-        # 6. Calculate overall fairness score (now including Fairlearn)
         overall_fairness = self._calculate_single_query_fairness_score_with_fairlearn(
             fairness_indicators
         )
         
-        # 7. Generate warnings
         warnings = self._generate_fairness_warnings_with_fairlearn(
             fairness_indicators,
             diversity_metrics,
@@ -304,13 +280,10 @@ class RAGBiasDetector:
             return {'error': 'Insufficient documents for Fairlearn analysis'}
         
         try:
-            # Prepare data: each document is a sample
             sources = []
             categories = []
             scores = []
-            high_quality_flags = []  # Binary: is this a high-quality result?
-            
-            # Calculate score threshold (top 50% of results are "high quality")
+            high_quality_flags = [] 
             all_scores = [doc.get('score', 0.0) for doc in retrieved_docs]
             if not all_scores:
                 return {'error': 'No scores available'}
@@ -321,37 +294,28 @@ class RAGBiasDetector:
                 metadata = doc.get('metadata', {})
                 score = doc.get('score', 0.0)
                 
-                # Extract source
                 source = metadata.get('source_name') or metadata.get('source', 'unknown')
                 sources.append(source)
                 
-                # Extract primary category
                 doc_categories = metadata.get('categories', [])
                 category = doc_categories[0] if doc_categories else 'unknown'
                 categories.append(category)
                 
-                # Score
                 scores.append(score)
                 
-                # Binary outcome: is this a high-quality result?
                 high_quality = 1 if score >= median_score else 0
                 high_quality_flags.append(high_quality)
             
-            # Convert to arrays
             y_true = np.array(high_quality_flags)
-            y_pred = np.array(high_quality_flags)  # Using same as true for selection rate analysis
-            
-            # Analyze fairness across SOURCE dimension
+            y_pred = np.array(high_quality_flags)  
             source_fairness = self._analyze_fairlearn_dimension(
                 y_true, y_pred, sources, 'source'
             )
             
-            # Analyze fairness across CATEGORY dimension
             category_fairness = self._analyze_fairlearn_dimension(
                 y_true, y_pred, categories, 'category'
             )
             
-            # Calculate overall Fairlearn-based fairness
             fairlearn_summary = {
                 'source_analysis': source_fairness,
                 'category_analysis': category_fairness,
@@ -383,7 +347,6 @@ class RAGBiasDetector:
             Dictionary with demographic parity metrics
         """
         try:
-            # Handle case with only one unique group
             unique_groups = set(sensitive_features)
             if len(unique_groups) < 2:
                 return {
@@ -392,7 +355,6 @@ class RAGBiasDetector:
                     'groups': list(unique_groups)
                 }
             
-            # Calculate MetricFrame
             mf = MetricFrame(
                 metrics={
                     'selection_rate': selection_rate,
@@ -402,7 +364,6 @@ class RAGBiasDetector:
                 sensitive_features=np.array(sensitive_features)
             )
             
-            # Calculate demographic parity metrics
             dp_diff = demographic_parity_difference(
                 y_true, y_pred, 
                 sensitive_features=np.array(sensitive_features)
@@ -413,10 +374,8 @@ class RAGBiasDetector:
                 sensitive_features=np.array(sensitive_features)
             )
             
-            # Get per-group metrics
             by_group = mf.by_group.to_dict()
             
-            # Identify advantaged and disadvantaged groups
             group_rates = by_group.get('selection_rate', {})
             if group_rates:
                 max_group = max(group_rates, key=group_rates.get)
@@ -468,19 +427,16 @@ class RAGBiasDetector:
         Higher is better (1.0 = perfectly fair)
         """
         if 'error' in fairlearn_results:
-            return 0.5  # Neutral score if error
+            return 0.5  
         
         scores = []
         
-        # Source fairness score
         source_analysis = fairlearn_results.get('source_analysis', {})
         if 'demographic_parity_difference' in source_analysis:
             dp_diff = abs(source_analysis['demographic_parity_difference'])
-            # Convert to score: 0 diff = 1.0 score, 1.0 diff = 0.0 score
             source_score = max(0.0, 1.0 - dp_diff)
             scores.append(source_score)
         
-        # Category fairness score
         category_analysis = fairlearn_results.get('category_analysis', {})
         if 'demographic_parity_difference' in category_analysis:
             dp_diff = abs(category_analysis['demographic_parity_difference'])
@@ -529,15 +485,12 @@ class RAGBiasDetector:
         """
         warnings = []
         
-        # Existing warnings (from base method)
         warnings.extend(self._generate_fairness_warnings(
             indicators, diversity_metrics, query_characteristics
         ))
         
-        # Fairlearn-specific warnings
         if fairlearn_results and 'error' not in fairlearn_results:
             
-            # Source fairness warnings
             source_analysis = fairlearn_results.get('source_analysis', {})
             if 'fairness_assessment' in source_analysis:
                 assessment = source_analysis['fairness_assessment']
@@ -563,7 +516,6 @@ class RAGBiasDetector:
                         'recommendation': "Monitor source distribution in future queries"
                     })
             
-            # Category fairness warnings
             category_analysis = fairlearn_results.get('category_analysis', {})
             if 'fairness_assessment' in category_analysis:
                 assessment = category_analysis['fairness_assessment']

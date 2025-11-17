@@ -1,19 +1,13 @@
-"""
-Simple Model Evaluation with Response Comparison
-Assumes indexes are already built
-"""
 import json
 import logging
 import pandas as pd
 import numpy as np
 import argparse
-from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List
 import sys
 import os
 
-# Add parent directory to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pipeline import TechTrendsRAGPipeline
@@ -41,11 +35,9 @@ class SimpleModelEvaluator:
         if not expected or not generated:
             return 0.0
         
-        # Tokenize and normalize
         gen_tokens = set(generated.lower().split())
         exp_tokens = set(expected.lower().split())
         
-        # Remove common words
         stop_words = {'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 
                      'or', 'is', 'are', 'was', 'were', 'be', 'been', 'being'}
         gen_tokens -= stop_words
@@ -54,7 +46,6 @@ class SimpleModelEvaluator:
         if not exp_tokens:
             return 0.0
         
-        # Calculate Jaccard similarity
         intersection = len(gen_tokens & exp_tokens)
         union = len(gen_tokens | exp_tokens)
         
@@ -63,7 +54,6 @@ class SimpleModelEvaluator:
     def evaluate_single_query(self, question: str, expected_response: str = None) -> Dict[str, Any]:
         """Evaluate a single query"""
         try:
-            # Generate response
             result = self.pipeline.query(question)
             
             evaluation = {
@@ -78,7 +68,6 @@ class SimpleModelEvaluator:
                 'error': None
             }
             
-            # Calculate response similarity if expected response provided
             if expected_response:
                 similarity = self.calculate_response_similarity(
                     result['response'], 
@@ -88,7 +77,6 @@ class SimpleModelEvaluator:
             else:
                 evaluation['response_similarity'] = None
             
-            # Check thresholds
             evaluation['passes_validation'] = evaluation['validation_score'] >= self.validation_threshold
             evaluation['passes_fairness'] = evaluation['fairness_score'] >= self.fairness_threshold
             
@@ -111,7 +99,6 @@ class SimpleModelEvaluator:
         """Evaluate all queries from CSV"""
         self.logger.info(f"Loading test data from {csv_path}")
         
-        # Load CSV
         df = pd.read_csv(csv_path)
         
         if 'question' not in df.columns:
@@ -131,7 +118,6 @@ class SimpleModelEvaluator:
             eval_result = self.evaluate_single_query(question, expected)
             results.append(eval_result)
         
-        # Calculate aggregate metrics
         aggregate = self._calculate_aggregate_metrics(results)
         
         return {
@@ -151,23 +137,19 @@ class SimpleModelEvaluator:
                 'error': 'All queries failed'
             }
         
-        # Calculate averages
         avg_validation = sum(r['validation_score'] for r in successful_results) / len(successful_results)
         avg_fairness = sum(r['fairness_score'] for r in successful_results) / len(successful_results)
         
-        # Calculate response similarity if available
         similarities = [r['response_similarity'] for r in successful_results 
                        if r['response_similarity'] is not None]
         avg_similarity = sum(similarities) / len(similarities) if similarities else None
         
-        # Pass rates
         validation_passes = sum(1 for r in successful_results if r['passes_validation'])
         fairness_passes = sum(1 for r in successful_results if r['passes_fairness'])
         
         validation_pass_rate = validation_passes / len(successful_results)
         fairness_pass_rate = fairness_passes / len(successful_results)
         
-        # Overall status
         passes_thresholds = (
             avg_validation >= self.validation_threshold and
             avg_fairness >= self.fairness_threshold and
@@ -233,7 +215,6 @@ class SimpleModelEvaluator:
     
     def save_report(self, results: Dict[str, Any], output_path: str):
         """Save evaluation report"""
-        # Convert numpy types to Python types for JSON serialization
         def convert_to_serializable(obj):
             """Recursively convert numpy types to Python types"""
             if isinstance(obj, dict):
@@ -248,12 +229,11 @@ class SimpleModelEvaluator:
                 return float(obj)
             elif isinstance(obj, np.ndarray):
                 return obj.tolist()
-            elif hasattr(obj, 'item'):  # Catch any other numpy scalar types
+            elif hasattr(obj, 'item'):  
                 return obj.item()
             else:
                 return obj
         
-        # Convert results to serializable format
         serializable_results = convert_to_serializable(results)
         
         with open(output_path, 'w') as f:
@@ -261,7 +241,6 @@ class SimpleModelEvaluator:
         
         self.logger.info(f"Saved report to {output_path}")
         
-        # Print summary (use original results for display)
         agg = results['aggregate_metrics']
         print("\n" + "="*80)
         print("EVALUATION SUMMARY")
@@ -278,11 +257,9 @@ def push_to_artifact_registry(pipeline, project_id: str, location: str,
                               repository: str, version: str, 
                               metrics: Dict[str, Any]) -> str:
     """Push model to GCP Artifact Registry"""
-    from deployment.artifact_registry_pusher import ArtifactRegistryPusher
     
     logger.info("Pushing to Artifact Registry...")
     
-    # Get sample result for bias report
     sample_result = pipeline.query("What are the latest trends in AI?")
     
     artifact_path = pipeline.push_to_artifact_registry(
@@ -302,20 +279,15 @@ def push_to_artifact_registry(pipeline, project_id: str, location: str,
 def main():
     parser = argparse.ArgumentParser(description='Simple Model Evaluation')
     
-    # Required
     parser.add_argument('--test-data', type=str, required=True, help='CSV with questions and expected responses')
     
-    # Thresholds
     parser.add_argument('--validation-threshold', type=float, default=0.7)
     parser.add_argument('--fairness-threshold', type=float, default=0.6)
     
-    # Output
     parser.add_argument('--output', type=str, default='evaluation_report.json')
     
-    # Comparison
     parser.add_argument('--previous-report', type=str, help='Previous report for comparison')
     
-    # Artifact Registry (optional)
     parser.add_argument('--push-to-registry', action='store_true')
     parser.add_argument('--project-id', type=str)
     parser.add_argument('--location', type=str, default='us-central1')
@@ -324,7 +296,6 @@ def main():
     
     args = parser.parse_args()
     
-    # Setup
     setup_logging()
     logger = logging.getLogger(__name__)
     
@@ -333,7 +304,6 @@ def main():
     logger.info("="*80)
     
     try:
-        # Step 1: Load indexes (assume already present)
         logger.info("Step 1: Loading existing indexes...")
         pipeline = TechTrendsRAGPipeline(enable_tracking=False)
         
@@ -343,7 +313,6 @@ def main():
         
         logger.info("✅ Indexes loaded")
         
-        # Step 2: Evaluate all queries
         logger.info("\nStep 2: Generating responses and computing metrics...")
         evaluator = SimpleModelEvaluator(
             pipeline, 
@@ -353,13 +322,10 @@ def main():
         
         results = evaluator.evaluate_all(args.test_data)
         
-        # Step 3 & 4: Metrics and bias detection (already computed)
         logger.info("✅ Metrics and bias detection completed")
         
-        # Save report
         evaluator.save_report(results, args.output)
         
-        # Step 5: Check thresholds
         status = results['aggregate_metrics']['status']
         
         if status == 'FAILED':
@@ -369,9 +335,7 @@ def main():
         logger.info("✅ Model PASSED thresholds")
         
 
-        # Step 6: Push to registry if requested
         if args.push_to_registry:
-            # Optional: Compare with previous for informational purposes
             if args.previous_report:
                 logger.info("\nStep 6: Comparing with previous model...")
                 evaluator.compare_with_previous(results, args.previous_report)
@@ -393,7 +357,6 @@ def main():
                 results['aggregate_metrics']
             )
             
-            # Save artifact path for notification
             with open('artifact_path.txt', 'w') as f:
                 f.write(artifact_path)
             

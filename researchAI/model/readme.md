@@ -42,7 +42,7 @@ Input: User Query → [Hybrid Retrieval] → [Reranking] → [LLM Generation] �
 
 ## Pipeline Architecture
 
-![Alt text](images\Model-building-pipeline.png)
+![Pipeline Architecture](images/Model-building-pipeline.png)
 ---
 
 ## Key Features

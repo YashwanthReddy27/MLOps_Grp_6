@@ -4,7 +4,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class ResponseValidator:
     """Validate generated responses"""
     
@@ -35,7 +34,6 @@ class ResponseValidator:
             'no_hallucination_indicators': self._check_hallucination_indicators(response)
         }
         
-        # Overall score
         checks['overall_score'] = self._calculate_overall_score(checks)
         checks['is_valid'] = checks['overall_score'] >= 0.7
         
@@ -80,11 +78,9 @@ class ResponseValidator:
     
     def _check_relevance(self, query: str, response: str) -> Dict[str, Any]:
         """Check if response is relevant to query"""
-        # Simple keyword overlap check
         query_words = set(query.lower().split())
         response_words = set(response.lower().split())
         
-        # Remove common words
         common_words = {'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'are', 'was', 'were'}
         query_words -= common_words
         response_words -= common_words
@@ -106,7 +102,6 @@ class ResponseValidator:
         """Check if response length is appropriate"""
         length = len(response)
         
-        # Ideal range: 200-2000 characters
         if 200 <= length <= 2000:
             score = 1.0
         elif length < 200:
@@ -122,11 +117,9 @@ class ResponseValidator:
     
     def _check_structure(self, response: str) -> Dict[str, Any]:
         """Check if response has good structure"""
-        # Check for paragraphs
         paragraphs = response.split('\n\n')
         has_paragraphs = len(paragraphs) > 1
         
-        # Check for bullet points or numbered lists
         has_lists = bool(re.search(r'(^\d+\.|^-|^•)', response, re.MULTILINE))
         
         score = 0.5
@@ -144,7 +137,6 @@ class ResponseValidator:
     
     def _check_hallucination_indicators(self, response: str) -> Dict[str, Any]:
         """Check for common hallucination indicators"""
-        # Phrases that might indicate hallucination
         hallucination_phrases = [
             "i don't have access",
             "i cannot find",
@@ -159,12 +151,10 @@ class ResponseValidator:
             if phrase in response_lower
         ]
         
-        # These phrases are actually good - they show the model is being careful
-        # So we want them present
         has_uncertainty_acknowledgment = len(found_indicators) > 0
         
         return {
-            'passed': True,  # This is informational
+            'passed': True,  
             'indicators_found': found_indicators,
             'acknowledges_uncertainty': has_uncertainty_acknowledgment,
             'score': 1.0
@@ -172,7 +162,6 @@ class ResponseValidator:
     
     def _calculate_overall_score(self, checks: Dict[str, Any]) -> float:
         """Calculate overall validation score"""
-        # Weight different checks
         weights = {
             'has_content': 0.3,
             'has_citations': 0.2,

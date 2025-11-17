@@ -6,7 +6,6 @@ from config.settings import config
 
 logger = logging.getLogger(__name__)
 
-
 class DocumentChunker:
     """Create hierarchical chunks from documents"""
     
@@ -42,7 +41,6 @@ class DocumentChunker:
         chunks = []
         doc_type = document['doc_type']
         
-        # Level 1: Summary chunk (title + beginning of content)
         summary_text = f"{document['title']}. {document['content'][:200]}"
         summary_chunk = {
             'chunk_id': f"{document['doc_id']}_summary",
@@ -55,7 +53,6 @@ class DocumentChunker:
         }
         chunks.append(summary_chunk)
         
-        # Level 2: Detailed semantic chunks
         if doc_type == 'research_paper':
             splitter = self.paper_splitter
         else:
@@ -70,7 +67,7 @@ class DocumentChunker:
                 'doc_type': doc_type,
                 'chunk_type': 'detail',
                 'text': chunk_text,
-                'chunk_index': idx + 1,  # +1 because summary is 0
+                'chunk_index': idx + 1,   
                 'metadata': document['metadata']
             }
             chunks.append(chunk)
@@ -80,41 +77,3 @@ class DocumentChunker:
         )
         return chunks
     
-    def create_batch_chunks(self, documents: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Create chunks for multiple documents
-        
-        Args:
-            documents: List of processed documents
-            
-        Returns:
-            List of all chunks
-        """
-        all_chunks = []
-        
-        for doc in documents:
-            chunks = self.create_chunks(doc)
-            all_chunks.extend(chunks)
-        
-        self.logger.info(
-            f"Created {len(all_chunks)} chunks from {len(documents)} documents"
-        )
-        return all_chunks
-    
-    def get_parent_document(self, chunk: Dict[str, Any], 
-                           all_documents: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """
-        Retrieve the parent document for a given chunk
-        
-        Args:
-            chunk: Chunk object
-            all_documents: List of all documents
-            
-        Returns:
-            Parent document
-        """
-        doc_id = chunk['doc_id']
-        for doc in all_documents:
-            if doc['doc_id'] == doc_id:
-                return doc
-        return None

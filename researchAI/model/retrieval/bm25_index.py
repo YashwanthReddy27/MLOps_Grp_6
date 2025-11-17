@@ -12,7 +12,6 @@ from config.settings import config
 
 logger = logging.getLogger(__name__)
 
-# Download NLTK data if not already present
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
@@ -32,15 +31,12 @@ class BM25Index:
         self.index_name = index_name
         self.logger = logging.getLogger(__name__)
         
-        # Initialize components
         self.bm25 = None
         self.chunk_ids = []
         self.chunks_metadata = []
         
-        # Stop words
         self.stop_words = set(stopwords.words('english'))
         
-        # Paths
         self.persist_dir = Path(self.config.persist_directory)
         self.persist_dir.mkdir(parents=True, exist_ok=True)
         
@@ -59,13 +55,10 @@ class BM25Index:
         Returns:
             List of tokens
         """
-        # Convert to lowercase
         text = text.lower()
         
-        # Tokenize
         tokens = word_tokenize(text)
         
-        # Remove stopwords and short tokens
         tokens = [
             token for token in tokens 
             if token not in self.stop_words and len(token) > 2
@@ -82,17 +75,14 @@ class BM25Index:
         """
         self.logger.info(f"Building BM25 index for {len(chunks)} chunks")
         
-        # Extract and tokenize texts
         tokenized_corpus = []
         self.chunk_ids = []
         self.chunks_metadata = []
         
         for chunk in chunks:
-            # Tokenize text
             tokens = self.tokenize(chunk['text'])
             tokenized_corpus.append(tokens)
             
-            # Store metadata
             self.chunk_ids.append(chunk['chunk_id'])
             self.chunks_metadata.append({
                 'chunk_id': chunk['chunk_id'],
@@ -101,7 +91,6 @@ class BM25Index:
                 **chunk.get('metadata', {})
             })
         
-        # Build BM25 index
         self.bm25 = BM25Okapi(
             tokenized_corpus,
             k1=self.config.k1,
@@ -127,27 +116,21 @@ class BM25Index:
             self.logger.error("BM25 index not built. Call build_index first.")
             return []
         
-        # Tokenize query
         tokenized_query = self.tokenize(query)
         
-        # Get BM25 scores
         scores = self.bm25.get_scores(tokenized_query)
         
-        # Get top-k indices
         top_indices = np.argsort(scores)[::-1]
         
-        # Prepare results
         results = []
         for idx in top_indices:
             score = float(scores[idx])
             
-            # Skip low scores
             if score < 0.1:
                 continue
             
             metadata = self.chunks_metadata[idx].copy()
             
-            # Apply filters
             if filters:
                 if not self._apply_filters(metadata, filters):
                     continue
@@ -176,18 +159,15 @@ class BM25Index:
         Returns:
             True if document passes filters
         """
-        # Category filter
         if 'categories' in filters:
             doc_categories = metadata.get('categories', [])
             if not any(cat in doc_categories for cat in filters['categories']):
                 return False
         
-        # Document type filter
         if 'doc_type' in filters:
             if metadata.get('doc_type') != filters['doc_type']:
                 return False
         
-        # Minimum relevance filter
         if 'min_relevance' in filters:
             if metadata.get('relevance_score', 0) < filters['min_relevance']:
                 return False
@@ -197,14 +177,12 @@ class BM25Index:
     def save(self):
         """Save BM25 index to disk"""
         try:
-            # Save BM25 object
             with open(self.index_path, 'wb') as f:
                 pickle.dump({
                     'bm25': self.bm25,
                     'chunk_ids': self.chunk_ids
                 }, f)
             
-            # Save metadata separately
             with open(self.metadata_path, 'wb') as f:
                 pickle.dump(self.chunks_metadata, f)
             
@@ -224,13 +202,11 @@ class BM25Index:
             return False
         
         try:
-            # Load BM25 object
             with open(self.index_path, 'rb') as f:
                 data = pickle.load(f)
                 self.bm25 = data['bm25']
                 self.chunk_ids = data['chunk_ids']
             
-            # Load metadata
             with open(self.metadata_path, 'rb') as f:
                 self.chunks_metadata = pickle.load(f)
             
@@ -249,19 +225,16 @@ class BM25Index:
         """
         self.logger.info(f"Updating BM25 index with {len(chunks)} new chunks")
         
-        # If no existing index, build from scratch
         if self.bm25 is None:
             self.logger.warning("No existing BM25 index found. Building new index...")
             self.build_index(chunks)
             return
         
-        # Tokenize new documents
         new_tokenized_corpus = []
         for chunk in chunks:
             tokens = self.tokenize(chunk['text'])
             new_tokenized_corpus.append(tokens)
             
-            # Store metadata
             self.chunk_ids.append(chunk['chunk_id'])
             self.chunks_metadata.append({
                 'chunk_id': chunk['chunk_id'],
@@ -270,20 +243,14 @@ class BM25Index:
                 **chunk.get('metadata', {})
             })
         
-        # Rebuild BM25 with combined corpus (BM25 doesn't support incremental updates)
-        # Get existing tokenized corpus
         existing_corpus = []
         if hasattr(self.bm25, 'corpus_size'):
-            # Reconstruct corpus from existing data
             for i in range(self.bm25.corpus_size):
-                # Re-tokenize existing documents
                 existing_text = self.chunks_metadata[i]['text']
                 existing_corpus.append(self.tokenize(existing_text))
         
-        # Combine corpora
         combined_corpus = existing_corpus + new_tokenized_corpus
         
-        # Rebuild BM25 index with combined corpus
         self.bm25 = BM25Okapi(
             combined_corpus,
             k1=self.config.k1,

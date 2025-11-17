@@ -11,7 +11,6 @@ class Reranker:
         self.config = config.retrieval
         self.logger = logging.getLogger(__name__)
         
-        # Load cross-encoder
         self.logger.info(f"Loading reranker: {self.config.reranker_model}")
         self.model = CrossEncoder(self.config.reranker_model)
         self.logger.info("Reranker loaded")
@@ -33,16 +32,13 @@ class Reranker:
         if not candidates:
             return []
         
-        # Prepare pairs for cross-encoder
         pairs = [
             [query, candidate['metadata']['text']] 
             for candidate in candidates
         ]
         
-        # Get reranking scores
         rerank_scores = self.model.predict(pairs, show_progress_bar=False)
         
-        # Combine with original scores
         for i, candidate in enumerate(candidates):
             original_score = candidate['score']
             rerank_score = float(rerank_scores[i])
@@ -56,7 +52,6 @@ class Reranker:
             candidate['rerank_score'] = rerank_score
             candidate['score'] = combined_score
         
-        # Sort by combined score
         candidates.sort(key=lambda x: x['score'], reverse=True)
         
         self.logger.debug(f"Reranked {len(candidates)} candidates, returning top {top_k}")

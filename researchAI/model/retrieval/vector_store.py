@@ -18,13 +18,11 @@ class FAISSVectorStore:
         self.index_name = index_name
         self.logger = logging.getLogger(__name__)
         
-        # Initialize components
         self.index = None
         self.chunk_ids = []
         self.metadata = []
         self.dimension = config.embedding.dimension
         
-        # Paths
         self.persist_dir = Path(self.config.persist_directory)
         self.persist_dir.mkdir(parents=True, exist_ok=True)
         
@@ -36,11 +34,9 @@ class FAISSVectorStore:
     def create_index(self):
         """Create a new FAISS flat index"""
         if self.config.index_type == "Flat":
-            # Flat index - exact search
             self.index = faiss.IndexFlatIP(self.dimension)
             
         elif self.config.index_type == "IVFFlat":
-            # IVF index - approximate search with clustering
             quantizer = faiss.IndexFlatIP(self.dimension)
             self.index = faiss.IndexIVFFlat(
                 quantizer,
@@ -51,7 +47,6 @@ class FAISSVectorStore:
             self.index.nprobe = self.config.nprobe
             
         elif self.config.index_type == "flat":
-            # flat index - hierarchical navigable small world
             self.index = faiss.IndexFlatL2(self.dimension, self.config.flat_m)
             self.index.flat.efConstruction = self.config.flat_ef_construction
             self.index.flat.efSearch = self.config.flat_ef_search
@@ -84,20 +79,15 @@ class FAISSVectorStore:
         if self.index is None:
             self.create_index()
         
-        # Extract embeddings
         embeddings = np.array([chunk['embedding'] for chunk in chunks]).astype('float32')
         
-        # Normalize for cosine similarity
         faiss.normalize_L2(embeddings)
         
-        # Train if needed
         if self.config.index_type == "IVFFlat" and not self.index.is_trained:
             self.train_index(embeddings)
         
-        # Add to index
         self.index.add(embeddings)
         
-        # Store metadata
         for chunk in chunks:
             self.chunk_ids.append(chunk['chunk_id'])
             self.metadata.append({
@@ -129,15 +119,12 @@ class FAISSVectorStore:
             self.logger.warning("Index is empty")
             return []
         
-        # Prepare query
         query = np.array([query_embedding]).astype('float32')
         faiss.normalize_L2(query)
         
-        # Search
         search_k = min(top_k * 3, self.index.ntotal)
         distances, indices = self.index.search(query, search_k)
         
-        # Format results
         results = []
         for i, idx in enumerate(indices[0]):
             if idx == -1:
@@ -145,7 +132,6 @@ class FAISSVectorStore:
             
             metadata = self.metadata[idx].copy()
             
-            # Apply filters
             if filters and not self._apply_filters(metadata, filters):
                 continue
             
@@ -182,10 +168,8 @@ class FAISSVectorStore:
     def save(self):
         """Save index and metadata to disk"""
         try:
-            # Save FAISS index
             faiss.write_index(self.index, str(self.index_path))
             
-            # Save metadata
             with open(self.metadata_path, 'wb') as f:
                 pickle.dump({
                     'chunk_ids': self.chunk_ids,
@@ -208,10 +192,8 @@ class FAISSVectorStore:
             return False
         
         try:
-            # Load FAISS index
             self.index = faiss.read_index(str(self.index_path))
             
-            # Load metadata
             with open(self.metadata_path, 'rb') as f:
                 data = pickle.load(f)
                 self.chunk_ids = data['chunk_ids']
@@ -249,20 +231,15 @@ class FAISSVectorStore:
             self.logger.warning("No existing index found. Creating new index...")
             self.create_index()
         
-        # Extract embeddings
         embeddings = np.array([chunk['embedding'] for chunk in chunks]).astype('float32')
         
-        # Normalize for cosine similarity
         faiss.normalize_L2(embeddings)
         
-        # Train if needed (for IVF indexes)
         if self.config.index_type == "IVFFlat" and not self.index.is_trained:
             self.train_index(embeddings)
         
-        # Add to existing index
         self.index.add(embeddings)
         
-        # Append metadata
         for chunk in chunks:
             self.chunk_ids.append(chunk['chunk_id'])
             self.metadata.append({

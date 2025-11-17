@@ -8,7 +8,6 @@ from config.settings import config
 
 logger = logging.getLogger(__name__)
 
-
 class HybridEmbedder:
     """Generate hybrid embeddings for documents"""
     
@@ -16,11 +15,9 @@ class HybridEmbedder:
         self.config = config.embedding
         self.logger = logging.getLogger(__name__)
         
-        # Load embedding model
         self.logger.info(f"Loading embedding model: {self.config.model_name}")
         self.model = SentenceTransformer(self.config.model_name)
         
-        # Set device
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model.to(self.device)
         self.logger.info(f"Using device: {self.device}")
@@ -71,21 +68,17 @@ class HybridEmbedder:
         Returns:
             Chunk with embedding added
         """
-        # Main content embedding
         content_emb = self.embed_text(chunk['text'])
         
-        # Category embedding (for semantic boost)
         categories = chunk['metadata'].get('categories', [])
         if categories:
-            category_text = " ".join(categories[:3])  # Top 3 categories
+            category_text = " ".join(categories[:3])  
             category_emb = self.embed_text(category_text)
             
-            # Combine: 70% content, 30% category
             hybrid_emb = 0.7 * content_emb + 0.3 * category_emb
         else:
             hybrid_emb = content_emb
         
-        # Normalize if needed
         if self.config.normalize:
             hybrid_emb = hybrid_emb / np.linalg.norm(hybrid_emb)
         
@@ -104,13 +97,10 @@ class HybridEmbedder:
         """
         self.logger.info(f"Generating embeddings for {len(chunks)} chunks")
         
-        # Extract texts
         texts = [chunk['text'] for chunk in chunks]
         
-        # Generate content embeddings in batch
         content_embeddings = self.embed_batch(texts)
         
-        # Process category embeddings and combine
         for idx, chunk in enumerate(chunks):
             categories = chunk['metadata'].get('categories', [])
             
@@ -118,10 +108,8 @@ class HybridEmbedder:
                 category_text = " ".join(categories[:3])
                 category_emb = self.embed_text(category_text)
                 
-                # Combine embeddings -> hybrid embeddings
                 hybrid_emb = 0.7 * content_embeddings[idx] + 0.3 * category_emb
                 
-                # Normalize
                 if self.config.normalize:
                     hybrid_emb = hybrid_emb / np.linalg.norm(hybrid_emb)
                 
@@ -144,11 +132,9 @@ class HybridEmbedder:
         Returns:
             Query embedding
         """
-        # Enhance query with context if available
         if query_context:
             categories = query_context.get('categories', [])
             if categories:
-                # Add category hint to query
                 enhanced_query = f"{query} {' '.join(categories)}"
                 return self.embed_text(enhanced_query)
         

@@ -13,7 +13,6 @@ from evaluation.experiment_tracker import ExperimentTracker
 from utils.logger import setup_logging
 logger = logging.getLogger(__name__)
 
-
 class TechTrendsRAGPipeline:
     """Complete RAG pipeline for technology trends"""
     
@@ -29,7 +28,6 @@ class TechTrendsRAGPipeline:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Initializing Tech Trends RAG Pipeline")
         
-        # Initialize components
         self.doc_processor = DocumentProcessor()
         self.chunker = DocumentChunker()
         self.embedder = HybridEmbedder()
@@ -55,43 +53,32 @@ class TechTrendsRAGPipeline:
         """
         self.logger.info("Starting document indexing")
         self.logger.info(f"Indexing document: arxiv papers")
-        # Process and index papers
         if papers:
             for paper in papers:
-            # Process document
                 processed_doc = self.doc_processor.process_arxiv_paper(paper)
                 
-                # Create chunks
                 doc_chunks = self.chunker.create_chunks(processed_doc)
                 
-                # Generate embeddings
                 doc_chunks = self.embedder.embed_chunks(doc_chunks)
                 
-                # Index
                 self.retriever.index_documents(doc_chunks, 'paper')
                 
                 self.logger.info(f"Indexed {len(doc_chunks)} chunks")
         
-        # Process and index news
         if news:
             self.logger.info(f"Indexing document: news articles")
             for news in news:
         
-            # Process document
                 processed_doc = self.doc_processor.process_news_article(news)
                 
-                # Create chunks
                 doc_chunks = self.chunker.create_chunks(processed_doc)
                 
-                # Generate embeddings
                 doc_chunks = self.embedder.embed_chunks(doc_chunks)
                 
-                # Index
                 self.retriever.index_documents(doc_chunks, 'news')
                 
                 self.logger.info(f"Indexed {len(doc_chunks)} chunks")
         
-        # Save indexes
         self.retriever.save_indexes()
         self.logger.info("Document indexing completed")
     
@@ -129,12 +116,10 @@ class TechTrendsRAGPipeline:
         
         self.logger.info(f"Processing query: {query}")
         
-        # Start tracking if enabled
         if self.tracker:
             self.tracker.start_run()
             self.tracker.log_config()
         
-        # Step 1: Retrieval
         self.logger.info("Retrieving relevant documents")
         retrieved_docs = self.retriever.retrieve(
             query=query,
@@ -151,7 +136,6 @@ class TechTrendsRAGPipeline:
         
         self.logger.info(f"Retrieved {len(retrieved_docs)} documents")
         
-        # Step 2: Generation
         self.logger.info("Generating response")
         if enable_streaming:
             return self.streaming_generator.generate_response_stream(
@@ -164,7 +148,6 @@ class TechTrendsRAGPipeline:
                 retrieved_docs=retrieved_docs
             )
         
-        # Step 3: Validation
         self.logger.info("Validating response")
         validation = self.validator.validate(
             query=query,
@@ -172,7 +155,6 @@ class TechTrendsRAGPipeline:
             retrieved_docs=retrieved_docs
         )
         
-        # Step 4: Calculate metrics
         response_time = time.time() - start_time
         metrics = self.metrics_calculator.calculate_end_to_end_metrics(
             query=query,
@@ -181,13 +163,10 @@ class TechTrendsRAGPipeline:
             response_time=response_time
         )
 
-        # Step 5: Lightweight fairness check with Fairlearn
         self.logger.info("Checking retrieval fairness with Fairlearn")
 
-        # Normalize retrieval scores to [0, 1] range for fairness evaluation
         normalized_retrieval_score = self._normalize_retrieval_score(retrieved_docs)
 
-        # Prepare single-query fairness check data
         fairness_evaluation_data = {
             'query': query,
             'retrieved_docs': retrieved_docs,
@@ -200,12 +179,10 @@ class TechTrendsRAGPipeline:
             }
         }
 
-        # Run Fairlearn-based single-query fairness check
         fairness_report = self.fairness_detector.evaluate_single_query_fairness_with_fairlearn(
             fairness_evaluation_data
         )
         
-        # Compile final result
         final_result = {
             'query': query,
             'response': result['response'],
@@ -219,7 +196,6 @@ class TechTrendsRAGPipeline:
             'from_cache': False
         }
         
-        # Track experiment
         if self.tracker:
             self.tracker.log_query_result(
                 query=query,
@@ -254,11 +230,9 @@ class TechTrendsRAGPipeline:
         min_score = min(scores)
         max_score = max(scores)
         
-        # Handle case where all scores are the same
         if max_score == min_score:
             return 0.5
         
-        # Min-max normalization to [0, 1]
         normalized_scores = [(s - min_score) / (max_score - min_score) for s in scores]
         
         return sum(normalized_scores) / len(normalized_scores)
@@ -305,7 +279,6 @@ class TechTrendsRAGPipeline:
         from deployment.artifact_registry_pusher import ArtifactRegistryPusher
         from config.settings import config
         
-        # Use config values if not provided
         project_id = project_id or config.gcp.project_id
         location = location or config.gcp.location
         repository = repository or config.gcp.artifact_repository
@@ -318,14 +291,12 @@ class TechTrendsRAGPipeline:
             f"{location}-generic.pkg.dev/{project_id}/{repository}"
         )
         
-        # Initialize pusher
         pusher = ArtifactRegistryPusher(
             project_id=project_id,
             location=location,
             repository=repository
         )
         
-        # Push artifacts
         artifact_path = pusher.push(
             version=version,
             metrics=metrics,
@@ -347,7 +318,6 @@ class TechTrendsRAGPipeline:
         """
         self.logger.info("Starting incremental index update")
         
-        # Try to load existing indexes first
         indexes_loaded = self.load_indexes()
         
         if not indexes_loaded:
@@ -355,42 +325,31 @@ class TechTrendsRAGPipeline:
             self.index_documents(papers=papers, news=news)
             return
         
-        # Process and update papers
         if papers:
             self.logger.info(f"Updating indexes with {len(papers)} new papers")
             for paper in papers:
-                # Process document
                 processed_doc = self.doc_processor.process_arxiv_paper(paper)
                 
-                # Create chunks
                 doc_chunks = self.chunker.create_chunks(processed_doc)
                 
-                # Generate embeddings
                 doc_chunks = self.embedder.embed_chunks(doc_chunks)
                 
-                # Update indexes
                 self.retriever.update_indexes(doc_chunks, 'paper')
                 
                 self.logger.info(f"Updated with {len(doc_chunks)} paper chunks")
         
-        # Process and update news
         if news:
             self.logger.info(f"Updating indexes with {len(news)} new articles")
             for article in news:
-                # Process document
                 processed_doc = self.doc_processor.process_news_article(article)
                 
-                # Create chunks
                 doc_chunks = self.chunker.create_chunks(processed_doc)
                 
-                # Generate embeddings
                 doc_chunks = self.embedder.embed_chunks(doc_chunks)
                 
-                # Update indexes
                 self.retriever.update_indexes(doc_chunks, 'news')
                 
                 self.logger.info(f"Updated with {len(doc_chunks)} news chunks")
         
-        # Save updated indexes
         self.retriever.save_indexes()
         self.logger.info("Index update completed and saved")

@@ -1,6 +1,3 @@
-"""
-Script to update RAG indexes with new data from cleaned folder
-"""
 import json
 import logging
 import shutil
@@ -12,7 +9,6 @@ from pipeline import TechTrendsRAGPipeline
 from utils.logger import setup_logging
 from datetime import datetime
 logger = logging.getLogger(__name__)
-
 
 class IndexUpdater:
     """Handles updating RAG indexes with new cleaned data"""
@@ -31,11 +27,9 @@ class IndexUpdater:
         self.processed_dir = Path(processed_dir)
         self.logger = logging.getLogger(__name__)
         
-        # Create directories if they don't exist
         self.cleaned_dir.mkdir(parents=True, exist_ok=True)
         self.processed_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize pipeline
         self.pipeline = TechTrendsRAGPipeline(enable_tracking=True)
         
     def read_cleaned_files(self) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Path]]:
@@ -49,7 +43,6 @@ class IndexUpdater:
         news = []
         file_paths = []
         
-        # Get all JSON files in cleaned directory
         json_files = list(self.cleaned_dir.glob("*.json"))
         
         if not json_files:
@@ -63,11 +56,9 @@ class IndexUpdater:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 
-                # Determine file type based on filename or content structure
                 filename = file_path.name.lower()
                 
                 if 'arxiv' in filename or 'paper' in filename:
-                    # ArXiv papers file
                     if 'papers' in data:
                         papers.extend(data['papers'])
                         self.logger.info(f"Loaded {len(data['papers'])} papers from {file_path.name}")
@@ -75,7 +66,6 @@ class IndexUpdater:
                         self.logger.warning(f"No 'papers' key found in {file_path.name}")
                 
                 elif 'news' in filename or 'tech' in filename:
-                    # News articles file
                     if 'articles' in data:
                         news.extend(data['articles'])
                         self.logger.info(f"Loaded {len(data['articles'])} articles from {file_path.name}")
@@ -83,7 +73,6 @@ class IndexUpdater:
                         self.logger.warning(f"No 'articles' key found in {file_path.name}")
                 
                 else:
-                    # Try to infer from content structure
                     if 'papers' in data:
                         papers.extend(data['papers'])
                         self.logger.info(f"Inferred papers from {file_path.name}")
@@ -118,7 +107,6 @@ class IndexUpdater:
             try:
                 destination = self.processed_dir / file_path.name
                 
-                # If file exists in processed, rename with timestamp
                 if destination.exists():
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     stem = destination.stem
@@ -139,11 +127,9 @@ class IndexUpdater:
         self.logger.info("STARTING INDEX UPDATE PROCESS")
         self.logger.info("=" * 80)
         
-        # Step 1: Read cleaned files
         self.logger.info("\nStep 1: Reading cleaned data files...")
         papers, news, file_paths = self.read_cleaned_files()
         
-        # Check if any data was found
         if not papers and not news:
             self.logger.warning("⚠️  NO DATA FOUND TO INDEX")
             self.logger.warning("Cleaned folder is empty or contains no valid data files")
@@ -151,12 +137,10 @@ class IndexUpdater:
         
         self.logger.info(f"✓ Found {len(papers)} papers and {len(news)} articles")
         
-        # Step 2: Load existing indexes
         self.logger.info("\nStep 2: Loading existing indexes...")
         if not self.pipeline.load_indexes():
             self.logger.error("Failed to load existing indexes")
             self.logger.info("Creating new indexes instead...")
-            # If no indexes exist, use index_documents instead
             try:
                 self.pipeline.index_documents(papers=papers if papers else None, 
                                              news=news if news else None)
@@ -167,7 +151,6 @@ class IndexUpdater:
         else:
             self.logger.info("✓ Existing indexes loaded successfully")
             
-            # Step 3: Update indexes with new data
             self.logger.info("\nStep 3: Updating indexes with new data...")
             try:
                 self.pipeline.update_indexes(papers=papers if papers else None, 
@@ -177,12 +160,10 @@ class IndexUpdater:
                 self.logger.error(f"Failed to update indexes: {e}")
                 return False
         
-        # Step 4: Move processed files
         self.logger.info("\nStep 4: Moving processed files...")
         self.move_to_processed(file_paths)
         self.logger.info("✓ Files moved to processed directory")
         
-        # Step 5: Get index statistics
         self.logger.info("\nStep 5: Index statistics:")
         try:
             stats = self.pipeline.retriever.get_index_stats()
@@ -200,15 +181,12 @@ class IndexUpdater:
 
 def main():
     """Main execution function"""
-    # Setup logging
     setup_logging()
     logger = logging.getLogger(__name__)
     
     try:
-        # Create updater instance
         updater = IndexUpdater()
         
-        # Run update process
         success = updater.update_indexes()
         
         if success:

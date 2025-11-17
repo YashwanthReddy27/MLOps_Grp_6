@@ -6,7 +6,6 @@ from collections import Counter
 
 logger = logging.getLogger(__name__)
 
-
 class RAGMetrics:
     """Calculate metrics for RAG system"""
     
@@ -28,22 +27,18 @@ class RAGMetrics:
         """
         metrics = {}
         
-        # Basic statistics
         metrics['num_retrieved'] = len(retrieved_docs)
         
         if retrieved_docs:
-            # Score statistics
             scores = [doc['score'] for doc in retrieved_docs]
             metrics['avg_score'] = np.mean(scores)
             metrics['max_score'] = np.max(scores)
             metrics['min_score'] = np.min(scores)
             metrics['score_std'] = np.std(scores)
             
-            # Diversity metrics
             diversity = self._calculate_diversity(retrieved_docs)
             metrics.update(diversity)
             
-            # If we have ground truth, calculate precision/recall
             if relevant_doc_ids:
                 retrieved_ids = [doc['metadata']['doc_id'] for doc in retrieved_docs]
                 precision_recall = self._calculate_precision_recall(
@@ -69,18 +64,15 @@ class RAGMetrics:
         """
         metrics = {}
         
-        # Length metrics
         metrics['response_length'] = len(response)
         metrics['num_sentences'] = response.count('.') + response.count('!') + response.count('?')
         metrics['avg_sentence_length'] = metrics['response_length'] / max(metrics['num_sentences'], 1)
         
-        # Citation metrics
         import re
         citations = re.findall(r'\[\d+\]', response)
         metrics['num_citations'] = len(citations)
         metrics['unique_citations'] = len(set(citations))
         
-        # If we have ground truth, calculate similarity
         if ground_truth:
             similarity = self._calculate_text_similarity(response, ground_truth)
             metrics['similarity_score'] = similarity
@@ -111,7 +103,6 @@ class RAGMetrics:
             'generation_metrics': self.calculate_generation_metrics(response)
         }
         
-        # Calculate efficiency metrics
         metrics['tokens_per_second'] = len(response.split()) / max(response_time, 0.1)
         
         return metrics
@@ -130,7 +121,6 @@ class RAGMetrics:
         unique_sources = len(set(sources))
         unique_categories = len(set(categories))
         
-        # Shannon entropy for source diversity
         source_counts = Counter(sources)
         total = len(sources)
         

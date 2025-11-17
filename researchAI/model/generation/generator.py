@@ -15,7 +15,6 @@ class ResponseGenerator:
         self.config = config.generation
         self.logger = logging.getLogger(__name__)
         
-        # Initialize Gemini client
         if self.config.api_key:
             genai.configure(api_key=self.config.api_key)
             self.model = genai.GenerativeModel(self.config.model_name)
@@ -43,9 +42,7 @@ class ResponseGenerator:
         for idx, doc in enumerate(retrieved_docs):
             meta = doc['metadata']
             
-            # Format based on document type
             if meta.get('source') == 'arxiv' or 'arxiv_id' in meta:
-                # Research paper
                 authors = meta.get('authors', 'Unknown')
                 if len(authors) > 100:
                     authors = authors[:100] + "..."
@@ -57,7 +54,6 @@ class ResponseGenerator:
                 source_type = "Research Paper"
                 url = meta.get('html_url', meta.get('pdf_url', ''))
             else:
-                # News article
                 citation = (
                     f"[{idx+1}] {meta.get('title', 'Untitled')} - "
                     f"{meta.get('source_name', 'Unknown')} "
@@ -66,10 +62,8 @@ class ResponseGenerator:
                 source_type = "News Article"
                 url = meta.get('url', '')
             
-            # Get text content
             text = meta.get('text', '')
             
-            # Format section
             section = f"""
 [{idx+1}] {source_type}
 Title: {meta.get('title', 'Untitled')}
@@ -79,7 +73,6 @@ URL: {url}
 Categories: {', '.join(meta.get('categories', [])[:3])}
 ---
 """
-            # Check if we're exceeding limit
             if total_chars + len(section) > max_chars:
                 self.logger.warning(f"Context truncated at {idx+1} documents")
                 break
@@ -108,10 +101,8 @@ Categories: {', '.join(meta.get('categories', [])[:3])}
                 'error': 'no_results'
             }
         
-        # Prepare context
         context = self.prepare_context(retrieved_docs)
         
-        # Build prompt
         prompt = f"""{SYSTEM_PROMPT}
 
 Retrieved Context:
@@ -128,7 +119,6 @@ Please provide a comprehensive answer that:
 
 Answer:"""
         
-        # Generate response
         if self.model:
             try:
                 response = self._call_gemini(prompt)
@@ -138,7 +128,6 @@ Answer:"""
         else:
             response = self._generate_fallback_response(query, retrieved_docs)
         
-        # Extract citations from response
         citations = self._extract_citations(response, retrieved_docs)
         
         return {
@@ -183,7 +172,6 @@ Answer:"""
         Returns:
             Fallback response
         """
-        # Simple summary of top documents
         response_parts = [
             f"Based on {len(retrieved_docs)} sources, here are the key findings:\n"
         ]
@@ -216,7 +204,6 @@ Answer:"""
         """
         import re
         
-        # Find all citation numbers in response
         citation_pattern = r'\[(\d+)\]'
         cited_numbers = set(re.findall(citation_pattern, response))
         
@@ -255,12 +242,10 @@ class StreamingGenerator(ResponseGenerator):
             Response chunks
         """
         if not self.model:
-            # Fall back to non-streaming
             result = self.generate_response(query, retrieved_docs)
             yield result['response']
             return
         
-        # Prepare context and prompt
         context = self.prepare_context(retrieved_docs)
         
         prompt = f"""{SYSTEM_PROMPT}

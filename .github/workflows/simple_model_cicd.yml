@@ -57,13 +57,6 @@ jobs:
           cd data
           ls -alth
 
-      - name: data check
-        run: | 
-          cd researchAI
-          cd data
-          cd cleaned
-          ls -alth
-
       - name: Check if data folder exists
         run: |
           if [ ! -d "researchAI/data/cleaned" ] || [ -z "$(ls -A researchAI/data/cleaned)" ]; then

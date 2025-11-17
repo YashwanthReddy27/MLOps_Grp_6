@@ -15,6 +15,7 @@ from common.data_cleaning import TextCleaner
 from common.data_enrichment import CategoryManager
 from common.file_management import FileManager
 from common.database_utils import DatabaseManager
+from text_summarizer.summarize_text import Summarize
 
 class NewsAPIPipeline:
     """
@@ -30,6 +31,7 @@ class NewsAPIPipeline:
         self.category_manager = CategoryManager()
         self.file_manager = FileManager()
         self.database_manager = DatabaseManager()
+        self.text_summarizer = Summarize()
         # Default arguments for the DAG
         self.default_args = {
             'owner': 'airflow',
@@ -363,8 +365,10 @@ class NewsAPIPipeline:
                 content = self._extract_by_common_patterns(soup)
             if not content:
                 content = self._extract_by_paragraphs(soup)
-            
-            return content
+
+            summarized_content = self.text_summarizer.summarize_news_descriptions(content, "anirudhsayya/t5-small-xsum-finetuned")
+            self.logger.info("Summarization complete!")
+            return summarized_content
         except requests.RequestException as e:
             self.logger.error(f"Failed to fetch {url}: {e}")
             return None

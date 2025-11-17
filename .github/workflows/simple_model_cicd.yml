@@ -95,6 +95,7 @@ jobs:
           git push
       
       - name: DVC Push after Indexing
+        if: steps.check_data.outputs.has_data == 'true'
         run: |
           cd researchAI
           chmod +x dvc/dvc.sh
@@ -102,6 +103,7 @@ jobs:
         continue-on-error: false
       
       - name: Dvc file add to git repo
+        if: steps.check_data.outputs.has_data == 'true'
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"

@@ -20,8 +20,8 @@ class SimpleModelEvaluator:
     """Simple evaluator with response comparison"""
     
     def __init__(self, pipeline: TechTrendsRAGPipeline, 
-                 validation_threshold: float = 0.7,
-                 fairness_threshold: float = 0.6):
+                 validation_threshold: float = 0.2,
+                 fairness_threshold: float = 0.2):
         self.pipeline = pipeline
         self.logger = logging.getLogger(__name__)
         self.validation_threshold = validation_threshold

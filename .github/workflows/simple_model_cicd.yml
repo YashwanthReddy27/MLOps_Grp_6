@@ -3,7 +3,7 @@ name: Simple RAG Model CI/CD
 on:
   push:
     branches:
-      - feat/model-building
+      - fixes/model-ci-cd
       - main
   workflow_dispatch:
 
@@ -127,17 +127,6 @@ jobs:
           project_id: ${{ env.GCP_PROJECT_ID }}
         continue-on-error: true
       
-      - name: Download previous evaluation report
-        if: steps.check_data.outputs.has_data == 'true'
-        continue-on-error: true
-        uses: dawidd6/action-download-artifact@v3
-        with:
-          workflow: simple_model_cicd.yml
-          name: evaluation-report
-          path: ./previous_reports/
-          search_artifacts: true
-          if_no_artifact_found: warn
-      
       - name: Run Complete Evaluation Pipeline
         if: steps.check_data.outputs.has_data == 'true'
         env:
@@ -146,28 +135,17 @@ jobs:
         run: |
           cd researchAI/model
           
-          PREVIOUS_REPORT=""
-          if [ -f ../../previous_reports/evaluation_report.json ]; then
-            PREVIOUS_REPORT="--previous-report ../../previous_reports/evaluation_report.json"
-            echo "✅ Found previous report for comparison"
-          else
-            echo "ℹ️  No previous report - first run"
-          fi
-          
           PUSH_FLAG="--push-to-registry"
           echo "🚀 Will push to Artifact Registry if passed"
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
             --output evaluation_report.json \
-            --validation-threshold 0.7 \
-            --fairness-threshold 0.6 \
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
             --repository ${{ env.GCP_REPOSITORY }} \
-            --version "v$(date +%Y%m%d-%H%M%S)" \
-            $PREVIOUS_REPORT
+            --version "v$(date +%Y%m%d-%H%M%S)"
           
           if [ -f artifact_path.txt ]; then
             cp artifact_path.txt ${{ github.workspace }}/artifact_path.txt

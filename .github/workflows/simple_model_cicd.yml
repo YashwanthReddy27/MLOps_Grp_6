@@ -53,6 +53,7 @@ jobs:
       - name: DVC Pull
         run: | 
           cd researchAI
+          ls -alth
           dvc pull
           cd data
           cd cleaned

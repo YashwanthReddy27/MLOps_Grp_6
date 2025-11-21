@@ -58,7 +58,7 @@ jobs:
           ls -alth
           cd data
           ls -alth
-          cd cleaned
+          cd processed
           ls -alth
 
       - name: Check if data folder exists

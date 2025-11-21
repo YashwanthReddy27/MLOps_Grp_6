@@ -55,6 +55,7 @@ jobs:
           cd researchAI
           dvc pull
           cd data
+          ls cleaned
           ls -alth
 
       - name: Check if data folder exists

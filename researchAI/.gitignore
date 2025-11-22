@@ -1,2 +1,5 @@
 /data
 /logs
+/mlruns
+
+gc_credentials.json

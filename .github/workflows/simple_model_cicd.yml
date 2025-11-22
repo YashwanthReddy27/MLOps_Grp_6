@@ -206,12 +206,6 @@ jobs:
             
           else
             echo "status=FAILED" >> $GITHUB_OUTPUT
-            echo "validation=0.0" >> $GITHUB_OUTPUT
-            echo "fairness=0.0" >> $GITHUB_OUTPUT
-            echo "val_threshold=0.7" >> $GITHUB_OUTPUT
-            echo "fair_threshold=0.6" >> $GITHUB_OUTPUT
-            echo "val_gap=0.7" >> $GITHUB_OUTPUT
-            echo "fair_gap=0.6" >> $GITHUB_OUTPUT
           fi
       
       - name: Send Failure Email

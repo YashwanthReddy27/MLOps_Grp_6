@@ -58,7 +58,7 @@ jobs:
           ls -alth
           cd data
           ls -alth
-          cd processed
+          cd cleaned
           ls -alth
 
       - name: Check if data folder exists
@@ -81,24 +81,24 @@ jobs:
           python indexing_script.py
           cd ../..
       
-      - name: DVC Push after Indexing
-        if: steps.check_data.outputs.has_data == 'true'
-        run: |
-          cd researchAI
-          chmod +x dvc/dvc.sh
-          ./dvc/dvc.sh
-        continue-on-error: false
+      # - name: DVC Push after Indexing
+      #   if: steps.check_data.outputs.has_data == 'true'
+      #   run: |
+      #     cd researchAI
+      #     chmod +x dvc/dvc.sh
+      #     ./dvc/dvc.sh
+      #   continue-on-error: false
       
-      - name: Dvc file add to git repo
-        if: steps.check_data.outputs.has_data == 'true'
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          cd researchAI
-          git add data.dvc
-          git add logs.dvc
-          git commit -m "Updated dvc ref"
-          git push
+      # - name: Dvc file add to git repo
+      #   if: steps.check_data.outputs.has_data == 'true'
+      #   run: |
+      #     git config user.name "GitHub Actions Bot"
+      #     git config user.email "actions@github.com"
+      #     cd researchAI
+      #     git add data.dvc
+      #     git add logs.dvc
+      #     git commit -m "Updated dvc ref"
+      #     git push
 
       - name: Authenticate to Google Cloud
         if: steps.check_data.outputs.has_data == 'true'
@@ -206,12 +206,6 @@ jobs:
             
           else
             echo "status=FAILED" >> $GITHUB_OUTPUT
-            echo "validation=0.0" >> $GITHUB_OUTPUT
-            echo "fairness=0.0" >> $GITHUB_OUTPUT
-            echo "val_threshold=0.7" >> $GITHUB_OUTPUT
-            echo "fair_threshold=0.6" >> $GITHUB_OUTPUT
-            echo "val_gap=0.7" >> $GITHUB_OUTPUT
-            echo "fair_gap=0.6" >> $GITHUB_OUTPUT
           fi
       
       - name: Send Failure Email

@@ -1,5 +1,9 @@
 outs:
+<<<<<<< HEAD
 - md5: a284c297fc68f89398d9d7a4d509af5f.dir
+=======
+- md5: 3c8e83b8121a7897d0eeb3f5ff7bed29.dir
+>>>>>>> 3d3c81dc19328934a37edd0fc8ce7186014a6ca8
   size: 2577460
   nfiles: 61
   hash: md5

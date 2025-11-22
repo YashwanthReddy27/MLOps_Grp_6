@@ -2,5 +2,5 @@
 /logs
 gc_credentials.json
 mlops-dvc-key.json
-/.dvc/config
+
 /dvc.sh

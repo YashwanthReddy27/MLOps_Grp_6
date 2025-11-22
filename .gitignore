@@ -24,3 +24,5 @@ data/schema/.gitkeep
 .env/
 .project/
 mlops-gcp-lab1-2ef0048693b3.json
+
+gc_credentials.json

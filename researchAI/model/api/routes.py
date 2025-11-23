@@ -7,7 +7,7 @@ import uuid
 from typing import Callable, Dict, Any
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
@@ -80,7 +80,11 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
     # ===== Query Endpoint =====
     @router.post("/query", response_model=QueryResponse, tags=["query"])
     @limiter.limit("10/minute")  # Rate limit: 10 requests per minute
-    async def query(request: QueryRequest, background_tasks: BackgroundTasks):
+    async def query(
+        request: Request,  # ADDED: Required for SlowAPI
+        query_request: QueryRequest,
+        background_tasks: BackgroundTasks
+    ):
         """
         Process a RAG query
         
@@ -91,39 +95,94 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
         if pipeline is None:
             raise HTTPException(status_code=503, detail="Pipeline not initialized")
         
-        logger.info(f"Processing query: {request.query[:100]}...")
+        logger.info(f"Processing query: {query_request.query[:100]}...")
         
         try:
             # Process query
             result = pipeline.query(
-                query=request.query,
-                filters=request.filters,
-                enable_streaming=request.enable_streaming
+                query=query_request.query,
+                filters=query_request.filters,
+                enable_streaming=query_request.enable_streaming
             )
+            
+            # Debug: Log what keys are actually in the result
+            logger.debug(f"Pipeline result keys: {list(result.keys())}")
+            
+            # Extract values with safe defaults
+            response_time = result.get('response_time', 0.0)
+            validation = result.get('validation', {})
+            validation_score = validation.get('overall_score', 0.0)
+            bias_report = result.get('bias_report', {})
+            fairness_score = bias_report.get('overall_fairness_score', 0.0)
+            from_cache = result.get('from_cache', False)
             
             # Update metrics in background
             background_tasks.add_task(
                 update_metrics,
-                result['response_time'],
-                result['validation']['overall_score'],
-                result['bias_report'].get('overall_fairness_score', 0.0),
-                result.get('from_cache', False)
+                response_time,
+                validation_score,
+                fairness_score,
+                from_cache
             )
             
-            # Format response
+            # Format response with safe defaults
+            # Handle sources safely
+            sources_list = []
+            for source_data in result.get('sources', []):
+                try:
+                    # Ensure source has all required fields
+                    source_obj = Source(
+                        number=source_data.get('number', 0),
+                        title=source_data.get('title', 'Unknown'),
+                        source=source_data.get('source', 'Unknown'),
+                        date=source_data.get('date', 'N/A'),
+                        url=source_data.get('url', ''),
+                        relevance_score=source_data.get('relevance_score', 0.0),
+                        excerpt=source_data.get('excerpt', '')
+                    )
+                    sources_list.append(source_obj)
+                except Exception as e:
+                    logger.warning(f"Failed to parse source: {e}")
+                    continue
+            
+            # Handle BiasReport with all required fields
+            if bias_report and isinstance(bias_report, dict):
+                # Add required fields if missing
+                bias_report_data = {
+                    'overall_fairness_score': bias_report.get('overall_fairness_score', 0.0),
+                    'diversity_metrics': bias_report.get('diversity_metrics', {}),
+                    'warnings': bias_report.get('warnings', []),
+                    'query_characteristics': bias_report.get('query_characteristics', {}),
+                    'fairness_indicators': bias_report.get('fairness_indicators', {}),
+                    'evaluation_type': bias_report.get('evaluation_type', 'standard'),
+                    'timestamp': bias_report.get('timestamp', datetime.now().isoformat())
+                }
+                bias_report_obj = BiasReport(**bias_report_data)
+            else:
+                # Create default BiasReport
+                bias_report_obj = BiasReport(
+                    overall_fairness_score=0.0,
+                    diversity_metrics={},
+                    warnings=[],
+                    query_characteristics={},
+                    fairness_indicators={},
+                    evaluation_type='standard',
+                    timestamp=datetime.now().isoformat()
+                )
+            
             response = QueryResponse(
-                query=result['query'],
-                response=result['response'],
-                sources=[Source(**s) for s in result['sources']],
-                num_sources=result['num_sources'],
-                bias_report=BiasReport(**result['bias_report']),
-                validation=result['validation'],
-                metrics=result['metrics'],
-                response_time=result['response_time'],
-                from_cache=result.get('from_cache', False)
+                query=result.get('query', query_request.query),
+                response=result.get('response', ''),
+                sources=sources_list,
+                num_sources=len(sources_list),
+                bias_report=bias_report_obj,
+                validation=validation,
+                metrics=result.get('metrics', {}),
+                response_time=response_time,
+                from_cache=from_cache
             )
             
-            logger.info(f"Query processed successfully in {result['response_time']:.2f}s")
+            logger.info(f"Query processed successfully in {response_time:.2f}s")
             return response
             
         except Exception as e:
@@ -134,7 +193,10 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
     # ===== Index Update Endpoint =====
     @router.post("/index/update", response_model=IndexUpdateResponse, tags=["indexing"])
     @limiter.limit("5/hour")  # Rate limit: 5 requests per hour
-    async def update_index(request: IndexUpdateRequest):
+    async def update_index(
+        request: Request,  # ADDED: Required for SlowAPI
+        index_request: IndexUpdateRequest
+    ):
         """
         Update indexes with new documents
         
@@ -145,28 +207,28 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
         if pipeline is None:
             raise HTTPException(status_code=503, detail="Pipeline not initialized")
         
-        if not request.papers and not request.news:
+        if not index_request.papers and not index_request.news:
             raise HTTPException(status_code=400, detail="No documents provided")
         
         logger.info(
-            f"Index update requested - Papers: {len(request.papers or [])}, "
-            f"News: {len(request.news or [])}, Mode: {request.mode}"
+            f"Index update requested - Papers: {len(index_request.papers or [])}, "
+            f"News: {len(index_request.news or [])}, Mode: {index_request.mode}"
         )
         
         start_time = time.time()
         
         try:
-            if request.mode == "rebuild":
+            if index_request.mode == "rebuild":
                 # Rebuild indexes from scratch
                 pipeline.index_documents(
-                    papers=request.papers,
-                    news=request.news
+                    papers=index_request.papers,
+                    news=index_request.news
                 )
             else:
                 # Update existing indexes
                 pipeline.update_indexes(
-                    papers=request.papers,
-                    news=request.news
+                    papers=index_request.papers,
+                    news=index_request.news
                 )
             
             duration = time.time() - start_time
@@ -177,8 +239,8 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             response = IndexUpdateResponse(
                 status="success",
                 message="Indexes updated successfully",
-                papers_indexed=len(request.papers or []),
-                news_indexed=len(request.news or []),
+                papers_indexed=len(index_request.papers or []),
+                news_indexed=len(index_request.news or []),
                 total_chunks=stats['papers']['dense']['total_vectors'] + stats['news']['dense']['total_vectors'],
                 duration=duration
             )
@@ -252,7 +314,10 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
     # ===== Feedback Endpoint =====
     @router.post("/feedback", response_model=FeedbackResponse, tags=["feedback"])
     @limiter.limit("20/hour")
-    async def submit_feedback(request: FeedbackRequest):
+    async def submit_feedback(
+        request: Request,  # ADDED: Required for SlowAPI
+        feedback_request: FeedbackRequest
+    ):
         """
         Submit user feedback on a response
         
@@ -262,18 +327,18 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
         
         feedback_entry = {
             "feedback_id": feedback_id,
-            "query": request.query,
-            "response_id": request.response_id,
-            "rating": request.rating,
-            "feedback_text": request.feedback_text,
-            "issues": request.issues,
+            "query": feedback_request.query,
+            "response_id": feedback_request.response_id,
+            "rating": feedback_request.rating,
+            "feedback_text": feedback_request.feedback_text,
+            "issues": feedback_request.issues,
             "timestamp": datetime.now().isoformat()
         }
         
         # Store feedback (in production, use database)
         feedback_store.append(feedback_entry)
         
-        logger.info(f"Feedback received: {feedback_id} - Rating: {request.rating}")
+        logger.info(f"Feedback received: {feedback_id} - Rating: {feedback_request.rating}")
         
         return FeedbackResponse(
             status="success",

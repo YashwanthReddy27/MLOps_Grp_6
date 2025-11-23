@@ -17,13 +17,13 @@ services:
     volumes:
       # Mount code for development
       - ./model:/app
-      # Persist indexes
-      - ./faiss_indexes:/app/faiss_indexes
-      - ./bm25_indexes:/app/bm25_indexes
-      # Persist MLflow runs
-      - ./mlruns:/app/mlruns
-      # Persist logs
-      - ./logs:/app/logs
+      # # Persist indexes
+      # - ./faiss_indexes:/app/faiss_indexes
+      # - ./bm25_indexes:/app/bm25_indexes
+      # # Persist MLflow runs
+      # - ./mlruns:/app/mlruns
+      # # Persist logs
+      # - ./logs:/app/logs
     command: python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - rag-network

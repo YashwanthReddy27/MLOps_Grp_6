@@ -3,7 +3,7 @@ name: Simple RAG Model CI/CD
 on:
   push:
     branches:
-      - fixes/model-ci-cd
+      - feat/model-ci-cd
       - main
   workflow_dispatch:
 
@@ -35,11 +35,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r researchAI/model/requirements.txt
-
       - name: Download NLTK data
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
-
       - name: Set up GCP credentials
         run: | 
           echo ' ${{ secrets.GCP_SA_DVC_KEY }}'  > gcp-key.json
@@ -53,8 +51,9 @@ jobs:
       - name: DVC Pull
         run: | 
           cd researchAI
-          ls -alth
           dvc pull
+          cd data
+          ls -alth
 
       - name: Check if data folder exists
         run: |
@@ -75,25 +74,29 @@ jobs:
           cd researchAI/model
           python indexing_script.py
           cd ../..
+      - name: Push updated indexes to repository
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          git lfs install
+          git lfs track "researchAI/model/bm25_indexes/**"
+          git lfs track "researchAI/model/faiss_indexes/**"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add .gitattributes
+          git add researchAI/model/bm25_indexes/
+          git add researchAI/model/faiss_indexes/
+          echo "Staged changes:"
+          git diff --staged --name-status
+          git diff --staged --quiet || git commit -m "Update indexes after indexing [skip ci]"
+          git lfs push origin ${{ github.ref_name }}
+          git push
       
-      # - name: DVC Push after Indexing
-      #   if: steps.check_data.outputs.has_data == 'true'
-      #   run: |
-      #     cd researchAI
-      #     chmod +x dvc/dvc.sh
-      #     ./dvc/dvc.sh
-      #   continue-on-error: false
-      
-      # - name: Dvc file add to git repo
-      #   if: steps.check_data.outputs.has_data == 'true'
-      #   run: |
-      #     git config user.name "GitHub Actions Bot"
-      #     git config user.email "actions@github.com"
-      #     cd researchAI
-      #     git add data.dvc
-      #     git add logs.dvc
-      #     git commit -m "Updated dvc ref"
-      #     git push
+      - name: DVC Push after Indexing
+        run: |
+          cd researchAI
+          chmod +x dvc/dvc.sh
+          ./dvc/dvc.sh
+        continue-on-error: false
 
       - name: Authenticate to Google Cloud
         if: steps.check_data.outputs.has_data == 'true'
@@ -111,66 +114,39 @@ jobs:
       
       - name: Run Complete Evaluation Pipeline
         if: steps.check_data.outputs.has_data == 'true'
-        continue-on-error: true
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
         run: |
           cd researchAI/model
+          PREVIOUS_REPORT=""
+          if [ -f ../../previous_reports/evaluation_report.json ]; then
+            PREVIOUS_REPORT="--previous-report ../../previous_reports/evaluation_report.json"
+            echo "✅ Found previous report for comparison"
+          else
+            echo "ℹ️  No previous report - first run"
+          fi
           
           PUSH_FLAG="--push-to-registry"
-          echo "Will push to Artifact Registry if passed"
+          echo "🚀 Will push to Artifact Registry if passed"
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
             --output evaluation_report.json \
+            --validation-threshold 0.7 \
+            --fairness-threshold 0.6 \
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
             --repository ${{ env.GCP_REPOSITORY }} \
-            --version "v$(date +%Y%m%d-%H%M%S)"
+            --version "v$(date +%Y%m%d-%H%M%S)" \
+            $PREVIOUS_REPORT
           
           if [ -f artifact_path.txt ]; then
             cp artifact_path.txt ${{ github.workspace }}/artifact_path.txt
           fi
           cp evaluation_report.json ${{ github.workspace }}/evaluation_report.json
         id: evaluation
-
-      - name: Check Evaluation Status
-        if: steps.check_data.outputs.has_data == 'true'
-        id: check_evaluation
-        run: |
-          if [ -f evaluation_report.json ]; then
-            STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
-            echo "status=$STATUS" >> $GITHUB_OUTPUT
-            if [ "$STATUS" = "FAILED" ]; then
-              echo "⚠️ Model evaluation FAILED thresholds."
-              echo "evaluation_passed=false" >> $GITHUB_OUTPUT
-            else
-              echo "✅ Model evaluation PASSED thresholds."
-              echo "evaluation_passed=true" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "evaluation_passed=false" >> $GITHUB_OUTPUT
-            echo "status=FAILED" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Push updated indexes to repository
-        if: steps.check_data.outputs.has_data == 'true' && steps.check_evaluation.outputs.evaluation_passed == 'true'
-        run: |
-          git lfs install
-          git lfs track "researchAI/model/bm25_indexes/**"
-          git lfs track "researchAI/model/faiss_indexes/**"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add .gitattributes
-          git add researchAI/model/bm25_indexes/
-          git add researchAI/model/faiss_indexes/
-          echo "Staged changes:"
-          git diff --staged --name-status
-          git diff --staged --quiet || git commit -m "Update indexes after indexing [skip ci]"
-          git lfs push origin ${{ github.ref_name }}
-          git push
       
       - name: Upload evaluation report
         if: steps.check_data.outputs.has_data == 'true'
@@ -181,7 +157,7 @@ jobs:
           retention-days: 90
       
       - name: Read evaluation metrics
-        if: steps.check_data.outputs.has_data == 'true'  # Always read metrics if data exists
+        if: steps.check_data.outputs.has_data == 'true'
         id: read_metrics
         run: |
           if [ -f evaluation_report.json ]; then
@@ -192,68 +168,74 @@ jobs:
             FAIR_THRESHOLD=$(jq -r '.aggregate_metrics.thresholds.fairness' evaluation_report.json)
             VAL_PASS_RATE=$(jq -r '.aggregate_metrics.validation_pass_rate' evaluation_report.json)
             FAIR_PASS_RATE=$(jq -r '.aggregate_metrics.fairness_pass_rate' evaluation_report.json)
-
-            echo "📊 Evaluation Metrics:"
-            echo "  Status: $STATUS"
-            echo "  Validation: $VALIDATION (threshold: $VAL_THRESHOLD)"
-            echo "  Fairness: $FAIRNESS (threshold: $FAIR_THRESHOLD)"
             
             echo "status=$STATUS" >> $GITHUB_OUTPUT
-            echo "validation=${VALIDATION:-N/A}" >> $GITHUB_OUTPUT
-            echo "fairness=${FAIRNESS:-N/A}" >> $GITHUB_OUTPUT
-            echo "val_threshold=${VAL_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
-            echo "fair_threshold=${FAIR_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
-            echo "val_pass_rate=${VAL_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
-            echo "fair_pass_rate=${FAIR_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
+            echo "validation=$VALIDATION" >> $GITHUB_OUTPUT
+            echo "fairness=$FAIRNESS" >> $GITHUB_OUTPUT
+            echo "val_threshold=$VAL_THRESHOLD" >> $GITHUB_OUTPUT
+            echo "fair_threshold=$FAIR_THRESHOLD" >> $GITHUB_OUTPUT
+            echo "val_pass_rate=$VAL_PASS_RATE" >> $GITHUB_OUTPUT
+            echo "fair_pass_rate=$FAIR_PASS_RATE" >> $GITHUB_OUTPUT
+            
+            # Calculate gaps
+            VAL_GAP=$(echo "$VAL_THRESHOLD - $VALIDATION" | bc)
+            FAIR_GAP=$(echo "$FAIR_THRESHOLD - $FAIRNESS" | bc)
+            echo "val_gap=$VAL_GAP" >> $GITHUB_OUTPUT
+            echo "fair_gap=$FAIR_GAP" >> $GITHUB_OUTPUT
           else
-            echo "❌ evaluation_report.json not found"
             echo "status=FAILED" >> $GITHUB_OUTPUT
-            echo "validation=N/A" >> $GITHUB_OUTPUT
-            echo "fairness=N/A" >> $GITHUB_OUTPUT
-            echo "val_threshold=N/A" >> $GITHUB_OUTPUT
-            echo "fair_threshold=N/A" >> $GITHUB_OUTPUT
-            echo "val_pass_rate=N/A" >> $GITHUB_OUTPUT
-            echo "fair_pass_rate=N/A" >> $GITHUB_OUTPUT
+            echo "validation=0.0" >> $GITHUB_OUTPUT
+            echo "fairness=0.0" >> $GITHUB_OUTPUT
+            echo "val_threshold=0.7" >> $GITHUB_OUTPUT
+            echo "fair_threshold=0.6" >> $GITHUB_OUTPUT
+            echo "val_gap=0.7" >> $GITHUB_OUTPUT
+            echo "fair_gap=0.6" >> $GITHUB_OUTPUT
           fi
       
       - name: Send Failure Email
-        if: |
-          steps.check_data.outputs.has_data == 'true' && 
-          steps.check_evaluation.outputs.evaluation_passed == 'false'
+        if: steps.check_data.outputs.has_data == 'true' && failure()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⚠️ RAG Model Evaluation FAILED - ${{ github.ref_name }}"
+          subject: "❌ RAG Model Evaluation FAILED - ${{ github.ref_name }}"
           to: ${{ secrets.DEVELOPER_EMAIL }}
           from: RAG Model CI/CD
           body: |
-            🔴 RAG Model Evaluation FAILED
+            ❌ RAG Model Evaluation FAILED
             
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
-            Run: ${{ github.run_number }}
             
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            📊 EVALUATION METRICS
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            📊 METRICS THAT FAILED:
             
             Validation Score:
-              • Achieved:  ${{ steps.read_metrics.outputs.validation }}
-              • Required:  ${{ steps.read_metrics.outputs.val_threshold }}
+              • Achieved: ${{ steps.read_metrics.outputs.validation }}
+              • Required: ${{ steps.read_metrics.outputs.val_threshold }}
+              • Gap: ${{ steps.read_metrics.outputs.val_gap }} below threshold
               • Pass Rate: ${{ steps.read_metrics.outputs.val_pass_rate }}
             
             Fairness Score:
-              • Achieved:  ${{ steps.read_metrics.outputs.fairness }}
-              • Required:  ${{ steps.read_metrics.outputs.fair_threshold }}
+              • Achieved: ${{ steps.read_metrics.outputs.fairness }}
+              • Required: ${{ steps.read_metrics.outputs.fair_threshold }}
+              • Gap: ${{ steps.read_metrics.outputs.fair_gap }} below threshold
               • Pass Rate: ${{ steps.read_metrics.outputs.fair_pass_rate }}
             
-            Overall Status: ${{ steps.read_metrics.outputs.status }}
+            ⚠️ POSSIBLE REASONS FOR FAILURE:
+            1. Validation score below 0.7 threshold
+            2. Fairness score below 0.6 threshold
+            3. Model regressed compared to previous version
+            4. Less than 80% of queries passed validation checks
+            5. Less than 80% of queries passed fairness checks
             
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            🔗 VIEW FULL DETAILS
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🔧 NEXT STEPS:
+            • Review the evaluation report artifact in GitHub Actions
+            • Check if indexes are properly loaded
+            • Verify test queries in test_queries_with_expected.csv
+            • Improve retrieval or generation parameters if needed
+            
+            🔗 View Full Details:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         continue-on-error: true

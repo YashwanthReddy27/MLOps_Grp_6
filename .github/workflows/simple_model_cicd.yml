@@ -57,6 +57,17 @@ jobs:
           cd researchAI
           ls -alth
           dvc pull
+      
+      - name: Remove corrupted FAISS file (one-time fix)
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          if [ -f researchAI/model/faiss_indexes/tech-papers.faiss ]; then
+            FILE_SIZE=$(wc -c < researchAI/model/faiss_indexes/tech-papers.faiss)
+            if [ "$FILE_SIZE" -lt 1000 ]; then
+              echo "⚠️ Removing corrupted tech-papers.faiss (only $FILE_SIZE bytes)"
+              rm researchAI/model/faiss_indexes/tech-papers.faiss
+            fi
+          fi
 
       - name: Check if data folder exists
         run: |

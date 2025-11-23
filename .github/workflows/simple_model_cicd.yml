@@ -75,6 +75,9 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/researchAI/model
         run: |
           cd researchAI/model
+          cd faiss_indexes
+          ls -alth
+          cd ..
           python indexing_script.py
           cd ../..
       

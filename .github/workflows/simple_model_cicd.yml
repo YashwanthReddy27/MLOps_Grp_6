@@ -231,18 +231,7 @@ jobs:
               • Achieved: ${{ steps.read_metrics.outputs.fairness }}
               • Required: ${{ steps.read_metrics.outputs.fair_threshold }}
               • Pass Rate: ${{ steps.read_metrics.outputs.fair_pass_rate }}
-            
-            POSSIBLE REASONS FOR FAILURE:
-            1. Validation score below threshold
-            2. Fairness score below threshold
-            3. Model regressed compared to previous version
-            
-            NEXT STEPS:
-            • Review the evaluation report artifact in GitHub Actions
-            • Check if indexes are properly loaded
-            • Verify test queries in test_queries_with_expected.csv
-            • Improve retrieval or generation parameters if needed
-            
+              
             View Full Details:
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         continue-on-error: true

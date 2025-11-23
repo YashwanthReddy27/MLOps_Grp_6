@@ -142,15 +142,17 @@ jobs:
         run: |
           if [ -f evaluation_report.json ]; then
             STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
             if [ "$STATUS" = "FAILED" ]; then
-              echo "⚠️ Model evaluation FAILED thresholds. Skipping remaining steps."
+              echo "⚠️ Model evaluation FAILED thresholds."
               echo "evaluation_passed=false" >> $GITHUB_OUTPUT
             else
-              echo "Model evaluation PASSED thresholds."
+              echo "✅ Model evaluation PASSED thresholds."
               echo "evaluation_passed=true" >> $GITHUB_OUTPUT
             fi
           else
             echo "evaluation_passed=false" >> $GITHUB_OUTPUT
+            echo "status=FAILED" >> $GITHUB_OUTPUT
           fi
 
       - name: Push updated indexes to repository
@@ -179,7 +181,7 @@ jobs:
           retention-days: 90
       
       - name: Read evaluation metrics
-        if: steps.check_data.outputs.has_data == 'true'
+        if: steps.check_data.outputs.has_data == 'true'  # Always read metrics if data exists
         id: read_metrics
         run: |
           if [ -f evaluation_report.json ]; then
@@ -191,51 +193,67 @@ jobs:
             VAL_PASS_RATE=$(jq -r '.aggregate_metrics.validation_pass_rate' evaluation_report.json)
             FAIR_PASS_RATE=$(jq -r '.aggregate_metrics.fairness_pass_rate' evaluation_report.json)
 
+            echo "📊 Evaluation Metrics:"
             echo "  Status: $STATUS"
-            echo "  Validation: $VALIDATION"
-            echo "  Fairness: $FAIRNESS"
+            echo "  Validation: $VALIDATION (threshold: $VAL_THRESHOLD)"
+            echo "  Fairness: $FAIRNESS (threshold: $FAIR_THRESHOLD)"
             
             echo "status=$STATUS" >> $GITHUB_OUTPUT
-            echo "validation=$VALIDATION" >> $GITHUB_OUTPUT
-            echo "fairness=$FAIRNESS" >> $GITHUB_OUTPUT
-            echo "val_threshold=$VAL_THRESHOLD" >> $GITHUB_OUTPUT
-            echo "fair_threshold=$FAIR_THRESHOLD" >> $GITHUB_OUTPUT
-            echo "val_pass_rate=$VAL_PASS_RATE" >> $GITHUB_OUTPUT
-            echo "fair_pass_rate=$FAIR_PASS_RATE" >> $GITHUB_OUTPUT
-            
+            echo "validation=${VALIDATION:-N/A}" >> $GITHUB_OUTPUT
+            echo "fairness=${FAIRNESS:-N/A}" >> $GITHUB_OUTPUT
+            echo "val_threshold=${VAL_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
+            echo "fair_threshold=${FAIR_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
+            echo "val_pass_rate=${VAL_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
+            echo "fair_pass_rate=${FAIR_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
           else
+            echo "❌ evaluation_report.json not found"
             echo "status=FAILED" >> $GITHUB_OUTPUT
+            echo "validation=N/A" >> $GITHUB_OUTPUT
+            echo "fairness=N/A" >> $GITHUB_OUTPUT
+            echo "val_threshold=N/A" >> $GITHUB_OUTPUT
+            echo "fair_threshold=N/A" >> $GITHUB_OUTPUT
+            echo "val_pass_rate=N/A" >> $GITHUB_OUTPUT
+            echo "fair_pass_rate=N/A" >> $GITHUB_OUTPUT
           fi
       
       - name: Send Failure Email
-        if: steps.check_data.outputs.has_data == 'true' && steps.check_evaluation.outputs.evaluation_passed == 'false'
+        if: |
+          steps.check_data.outputs.has_data == 'true' && 
+          steps.check_evaluation.outputs.evaluation_passed == 'false'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "RAG Model Evaluation FAILED - ${{ github.ref_name }}"
+          subject: "⚠️ RAG Model Evaluation FAILED - ${{ github.ref_name }}"
           to: ${{ secrets.DEVELOPER_EMAIL }}
           from: RAG Model CI/CD
           body: |
-            RAG Model Evaluation FAILED
+            🔴 RAG Model Evaluation FAILED
             
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
+            Run: ${{ github.run_number }}
             
-            METRICS THAT FAILED:
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            📊 EVALUATION METRICS
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             
             Validation Score:
-              • Achieved: ${{ steps.read_metrics.outputs.validation }}
-              • Required: ${{ steps.read_metrics.outputs.val_threshold }}
+              • Achieved:  ${{ steps.read_metrics.outputs.validation }}
+              • Required:  ${{ steps.read_metrics.outputs.val_threshold }}
               • Pass Rate: ${{ steps.read_metrics.outputs.val_pass_rate }}
             
             Fairness Score:
-              • Achieved: ${{ steps.read_metrics.outputs.fairness }}
-              • Required: ${{ steps.read_metrics.outputs.fair_threshold }}
+              • Achieved:  ${{ steps.read_metrics.outputs.fairness }}
+              • Required:  ${{ steps.read_metrics.outputs.fair_threshold }}
               • Pass Rate: ${{ steps.read_metrics.outputs.fair_pass_rate }}
-              
-            View Full Details:
+            
+            Overall Status: ${{ steps.read_metrics.outputs.status }}
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🔗 VIEW FULL DETAILS
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         continue-on-error: true

@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+from config.settings import config
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ class ArtifactRegistryPusher:
         self.project_id = project_id
         self.location = location
         self.repository = repository
+        self.version = config.GCPConfig.version
         self.logger = logging.getLogger(__name__)
         
         try:
@@ -76,7 +78,8 @@ class ArtifactRegistryPusher:
             Artifact Registry path
         """
         if version is None:
-            version = datetime.now().strftime("v%Y%m%d-%H%M%S")
+            version = self.version + 1
+            # version = datetime.now().strftime("v%Y%m%d-%H%M%S")
         
         version = self._clean_version(version)
         
@@ -252,3 +255,310 @@ class ArtifactRegistryPusher:
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Upload failed: {e.stderr}")
             raise RuntimeError(f"Failed to upload to Artifact Registry: {e.stderr}")
+
+    def pull_latest(self, destination_dir: str = "./model") -> Dict[str, Any]:
+        """
+        Pull the latest artifact version from Artifact Registry
+        
+        Args:
+            destination_dir: Directory to extract artifacts to (default: ./model)
+            
+        Returns:
+            Dictionary with metadata about pulled artifact
+        """
+        self.logger.info("Pulling latest artifact from Artifact Registry...")
+        
+        try:
+            # Get list of versions for the package
+            package_name = "rag-model"
+            list_cmd = [
+                "gcloud", "artifacts", "versions", "list",
+                "--project", self.project_id,
+                "--location", self.location,
+                "--repository", self.repository,
+                "--package", package_name,
+                "--format", "json",
+                "--sort-by", "~createTime",  # Sort by creation time, newest first
+                "--limit", "1"
+            ]
+            
+            result = subprocess.run(
+                list_cmd,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            versions = json.loads(result.stdout)
+            
+            if not versions:
+                self.logger.error("No versions found in Artifact Registry")
+                raise RuntimeError("No artifacts found in registry")
+            
+            latest_version = versions[0]['name'].split('/')[-1]
+            self.logger.info(f"Latest version found: {latest_version}")
+            
+            # Download the artifact
+            temp_dir = Path(tempfile.mkdtemp())
+            download_path = temp_dir / f"rag-model-{latest_version}.tar.gz"
+            
+            download_cmd = [
+                "gcloud", "artifacts", "generic", "download",
+                "--project", self.project_id,
+                "--location", self.location,
+                "--repository", self.repository,
+                "--package", package_name,
+                "--version", latest_version,
+                "--destination", str(temp_dir)
+            ]
+            
+            self.logger.info("Downloading artifact...")
+            subprocess.run(
+                download_cmd,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            # Find the downloaded file (gcloud may create a subdirectory)
+            downloaded_files = list(temp_dir.rglob("*.tar.gz"))
+            if not downloaded_files:
+                raise RuntimeError("Downloaded artifact not found")
+            
+            tarball_path = downloaded_files[0]
+            self.logger.info(f"Artifact downloaded to: {tarball_path}")
+            
+            # Extract the artifact
+            metadata = self._extract_artifact(tarball_path, destination_dir)
+            
+            # Cleanup temp directory
+            shutil.rmtree(temp_dir)
+            
+            self.logger.info(f"✅ Latest artifact pulled and extracted to: {destination_dir}")
+            
+            return {
+                'version': latest_version,
+                'destination': destination_dir,
+                'metadata': metadata,
+                'success': True
+            }
+            
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to pull artifact: {e.stderr}")
+            raise RuntimeError(f"Failed to pull from Artifact Registry: {e.stderr}")
+        except Exception as e:
+            self.logger.error(f"Error pulling artifact: {e}")
+            raise
+    
+    def pull_specific_version(
+        self, 
+        version: str, 
+        destination_dir: str = "./model"
+    ) -> Dict[str, Any]:
+        """
+        Pull a specific artifact version from Artifact Registry
+        
+        Args:
+            version: Specific version to pull
+            destination_dir: Directory to extract artifacts to
+            
+        Returns:
+            Dictionary with metadata about pulled artifact
+        """
+        self.logger.info(f"Pulling artifact version {version} from Artifact Registry...")
+        
+        try:
+            package_name = "rag-model"
+            version = self._clean_version(version)
+            
+            # Download the artifact
+            temp_dir = Path(tempfile.mkdtemp())
+            
+            download_cmd = [
+                "gcloud", "artifacts", "generic", "download",
+                "--project", self.project_id,
+                "--location", self.location,
+                "--repository", self.repository,
+                "--package", package_name,
+                "--version", version,
+                "--destination", str(temp_dir)
+            ]
+            
+            self.logger.info(f"Downloading artifact version {version}...")
+            subprocess.run(
+                download_cmd,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            # Find the downloaded file
+            downloaded_files = list(temp_dir.rglob("*.tar.gz"))
+            if not downloaded_files:
+                raise RuntimeError("Downloaded artifact not found")
+            
+            tarball_path = downloaded_files[0]
+            self.logger.info(f"Artifact downloaded to: {tarball_path}")
+            
+            # Extract the artifact
+            metadata = self._extract_artifact(tarball_path, destination_dir)
+            
+            # Cleanup temp directory
+            shutil.rmtree(temp_dir)
+            
+            self.logger.info(f"✅ Artifact version {version} pulled and extracted to: {destination_dir}")
+            
+            return {
+                'version': version,
+                'destination': destination_dir,
+                'metadata': metadata,
+                'success': True
+            }
+            
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to pull artifact: {e.stderr}")
+            raise RuntimeError(f"Failed to pull from Artifact Registry: {e.stderr}")
+        except Exception as e:
+            self.logger.error(f"Error pulling artifact: {e}")
+            raise
+    
+    def _extract_artifact(
+        self, 
+        tarball_path: Path, 
+        destination_dir: str
+    ) -> Dict[str, Any]:
+        """
+        Extract artifact tarball to destination directory
+        
+        Args:
+            tarball_path: Path to the tarball file
+            destination_dir: Directory to extract to
+            
+        Returns:
+            Metadata from the artifact
+        """
+        self.logger.info(f"Extracting artifact to {destination_dir}...")
+        
+        dest_path = Path(destination_dir)
+        dest_path.mkdir(parents=True, exist_ok=True)
+        
+        metadata = None
+        
+        with tarfile.open(tarball_path, "r:gz") as tar:
+            # Extract metadata first
+            try:
+                metadata_member = tar.getmember("metadata.json")
+                metadata_file = tar.extractfile(metadata_member)
+                metadata = json.load(metadata_file)
+                self.logger.info(f"Loaded metadata: version={metadata.get('version')}")
+            except KeyError:
+                self.logger.warning("No metadata.json found in artifact")
+            
+            # Extract FAISS indexes
+            faiss_members = [m for m in tar.getmembers() if m.name.startswith("faiss_indexes/")]
+            if faiss_members:
+                faiss_dest = dest_path / "faiss_indexes"
+                faiss_dest.mkdir(parents=True, exist_ok=True)
+                
+                for member in faiss_members:
+                    # Remove the faiss_indexes/ prefix from the path
+                    member.name = member.name.replace("faiss_indexes/", "")
+                    if member.name:  # Skip if name becomes empty
+                        tar.extract(member, path=faiss_dest)
+                
+                self.logger.info(f"✅ Extracted FAISS indexes to {faiss_dest}")
+            else:
+                self.logger.warning("No FAISS indexes found in artifact")
+            
+            # Extract BM25 indexes
+            bm25_members = [m for m in tar.getmembers() if m.name.startswith("bm25_indexes/")]
+            if bm25_members:
+                bm25_dest = dest_path / "bm25_indexes"
+                bm25_dest.mkdir(parents=True, exist_ok=True)
+                
+                for member in bm25_members:
+                    # Remove the bm25_indexes/ prefix from the path
+                    member.name = member.name.replace("bm25_indexes/", "")
+                    if member.name:  # Skip if name becomes empty
+                        tar.extract(member, path=bm25_dest)
+                
+                self.logger.info(f"✅ Extracted BM25 indexes to {bm25_dest}")
+            else:
+                self.logger.warning("No BM25 indexes found in artifact")
+            
+            # Extract MLflow runs (optional)
+            mlruns_members = [m for m in tar.getmembers() if m.name.startswith("mlruns/")]
+            if mlruns_members:
+                mlruns_dest = dest_path / "mlruns"
+                mlruns_dest.mkdir(parents=True, exist_ok=True)
+                
+                for member in mlruns_members:
+                    member.name = member.name.replace("mlruns/", "")
+                    if member.name:
+                        tar.extract(member, path=mlruns_dest)
+                
+                self.logger.info(f"✅ Extracted MLflow runs to {mlruns_dest}")
+            
+            # Extract config (optional)
+            config_members = [m for m in tar.getmembers() if m.name.startswith("config/")]
+            if config_members:
+                config_dest = dest_path / "config"
+                config_dest.mkdir(parents=True, exist_ok=True)
+                
+                for member in config_members:
+                    member.name = member.name.replace("config/", "")
+                    if member.name:
+                        tar.extract(member, path=config_dest)
+                
+                self.logger.info(f"✅ Extracted config to {config_dest}")
+        
+        return metadata
+    
+    def list_versions(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        List available versions in Artifact Registry
+        
+        Args:
+            limit: Maximum number of versions to return
+            
+        Returns:
+            List of version information dictionaries
+        """
+        self.logger.info("Listing artifact versions...")
+        
+        try:
+            package_name = "rag-model"
+            list_cmd = [
+                "gcloud", "artifacts", "versions", "list",
+                "--project", self.project_id,
+                "--location", self.location,
+                "--repository", self.repository,
+                "--package", package_name,
+                "--format", "json",
+                "--sort-by", "~createTime",
+                "--limit", str(limit)
+            ]
+            
+            result = subprocess.run(
+                list_cmd,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            versions = json.loads(result.stdout)
+            
+            version_info = []
+            for v in versions:
+                version_info.append({
+                    'version': v['name'].split('/')[-1],
+                    'created': v.get('createTime', 'Unknown'),
+                    'updated': v.get('updateTime', 'Unknown')
+                })
+            
+            self.logger.info(f"Found {len(version_info)} versions")
+            return version_info
+            
+        except subprocess.CalledProcessError as e:
+            self.logger.error(f"Failed to list versions: {e.stderr}")
+            return []

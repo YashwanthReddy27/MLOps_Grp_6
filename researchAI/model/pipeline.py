@@ -11,6 +11,8 @@ from evaluation.model_bias_detector import RAGBiasDetector
 from evaluation.metrics import RAGMetrics
 from evaluation.experiment_tracker import ExperimentTracker
 from utils.logger import setup_logging
+from deployment.artifact_registry_pusher import ArtifactRegistryPusher
+from config.settings import config
 logger = logging.getLogger(__name__)
 
 class TechTrendsRAGPipeline:
@@ -38,9 +40,13 @@ class TechTrendsRAGPipeline:
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
         self.tracker = ExperimentTracker() if enable_tracking else None
+        self.project_id = config.GCPConfig.project_id
+        self.location = config.GCPConfig.location
+        self.repository = config.GCPConfig.artifact_repository
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
-
         self.logger.info("Pipeline initialized successfully")
+        if not self.project_id:
+            raise ValueError("GCP project_id is required")
     
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
@@ -89,14 +95,63 @@ class TechTrendsRAGPipeline:
         Returns:
             True if successful
         """
+
         self.logger.info("Loading indexes")
-        success = self.retriever.load_indexes()
         
-        if success:
-            stats = self.retriever.get_index_stats()
-            self.logger.info(f"Indexes loaded: {stats}")
-        
-        return success
+        try:
+            pusher = ArtifactRegistryPusher(
+                project_id=self.project_id,
+                location=self.location,
+                repository=self.repository
+            )
+            
+            # Pull artifact (latest or specific version)
+            if version:
+                result = pusher.pull_specific_version(
+                    version=version,
+                    destination_dir="./model"
+                )
+            else:
+                result = pusher.pull_latest(
+                    destination_dir="./model"
+                )
+            
+            self.logger.info(f"Artifact pulled: version {result['version']}")
+            
+            # Update retriever paths to point to the model directory
+            import shutil
+            
+            # Copy FAISS indexes to the expected location
+            model_faiss = Path("./model/faiss_indexes")
+            target_faiss = Path(config.vector_store.persist_directory)
+            
+            if model_faiss.exists():
+                target_faiss.mkdir(parents=True, exist_ok=True)
+                for file in model_faiss.glob("*"):
+                    shutil.copy2(file, target_faiss / file.name)
+                self.logger.info(f"Copied FAISS indexes to {target_faiss}")
+            
+            # Copy BM25 indexes to the expected location
+            model_bm25 = Path("./model/bm25_indexes")
+            target_bm25 = Path(config.bm25.persist_directory)
+            
+            if model_bm25.exists():
+                target_bm25.mkdir(parents=True, exist_ok=True)
+                for file in model_bm25.glob("*"):
+                    shutil.copy2(file, target_bm25 / file.name)
+                self.logger.info(f"Copied BM25 indexes to {target_bm25}")
+            
+            success = self.retriever.load_indexes()
+            
+            if success:
+                stats = self.retriever.get_index_stats()
+                self.logger.info(f"Indexes loaded: {stats}")
+            
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Error loading from Artifact Registry: {e}")
+            raise
 
     def query(self, query: str, 
          filters: Optional[Dict[str, Any]] = None,

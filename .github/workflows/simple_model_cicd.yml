@@ -267,27 +267,10 @@ jobs:
           from: RAG Model CI/CD
           body: |
             🔴 RAG Model Evaluation FAILED
-            
+
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Run: ${{ github.run_number }}
-            
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            📊 EVALUATION METRICS
-            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            
-            Validation Score:
-              • Achieved:  ${{ env.EVAL_VALIDATION }}
-              • Required:  ${{ env.EVAL_VAL_THRESHOLD }}
-              • Pass Rate: ${{ env.EVAL_VAL_PASS_RATE }}
-            
-            Fairness Score:
-              • Achieved:  ${{ env.EVAL_FAIRNESS }}
-              • Required:  ${{ env.EVAL_FAIR_THRESHOLD }}
-              • Pass Rate: ${{ env.EVAL_FAIR_PASS_RATE }}
-            
-            Overall Status: ${{ env.EVAL_STATUS }}
-            
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             🔗 VIEW FULL DETAILS
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -182,13 +182,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: evaluation-report
+          path: evaluation_report.json 
           retention-days: 90
       
       - name: Read evaluation metrics
         if: steps.check_data.outputs.has_data == 'true'  # Always read metrics if data exists
         id: read_metrics
         run: |
-          if [ -f ${{ github.workspace }}/evaluation_report.json ]; then
+          if [ -f evaluation_report.json ]; then
             STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
             VALIDATION=$(jq -r '.aggregate_metrics.avg_validation_score' evaluation_report.json)
             FAIRNESS=$(jq -r '.aggregate_metrics.avg_fairness_score' evaluation_report.json)

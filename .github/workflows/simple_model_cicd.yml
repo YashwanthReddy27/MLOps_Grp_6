@@ -1,7 +1,7 @@
 name: Simple RAG Model CI/CD
 
 on:
-  push:
+  push: 
     branches:
       - fixes/model-ci-cd
       - main
@@ -128,7 +128,7 @@ jobs:
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
-            --output evaluation_report.json 
+            --output evaluation_report.json \
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \

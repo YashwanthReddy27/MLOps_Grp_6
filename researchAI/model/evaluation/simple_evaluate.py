@@ -281,8 +281,8 @@ def main():
     
     parser.add_argument('--test-data', type=str, required=True, help='CSV with questions and expected responses')
     
-    parser.add_argument('--validation-threshold', type=float, default=0.7)
-    parser.add_argument('--fairness-threshold', type=float, default=0.6)
+    parser.add_argument('--validation-threshold', type=float, default=1.0)
+    parser.add_argument('--fairness-threshold', type=float, default=1.0)
     
     parser.add_argument('--output', type=str, default='evaluation_report.json')
     

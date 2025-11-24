@@ -64,7 +64,7 @@ jobs:
             echo "⚠️ No data files found in cleaned folder. Nothing to index."
             echo "has_data=false" >> $GITHUB_OUTPUT
           else
-            echo "✅ Data folder exists with files. Proceeding with indexing..."
+            echo " Data folder exists with files. Proceeding with indexing..."
             echo "has_data=true" >> $GITHUB_OUTPUT
           fi
         id: check_data
@@ -152,7 +152,7 @@ jobs:
               echo "⚠️ Model evaluation FAILED thresholds."
               echo "evaluation_passed=false" >> $GITHUB_OUTPUT
             else
-              echo "✅ Model evaluation PASSED thresholds."
+              echo " Model evaluation PASSED thresholds."
               echo "evaluation_passed=true" >> $GITHUB_OUTPUT
             fi
           else
@@ -185,73 +185,6 @@ jobs:
           path: evaluation_report.json 
           retention-days: 90
 
-      - name: Read evaluation metrics
-        if: steps.check_data.outputs.has_data == 'true'
-        id: read_metrics
-        run: |
-          echo "📍 Current directory: $(pwd)"
-          echo "📂 Looking for evaluation_report.json..."
-          ls -la evaluation_report.json || echo "❌ File not found!"
-          
-          if [ -f evaluation_report.json ]; then
-            echo "✅ File found, parsing..."
-            
-            STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
-            VALIDATION=$(jq -r '.aggregate_metrics.avg_validation_score' evaluation_report.json)
-            FAIRNESS=$(jq -r '.aggregate_metrics.avg_fairness_score' evaluation_report.json)
-            VAL_THRESHOLD=$(jq -r '.aggregate_metrics.thresholds.validation' evaluation_report.json)
-            FAIR_THRESHOLD=$(jq -r '.aggregate_metrics.thresholds.fairness' evaluation_report.json)
-            VAL_PASS_RATE=$(jq -r '.aggregate_metrics.validation_pass_rate' evaluation_report.json)
-            FAIR_PASS_RATE=$(jq -r '.aggregate_metrics.fairness_pass_rate' evaluation_report.json)
-
-            echo "📊 Parsed Evaluation Metrics:"
-            echo "  Status: $STATUS"
-            echo "  Validation: $VALIDATION (threshold: $VAL_THRESHOLD)"
-            echo "  Fairness: $FAIRNESS (threshold: $FAIR_THRESHOLD)"
-            echo "  Validation Pass Rate: $VAL_PASS_RATE"
-            echo "  Fairness Pass Rate: $FAIR_PASS_RATE"
-            
-            # Write to GITHUB_OUTPUT for step outputs
-            echo "status=$STATUS" >> $GITHUB_OUTPUT
-            echo "validation=${VALIDATION:-N/A}" >> $GITHUB_OUTPUT
-            echo "fairness=${FAIRNESS:-N/A}" >> $GITHUB_OUTPUT
-            echo "val_threshold=${VAL_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
-            echo "fair_threshold=${FAIR_THRESHOLD:-N/A}" >> $GITHUB_OUTPUT
-            echo "val_pass_rate=${VAL_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
-            echo "fair_pass_rate=${FAIR_PASS_RATE:-N/A}" >> $GITHUB_OUTPUT
-            
-            # CRITICAL: Also write to GITHUB_ENV for email step
-            echo "EVAL_STATUS=$STATUS" >> $GITHUB_ENV
-            echo "EVAL_VALIDATION=${VALIDATION:-N/A}" >> $GITHUB_ENV
-            echo "EVAL_FAIRNESS=${FAIRNESS:-N/A}" >> $GITHUB_ENV
-            echo "EVAL_VAL_THRESHOLD=${VAL_THRESHOLD:-N/A}" >> $GITHUB_ENV
-            echo "EVAL_FAIR_THRESHOLD=${FAIR_THRESHOLD:-N/A}" >> $GITHUB_ENV
-            echo "EVAL_VAL_PASS_RATE=${VAL_PASS_RATE:-N/A}" >> $GITHUB_ENV
-            echo "EVAL_FAIR_PASS_RATE=${FAIR_PASS_RATE:-N/A}" >> $GITHUB_ENV
-            
-            echo "✅ Metrics saved to outputs and environment"
-          else
-            echo "❌ evaluation_report.json not found"
-            
-            # Set fallback values
-            echo "status=FAILED" >> $GITHUB_OUTPUT
-            echo "validation=N/A" >> $GITHUB_OUTPUT
-            echo "fairness=N/A" >> $GITHUB_OUTPUT
-            echo "val_threshold=N/A" >> $GITHUB_OUTPUT
-            echo "fair_threshold=N/A" >> $GITHUB_OUTPUT
-            echo "val_pass_rate=N/A" >> $GITHUB_OUTPUT
-            echo "fair_pass_rate=N/A" >> $GITHUB_OUTPUT
-            
-            # Also set in environment
-            echo "EVAL_STATUS=FAILED" >> $GITHUB_ENV
-            echo "EVAL_VALIDATION=N/A" >> $GITHUB_ENV
-            echo "EVAL_FAIRNESS=N/A" >> $GITHUB_ENV
-            echo "EVAL_VAL_THRESHOLD=N/A" >> $GITHUB_ENV
-            echo "EVAL_FAIR_THRESHOLD=N/A" >> $GITHUB_ENV
-            echo "EVAL_VAL_PASS_RATE=N/A" >> $GITHUB_ENV
-            echo "EVAL_FAIR_PASS_RATE=N/A" >> $GITHUB_ENV
-          fi
-
       - name: Send Failure Email
         if: |
           steps.check_data.outputs.has_data == 'true' && 
@@ -266,13 +199,13 @@ jobs:
           to: ${{ secrets.DEVELOPER_EMAIL }}
           from: RAG Model CI/CD
           body: |
-            🔴 RAG Model Evaluation FAILED
+            RAG Model Evaluation FAILED
 
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Run: ${{ github.run_number }}
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            🔗 VIEW FULL DETAILS
+            VIEW FULL DETAILS
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         continue-on-error: true

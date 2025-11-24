@@ -57,17 +57,6 @@ jobs:
           cd researchAI
           ls -alth
           dvc pull
-      
-      - name: Remove corrupted FAISS file (one-time fix)
-        if: steps.check_data.outputs.has_data == 'true'
-        run: |
-          if [ -f researchAI/model/faiss_indexes/tech-papers.faiss ]; then
-            FILE_SIZE=$(wc -c < researchAI/model/faiss_indexes/tech-papers.faiss)
-            if [ "$FILE_SIZE" -lt 1000 ]; then
-              echo "⚠️ Removing corrupted tech-papers.faiss (only $FILE_SIZE bytes)"
-              rm researchAI/model/faiss_indexes/tech-papers.faiss
-            fi
-          fi
 
       - name: Check if data folder exists
         run: |
@@ -139,7 +128,7 @@ jobs:
           
           python evaluation/simple_evaluate.py \
             --test-data test_queries_with_expected.csv \
-            --output evaluation_report.json \
+            --output evaluation_report.json 
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
@@ -193,14 +182,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: evaluation-report
-          path: evaluation_report.json
           retention-days: 90
       
       - name: Read evaluation metrics
         if: steps.check_data.outputs.has_data == 'true'  # Always read metrics if data exists
         id: read_metrics
         run: |
-          if [ -f evaluation_report.json ]; then
+          if [ -f ${{ github.workspace }}/evaluation_report.json ]; then
             STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
             VALIDATION=$(jq -r '.aggregate_metrics.avg_validation_score' evaluation_report.json)
             FAIRNESS=$(jq -r '.aggregate_metrics.avg_fairness_score' evaluation_report.json)

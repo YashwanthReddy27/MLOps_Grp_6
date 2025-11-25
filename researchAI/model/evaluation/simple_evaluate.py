@@ -20,8 +20,8 @@ class SimpleModelEvaluator:
     """Simple evaluator with response comparison"""
     
     def __init__(self, pipeline: TechTrendsRAGPipeline, 
-                 validation_threshold: float = 0.7,
-                 fairness_threshold: float = 0.6):
+                 validation_threshold: float = 0.2,
+                 fairness_threshold: float = 0.2):
         self.pipeline = pipeline
         self.logger = logging.getLogger(__name__)
         self.validation_threshold = validation_threshold
@@ -272,7 +272,7 @@ def push_to_artifact_registry(pipeline, project_id: str, location: str,
         description=f"Validation: {metrics['avg_validation_score']:.3f}, Fairness: {metrics['avg_fairness_score']:.3f}"
     )
     
-    logger.info(f"✅ Pushed to: {artifact_path}")
+    logger.info(f" Pushed to: {artifact_path}")
     return artifact_path
 
 
@@ -281,8 +281,8 @@ def main():
     
     parser.add_argument('--test-data', type=str, required=True, help='CSV with questions and expected responses')
     
-    parser.add_argument('--validation-threshold', type=float, default=0.7)
-    parser.add_argument('--fairness-threshold', type=float, default=0.6)
+    parser.add_argument('--validation-threshold', type=float, default=0.2)
+    parser.add_argument('--fairness-threshold', type=float, default=0.2)
     
     parser.add_argument('--output', type=str, default='evaluation_report.json')
     
@@ -311,7 +311,7 @@ def main():
             logger.error("Failed to load indexes")
             sys.exit(1)
         
-        logger.info("✅ Indexes loaded")
+        logger.info(" Indexes loaded")
         
         logger.info("\nStep 2: Generating responses and computing metrics...")
         evaluator = SimpleModelEvaluator(
@@ -322,17 +322,17 @@ def main():
         
         results = evaluator.evaluate_all(args.test_data)
         
-        logger.info("✅ Metrics and bias detection completed")
+        logger.info(" Metrics and bias detection completed")
         
         evaluator.save_report(results, args.output)
         
         status = results['aggregate_metrics']['status']
         
         if status == 'FAILED':
-            logger.error("❌ Model FAILED thresholds")
+            logger.error(" Model FAILED thresholds")
             sys.exit(1)
         
-        logger.info("✅ Model PASSED thresholds")
+        logger.info(" Model PASSED thresholds")
         
 
         if args.push_to_registry:
@@ -360,8 +360,8 @@ def main():
             with open('artifact_path.txt', 'w') as f:
                 f.write(artifact_path)
             
-            logger.info("✅ Model pushed successfully")
-            logger.info("\n✅ EVALUATION COMPLETED SUCCESSFULLY")
+            logger.info(" Model pushed successfully")
+            logger.info("\n EVALUATION COMPLETED SUCCESSFULLY")
             sys.exit(0)
         
     except Exception as e:

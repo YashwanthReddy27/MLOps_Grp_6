@@ -69,6 +69,13 @@ jobs:
           fi
         id: check_data
 
+      - name: Authenticate to Google Cloud
+        if: steps.check_data.outputs.has_data == 'true'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        continue-on-error: false
+
       - name: Run Indexing Script
         if: steps.check_data.outputs.has_data == 'true'
         env:
@@ -99,13 +106,6 @@ jobs:
       #     git add logs.dvc
       #     git commit -m "Updated dvc ref"
       #     git push
-
-      - name: Authenticate to Google Cloud
-        if: steps.check_data.outputs.has_data == 'true'
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-        continue-on-error: true
       
       - name: Set up Google Cloud SDK
         if: steps.check_data.outputs.has_data == 'true'

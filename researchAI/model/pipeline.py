@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List, Dict, Any, Optional
 import time
 import logging
@@ -40,9 +41,9 @@ class TechTrendsRAGPipeline:
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
         self.tracker = ExperimentTracker() if enable_tracking else None
-        self.project_id = config.GCPConfig.project_id
-        self.location = config.GCPConfig.location
-        self.repository = config.GCPConfig.artifact_repository
+        self.project_id = config.gcp_config.project_id
+        self.location = config.gcp_config.location
+        self.repository = config.gcp_config.artifact_repository
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
         self.logger.info("Pipeline initialized successfully")
         if not self.project_id:
@@ -106,15 +107,7 @@ class TechTrendsRAGPipeline:
             )
             
             # Pull artifact (latest or specific version)
-            if version:
-                result = pusher.pull_specific_version(
-                    version=version,
-                    destination_dir="./model"
-                )
-            else:
-                result = pusher.pull_latest(
-                    destination_dir="./model"
-                )
+            result = pusher.pull_latest(destination_dir="./model")
             
             self.logger.info(f"Artifact pulled: version {result['version']}")
             

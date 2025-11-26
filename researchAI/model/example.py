@@ -202,7 +202,7 @@ def main():
                     project_id=project_id,
                     location=args.location,
                     repository=args.repository,
-                    version=args.version,
+                    version=args.version, # keep in mind not to give any version number in the args in the terminal
                     metrics=test_result['metrics'],
                     bias_report=test_result['bias_report'],
                     description=args.description or f"RAG model with validation score {validation_score:.2f}"

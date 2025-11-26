@@ -107,8 +107,6 @@ class GCPConfig(BaseModel):
     artifact_repository: str = Field(
         default_factory=lambda: os.getenv("GCP_ARTIFACT_REPOSITORY", "rag-models")
     )
-    
-    version: str = "1.0"
 
 class RAGConfig(BaseModel):
     """Main RAG pipeline configuration"""
@@ -120,7 +118,7 @@ class RAGConfig(BaseModel):
     bm25: BM25Config = BM25Config()
     cache: CacheConfig = CacheConfig()
     bias_detection: BiasDetectionConfig = BiasDetectionConfig()
-    GCPConfig: GCPConfig = GCPConfig()
+    gcp_config: GCPConfig = GCPConfig()
     
     # MLflow tracking - LOCAL FILE STORAGE
     mlflow_tracking_uri: str = Field(

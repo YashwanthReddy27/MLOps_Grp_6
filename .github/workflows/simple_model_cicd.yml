@@ -3,7 +3,7 @@ name: Simple RAG Model CI/CD
 on:
   push: 
     branches:
-      - fixes/model-ci-cd
+      - fix/model-artifact-changes
       - main
   workflow_dispatch:
 
@@ -132,8 +132,7 @@ jobs:
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
-            --repository ${{ env.GCP_REPOSITORY }} \
-            --version "v$(date +%Y%m%d-%H%M%S)"
+            --repository ${{ env.GCP_REPOSITORY }}
           
           if [ -f artifact_path.txt ]; then
             cp artifact_path.txt ${{ github.workspace }}/artifact_path.txt

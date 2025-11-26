@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from config.settings import config
+import shutil
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,6 @@ class ArtifactRegistryPusher:
         self.project_id = project_id
         self.location = location
         self.repository = repository
-        self.version = config.GCPConfig.version
         self.logger = logging.getLogger(__name__)
         
         try:
@@ -52,12 +52,72 @@ class ArtifactRegistryPusher:
             capture_output=True,
             text=True
         )
-        
+
+
+        # Cache the current latest version
+        self.current_version = self._fetch_latest_version()
+        self.logger.info(f"Current latest version in registry: {self.current_version}")
+                
         self.logger.info(
             f"Initialized Artifact Registry pusher: "
             f"{location}-generic.pkg.dev/{project_id}/{repository}"
         )
-    
+
+    def _fetch_latest_version(self) -> Optional[str]:
+        """
+        Fetch the current latest version from registry (cached in __init__)
+        
+        Returns:
+            Latest version string or None if no versions exist
+        """
+        try:
+            versions = self.list_versions(limit=1)
+            
+            if not versions:
+                self.logger.info("No existing versions in registry")
+                return None
+            
+            latest = versions[0]['version']
+            self.logger.debug(f"Fetched latest version: {latest}")
+            return latest
+            
+        except Exception as e:
+            self.logger.warning(f"Could not fetch latest version: {e}")
+            return None
+
+    def _get_next_version(self) -> str:
+        """
+        Get the next semantic version based on cached current version
+        Increments: 1.0 → 1.1 → ... → 1.9 → 2.0
+        
+        Returns:
+            Next version string (e.g., "1.1", "1.2", "2.0")
+        """
+        if self.current_version is None:
+            self.logger.info("No existing versions. Starting with 1.0")
+            return "1.0"
+        
+        import re
+        match = re.search(r'(\d+)[.-](\d+)', self.current_version)
+        
+        if match:
+            major = int(match.group(1))
+            minor = int(match.group(2))
+            
+            # Increment logic: after 1.9 → 2.0
+            if minor >= 9:
+                new_version = f"{major + 1}.0"
+            else:
+                new_version = f"{major}.{minor + 1}"
+            
+            self.logger.info(f"Next version: {new_version} (current: {self.current_version})")
+            return new_version
+        else:
+            from datetime import datetime
+            fallback = datetime.now().strftime("%Y%m%d-%H%M%S")
+            self.logger.warning(f"Could not parse version format. Using timestamp: {fallback}")
+            return fallback
+
     def push(
         self,
         version: Optional[str] = None,
@@ -78,7 +138,7 @@ class ArtifactRegistryPusher:
             Artifact Registry path
         """
         if version is None:
-            version = self.version + 1
+            version = self._get_next_version()
             # version = datetime.now().strftime("v%Y%m%d-%H%M%S")
         
         version = self._clean_version(version)
@@ -96,6 +156,7 @@ class ArtifactRegistryPusher:
         if Path(tarball_path).exists():
             Path(tarball_path).unlink()
         
+        self.current_version = version
         self.logger.info(f"✓ Model pushed to: {artifact_path}")
         return artifact_path
     
@@ -269,34 +330,15 @@ class ArtifactRegistryPusher:
         self.logger.info("Pulling latest artifact from Artifact Registry...")
         
         try:
-            # Get list of versions for the package
-            package_name = "rag-model"
-            list_cmd = [
-                "gcloud", "artifacts", "versions", "list",
-                "--project", self.project_id,
-                "--location", self.location,
-                "--repository", self.repository,
-                "--package", package_name,
-                "--format", "json",
-                "--sort-by", "~createTime",  # Sort by creation time, newest first
-                "--limit", "1"
-            ]
-            
-            result = subprocess.run(
-                list_cmd,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            
-            versions = json.loads(result.stdout)
-            
-            if not versions:
+            # Use cached version from __init__
+            if self.current_version is None:
                 self.logger.error("No versions found in Artifact Registry")
                 raise RuntimeError("No artifacts found in registry")
-            
-            latest_version = versions[0]['name'].split('/')[-1]
-            self.logger.info(f"Latest version found: {latest_version}")
+
+            latest_version = self.current_version
+            self.logger.info(f"Using cached latest version: {latest_version}")
+
+            package_name = "rag-model"
             
             # Download the artifact
             temp_dir = Path(tempfile.mkdtemp())

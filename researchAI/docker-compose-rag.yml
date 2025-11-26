@@ -37,7 +37,7 @@ services:
   # Frontend Streamlit Service
   frontend:
     build:
-      context: ./model/frontend
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: rag-frontend
     ports:

@@ -118,28 +118,7 @@ class APIClient:
             Stats data or None
         """
         return self._make_request('GET', '/api/stats')
-    
-    def update_index(self, papers: Optional[List[Dict]] = None,
-                    news: Optional[List[Dict]] = None,
-                    mode: str = "update") -> Optional[Dict]:
-        """
-        Update indexes with new documents
-        
-        Args:
-            papers: List of papers to index
-            news: List of news articles to index
-            mode: 'update' or 'rebuild'
-            
-        Returns:
-            Update response or None
-        """
-        data = {
-            'papers': papers,
-            'news': news,
-            'mode': mode
-        }
-        
-        return self._make_request('POST', '/api/index/update', data=data)
+
     
     def submit_feedback(self, query: str, rating: int,
                        feedback_text: Optional[str] = None,

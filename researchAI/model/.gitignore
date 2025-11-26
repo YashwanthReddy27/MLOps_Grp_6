@@ -14,9 +14,16 @@ env/
 ENV/
 model-env/
 rag-env/
+/test/
+bin/
+
+*.diff
 
 # IDE
 .vscode/
+
+# downloaded model
+downloaded-model/
 
 # Environment Variables
 .env

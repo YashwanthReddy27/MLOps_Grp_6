@@ -53,7 +53,6 @@ class ArtifactRegistryPusher:
             text=True
         )
 
-
         # Cache the current latest version
         self.current_version = self._fetch_latest_version()
         self.logger.info(f"Current latest version in registry: {self.current_version}")
@@ -331,6 +330,7 @@ class ArtifactRegistryPusher:
         
         try:
             # Use cached version from __init__
+            self.current_version = self._fetch_latest_version()
             if self.current_version is None:
                 self.logger.error("No versions found in Artifact Registry")
                 raise RuntimeError("No artifacts found in registry")

@@ -1,30 +1,30 @@
 version: '3.8'
 
+# ==============================================================================
+# PRODUCTION DOCKER COMPOSE - Backend + Frontend
+# ==============================================================================
+
 services:
   # Backend API Service
   backend:
     build:
       context: ./model
       dockerfile: Dockerfile
+    image: rag-backend:latest
     container_name: rag-backend
     ports:
       - "8000:8000"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-}
       - MLFLOW_TRACKING_URI=./mlruns
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
-      # Mount code for development
-      - ./model:/app
-      # # Persist indexes
-      # - ./faiss_indexes:/app/faiss_indexes
-      # - ./bm25_indexes:/app/bm25_indexes
-      # # Persist MLflow runs
-      # - ./mlruns:/app/mlruns
-      # # Persist logs
-      # - ./logs:/app/logs
-    command: python -m uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+      # Only persist data, not code
+      - faiss_indexes:/app/faiss_indexes
+      - bm25_indexes:/app/bm25_indexes
+      - mlruns:/app/mlruns
+      - logs:/app/logs
     networks:
       - rag-network
     healthcheck:
@@ -33,23 +33,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
 
   # Frontend Streamlit Service
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: rag-frontend:latest
     container_name: rag-frontend
     ports:
       - "8501:8501"
     environment:
       - API_URL=http://backend:8000
-    volumes:
-      # Mount code for development
-      - ./frontend:/app
-    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - rag-network
     healthcheck:
@@ -58,6 +57,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
 
 networks:
   rag-network:

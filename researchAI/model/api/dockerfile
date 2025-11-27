@@ -1,25 +1,50 @@
-# Backend Dockerfile for RAG API
+# ==============================================================================
+# BACKEND DOCKERFILE - Multi-stage Build for Production
+# ==============================================================================
+# Stage 1: Builder stage
+FROM python:3.11-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+COPY api/requirements.txt api_requirements.txt
+
+# Install Python dependencies to /install directory
+RUN pip install --no-cache-dir --prefix=/install \
+    -r requirements.txt \
+    -r api_requirements.txt
+
+# ==============================================================================
+# Stage 2: Runtime stage
 FROM python:3.11-slim
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install only runtime dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements files
-COPY requirements.txt .
-COPY requirements.txt api_requirements.txt
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r api_requirements.txt
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
 
 # Copy application code
 COPY . .
+
+# Create necessary directories
+RUN mkdir -p faiss_indexes bm25_indexes mlruns logs
+
+# Set Python path
+ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose port
 EXPOSE 8000
@@ -28,5 +53,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 
-# Run the application
+# Run application
 CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

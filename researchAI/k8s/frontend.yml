@@ -1,9 +1,15 @@
-# Frontend Deployment
+# ============================
+# Frontend configuration & deployment
+# ============================
+
+# 1) Frontend Deployment (Streamlit UI)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rag-frontend
   namespace: rag-system
+  labels:
+    app: rag-frontend
 spec:
   replicas: 2
   selector:
@@ -15,35 +21,38 @@ spec:
         app: rag-frontend
     spec:
       containers:
-      - name: frontend
-        image: us-central1-docker.pkg.dev/YOUR_PROJECT_ID/rag-models/frontend:latest
-        ports:
-        - containerPort: 8501
-        env:
-        - name: API_URL
-          value: "http://rag-backend:8000"
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /_stcore/health
-            port: 8501
-          initialDelaySeconds: 60
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /_stcore/health
-            port: 8501
-          initialDelaySeconds: 30
-          periodSeconds: 10
+        - name: rag-frontend
+          # TODO: replace with your actual Artifact Registry frontend image
+          image: REGION-docker.pkg.dev/PROJECT_ID/researchai-services/frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501   # Streamlit default port
+          env:
+            # Point the frontend at the internal backend service
+            - name: API_URL
+              value: "http://rag-backend.rag-system.svc.cluster.local:8000"
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
 
 ---
-# Frontend Service
+# 2) Frontend Service (external load balancer)
 apiVersion: v1
 kind: Service
 metadata:
@@ -51,8 +60,9 @@ metadata:
   namespace: rag-system
 spec:
   type: LoadBalancer
-  ports:
-  - port: 8501
-    targetPort: 8501
   selector:
     app: rag-frontend
+  ports:
+    - name: http
+      port: 80        # External LB port (user-facing)
+      targetPort: 8501  # Streamlit port in the container

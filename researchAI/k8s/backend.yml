@@ -1,4 +1,8 @@
-# ConfigMap for backend
+# ============================
+# Backend configuration & deployment
+# ============================
+
+# 1) ConfigMap for backend (non-secret config)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,7 +12,9 @@ data:
   LOG_LEVEL: "INFO"
 
 ---
-# Secret (create this manually first time)
+# 2) Secret for backend (sensitive values)
+# NOTE: replace placeholder values or create this Secret via:
+#   kubectl create secret generic backend-secret ... -n rag-system
 apiVersion: v1
 kind: Secret
 metadata:
@@ -16,16 +22,18 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "REPLACE_WITH_YOUR_KEY"
-  GCP_PROJECT_ID: "REPLACE_WITH_YOUR_PROJECT"
+  GOOGLE_API_KEY: "YOUR_GOOGLE_API_KEY"
+  GCP_PROJECT_ID: "YOUR_GCP_PROJECT_ID"
 
 ---
-# Backend Deployment
+# 3) Backend Deployment (FastAPI / Uvicorn)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rag-backend
   namespace: rag-system
+  labels:
+    app: rag-backend
 spec:
   replicas: 2
   selector:
@@ -37,57 +45,49 @@ spec:
         app: rag-backend
     spec:
       containers:
-      - name: backend
-        image: us-central1-docker.pkg.dev/YOUR_PROJECT_ID/rag-models/backend:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: GOOGLE_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: backend-secret
-              key: GOOGLE_API_KEY
-        - name: GCP_PROJECT_ID
-          valueFrom:
-            secretKeyRef:
-              name: backend-secret
-              key: GCP_PROJECT_ID
-        - name: LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: backend-config
-              key: LOG_LEVEL
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 8000
-          initialDelaySeconds: 60
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /api/health
-            port: 8000
-          initialDelaySeconds: 30
-          periodSeconds: 10
+        - name: rag-backend
+          # TODO: replace with your actual Artifact Registry backend image
+          image: REGION-docker.pkg.dev/PROJECT_ID/researchai-services/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: backend-secret
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
 
 ---
-# Backend Service
+# 4) Backend Service (internal cluster access)
 apiVersion: v1
 kind: Service
 metadata:
   name: rag-backend
   namespace: rag-system
 spec:
-  type: LoadBalancer
-  ports:
-  - port: 8000
-    targetPort: 8000
+  type: ClusterIP
   selector:
     app: rag-backend
+  ports:
+    - name: http
+      port: 8000        # Service port inside the cluster
+      targetPort: 8000  # Container port in the pod

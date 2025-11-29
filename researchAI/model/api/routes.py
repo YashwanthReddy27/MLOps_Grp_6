@@ -75,6 +75,27 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             indexes_loaded=indexes_loaded,
             index_stats=index_stats
         )
+
+    @router.post("/monitor/establish-baseline", tags=["monitoring"])
+    async def establish_baseline():
+        """Create performance baseline"""
+        try:
+            monitor = SimpleMonitor()
+            baseline = monitor.establish_baseline()
+            
+            if baseline:
+                return {
+                    "status": "success",
+                    "baseline": baseline
+                }
+            else:
+                return {
+                    "status": "failed",
+                    "message": "Need at least 50 queries"
+                }
+        except Exception as e:
+            logger.error(f"Error establishing baseline: {e}")
+            return {"status": "error", "message": str(e)}
     
     
     # ===== Query Endpoint =====
@@ -125,6 +146,10 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
                 from_cache
             )
             
+            # Add monitoring in background (add this line)
+            background_tasks.add_task(log_to_monitor, response)
+
+
             # Format response with safe defaults
             # Handle sources safely
             sources_list = []
@@ -216,6 +241,18 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             uptime=time.time() - metrics_store["start_time"]
         )
     
+
+    @router.get("/monitor/health", tags=["monitoring"])
+    async def monitor_health():
+        """Check model health"""
+        try:
+            monitor = SimpleMonitor()
+            health = monitor.check_health()
+            return health
+        except Exception as e:
+            logger.error(f"Error checking health: {e}")
+            return {"status": "ERROR", "message": str(e)}
+    
     
     # ===== Stats Endpoint =====
     @router.get("/stats", response_model=StatsResponse, tags=["monitoring"])
@@ -285,6 +322,14 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
     
     return router
 
+def log_to_monitor(result: dict):
+    """Log query result to monitoring"""
+    try:
+        from monitoring.monitor import SimpleMonitor
+        monitor = SimpleMonitor()
+        monitor.log_query(result)
+    except Exception as e:
+        logger.error(f"Error logging to monitor: {e}")
 
 def update_metrics(response_time: float, validation_score: float, 
                    fairness_score: float, from_cache: bool):

@@ -1,0 +1,23 @@
+# Monitoring CronJob - runs every 6 hours
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: model-health-check
+  namespace: rag-system
+spec:
+  schedule: "0 */6 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: health-checker
+            image: curlimages/curl:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking model health..."
+              curl -s http://rag-backend:8000/api/monitor/health
+              echo "Health check completed"

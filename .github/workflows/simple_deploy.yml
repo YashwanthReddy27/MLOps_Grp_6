@@ -1,0 +1,69 @@
+name: Simple Deploy to GKE
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: rag-cluster
+  GKE_ZONE: us-central1-a
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+    
+    - name: Configure Docker
+      run: |
+        gcloud auth configure-docker us-central1-docker.pkg.dev
+    
+    - name: Build and Push Backend
+      run: |
+        cd model
+        docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-models/backend:latest .
+        docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-models/backend:latest
+    
+    - name: Build and Push Frontend
+      run: |
+        cd frontend
+        docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-models/frontend:latest .
+        docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-models/frontend:latest
+    
+    - name: Get GKE Credentials
+      run: |
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+          --zone=${{ env.GKE_ZONE }} \
+          --project=${{ secrets.GCP_PROJECT_ID }}
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/backend.yaml
+        kubectl apply -f k8s/frontend.yaml
+        kubectl apply -f k8s/monitoring.yaml
+    
+    - name: Wait for deployment
+      run: |
+        kubectl wait --for=condition=available --timeout=300s \
+          deployment/rag-backend -n rag-system
+        kubectl wait --for=condition=available --timeout=300s \
+          deployment/rag-frontend -n rag-system
+    
+    - name: Get service URLs
+      run: |
+        echo "Backend URL:"
+        kubectl get service rag-backend -n rag-system
+        echo "Frontend URL:"
+        kubectl get service rag-frontend -n rag-system

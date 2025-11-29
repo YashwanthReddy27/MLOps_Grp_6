@@ -1,0 +1,58 @@
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-frontend
+  namespace: rag-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-frontend
+  template:
+    metadata:
+      labels:
+        app: rag-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: us-central1-docker.pkg.dev/YOUR_PROJECT_ID/rag-models/frontend:latest
+        ports:
+        - containerPort: 8501
+        env:
+        - name: API_URL
+          value: "http://rag-backend:8000"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+# Frontend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-frontend
+  namespace: rag-system
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8501
+    targetPort: 8501
+  selector:
+    app: rag-frontend

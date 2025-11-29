@@ -1,0 +1,93 @@
+# ConfigMap for backend
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: rag-system
+data:
+  LOG_LEVEL: "INFO"
+
+---
+# Secret (create this manually first time)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+  namespace: rag-system
+type: Opaque
+stringData:
+  GOOGLE_API_KEY: "REPLACE_WITH_YOUR_KEY"
+  GCP_PROJECT_ID: "REPLACE_WITH_YOUR_PROJECT"
+
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-backend
+  namespace: rag-system
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-backend
+  template:
+    metadata:
+      labels:
+        app: rag-backend
+    spec:
+      containers:
+      - name: backend
+        image: us-central1-docker.pkg.dev/YOUR_PROJECT_ID/rag-models/backend:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: GOOGLE_API_KEY
+        - name: GCP_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: GCP_PROJECT_ID
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: LOG_LEVEL
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+
+---
+# Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-backend
+  namespace: rag-system
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 8000
+    targetPort: 8000
+  selector:
+    app: rag-backend

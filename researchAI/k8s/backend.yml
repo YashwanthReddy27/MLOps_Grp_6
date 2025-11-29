@@ -1,0 +1,93 @@
+# ============================
+# Backend configuration & deployment
+# ============================
+
+# 1) ConfigMap for backend (non-secret config)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: rag-system
+data:
+  LOG_LEVEL: "INFO"
+
+---
+# 2) Secret for backend (sensitive values)
+# NOTE: replace placeholder values or create this Secret via:
+#   kubectl create secret generic backend-secret ... -n rag-system
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-secret
+  namespace: rag-system
+type: Opaque
+stringData:
+  GOOGLE_API_KEY: "YOUR_GOOGLE_API_KEY"
+  GCP_PROJECT_ID: "YOUR_GCP_PROJECT_ID"
+
+---
+# 3) Backend Deployment (FastAPI / Uvicorn)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-backend
+  namespace: rag-system
+  labels:
+    app: rag-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rag-backend
+  template:
+    metadata:
+      labels:
+        app: rag-backend
+    spec:
+      containers:
+        - name: rag-backend
+          # TODO: replace with your actual Artifact Registry backend image
+          image: REGION-docker.pkg.dev/PROJECT_ID/researchai-services/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: backend-config
+            - secretRef:
+                name: backend-secret
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+
+---
+# 4) Backend Service (internal cluster access)
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-backend
+  namespace: rag-system
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-backend
+  ports:
+    - name: http
+      port: 8000        # Service port inside the cluster
+      targetPort: 8000  # Container port in the pod

@@ -1,6 +1,5 @@
 /data
 /logs
-gc_credentials.json
-mlops-dvc-key.json
+/mlruns
 
-/dvc.sh
+gc_credentials.json

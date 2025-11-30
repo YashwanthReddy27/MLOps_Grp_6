@@ -1,15 +1,9 @@
-"""
-Chat interface components
-"""
 import streamlit as st
 from datetime import datetime
 from typing import Dict, Any
 
-
 def render_chat_interface():
-    """Render the main chat interface"""
     st.header("💬 Chat")
-
 
 def display_message(message: Dict[str, Any]):
     """
@@ -40,19 +34,71 @@ def display_message(message: Dict[str, Any]):
                         st.markdown(
                             f"**[{source['number']}]** {source['title']}"
                         )
-                        st.caption(f"{source['source']} - {source.get('date', 'N/A')}")
                         if source.get('url'):
-                            st.markdown(f"[🔗 Link]({source['url']})")
-                        st.markdown("---")
+                            st.caption(f"{source['source']} - {source.get('date', 'Date N/A')} - [🔗 Link]({source['url']})")
+                        else:
+                            st.caption(f"{source['source']} - {source.get('date', 'Date N/A')}")
             
-            # Display timestamp and response time
+            # Display performance metrics if available (NEW SECTION)
+            metrics = message.get("metrics", {})
+            response_time = message.get("response_time", 0)
+            bias_report = message.get("bias_report", {})
+            
+            if metrics or response_time or bias_report:
+                with st.expander("📊 Performance Metrics", expanded=False):
+                    # Response time and validation
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        st.metric("Response Time", f"{response_time:.2f}s")
+                    
+                    with col2:
+                        validation_score = message.get("validation", {}).get("overall_score", 0)
+                        st.metric("Validation", f"{validation_score:.1%}")
+                    
+                    with col3:
+                        fairness_score = bias_report.get('overall_fairness_score', 0)
+                        st.metric("Fairness", f"{fairness_score:.1%}")
+                    
+                    # Retrieval metrics
+                    if metrics and 'retrieval_metrics' in metrics:
+                        st.markdown("**Retrieval Metrics**")
+                        retrieval = metrics['retrieval_metrics']
+                        
+                        met_col1, met_col2 = st.columns(2)
+                        with met_col1:
+                            st.caption(f"Retrieved: {retrieval.get('num_retrieved', 0)} docs")
+                            st.caption(f"Avg Score: {retrieval.get('avg_score', 0):.3f}")
+                        
+                        with met_col2:
+                            st.caption(f"Sources: {retrieval.get('source_diversity', 0)}")
+                            st.caption(f"Categories: {retrieval.get('category_diversity', 0)}")
+                    
+                    # Generation metrics
+                    if metrics and 'generation_metrics' in metrics:
+                        st.markdown("**Generation Metrics**")
+                        generation = metrics['generation_metrics']
+                        
+                        gen_col1, gen_col2 = st.columns(2)
+                        with gen_col1:
+                            st.caption(f"Length: {generation.get('response_length', 0)} chars")
+                        
+                        with gen_col2:
+                            st.caption(f"Citations: {generation.get('num_citations', 0)}")
+                    
+                    # Fairness warnings
+                    warnings = bias_report.get('warnings', [])
+                    if warnings:
+                        st.markdown("**⚠️ Fairness Warnings**")
+                        for warning in warnings:
+                            st.warning(f"**{warning.get('type', 'Warning')}**: {warning.get('message', '')}")
+            
+            # Display timestamp
             if timestamp:
-                response_time = message.get("response_time", 0)
                 st.caption(
                     f"*{format_timestamp(timestamp)} • "
                     f"Response time: {response_time:.2f}s*"
                 )
-
 
 def format_timestamp(timestamp: str) -> str:
     """
@@ -69,7 +115,6 @@ def format_timestamp(timestamp: str) -> str:
         return dt.strftime("%I:%M %p")
     except:
         return timestamp
-
 
 def render_chat_history_sidebar():
     """Render chat history in sidebar"""
@@ -101,8 +146,6 @@ def render_chat_history_sidebar():
     else:
         st.sidebar.caption("No chat history yet")
 
-
-def export_chat_history():
     """Export chat history as text"""
     if 'messages' not in st.session_state or not st.session_state.messages:
         return None

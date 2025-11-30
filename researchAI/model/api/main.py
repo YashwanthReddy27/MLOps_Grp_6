@@ -1,14 +1,11 @@
-"""
-FastAPI Backend for RAG Pipeline
-"""
 import os
 import sys
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Optional
 from datetime import datetime
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -20,10 +17,6 @@ import uvicorn
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pipeline import TechTrendsRAGPipeline
-from api.schemas import (
-    QueryRequest, QueryResponse, IndexUpdateRequest, 
-    HealthResponse, MetricsResponse, StatsResponse, FeedbackRequest
-)
 from api.routes import create_api_router
 from utils.logger import setup_logging
 

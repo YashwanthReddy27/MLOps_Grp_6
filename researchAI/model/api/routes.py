@@ -1,19 +1,16 @@
-"""
-API Routes for RAG Pipeline
-"""
 import logging
 import time
-import uuid
-from typing import Callable, Dict, Any
+from typing import Callable
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from monitoring.monitor import SimpleMonitor
+
 from api.schemas import (
-    QueryRequest, QueryResponse, IndexUpdateRequest, IndexUpdateResponse,
-    HealthResponse, MetricsResponse, StatsResponse, FeedbackRequest, FeedbackResponse,
+    QueryRequest, QueryResponse, HealthResponse, MetricsResponse,
     Source, BiasReport
 )
 
@@ -32,9 +29,7 @@ metrics_store = {
     "start_time": time.time()
 }
 
-# In-memory feedback storage (in production, use database)
-feedback_store = []
-
+from config.settings import config 
 
 def create_api_router(get_pipeline: Callable) -> APIRouter:
     """
@@ -99,7 +94,7 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
     
 
     @router.post("/query", response_model=QueryResponse, tags=["query"])
-    @limiter.limit("10/minute")
+    @limiter.limit(config.fastapi.rate_limit_query)
     async def query(
         request: Request,
         query_request: QueryRequest,
@@ -241,73 +236,7 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             logger.error(f"Error checking health: {e}")
             return {"status": "ERROR", "message": str(e)}
     
-    
-    # ===== Stats Endpoint =====
-    @router.get("/stats", response_model=StatsResponse, tags=["monitoring"])
-    async def get_stats():
-        """
-        Get index statistics
-        """
-        pipeline = get_pipeline()
-        
-        if pipeline is None:
-            raise HTTPException(status_code=503, detail="Pipeline not initialized")
-        
-        try:
-            stats = pipeline.retriever.get_index_stats()
-            
-            total_docs = (
-                stats['papers']['dense']['total_vectors'] +
-                stats['news']['dense']['total_vectors']
-            )
-            
-            return StatsResponse(
-                papers_index=stats['papers'],
-                news_index=stats['news'],
-                total_documents=total_docs
-            )
-            
-        except Exception as e:
-            logger.error(f"Error getting stats: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error getting stats: {str(e)}")
-    
-    
-    # ===== Feedback Endpoint =====
-    @router.post("/feedback", response_model=FeedbackResponse, tags=["feedback"])
-    @limiter.limit("20/hour")
-    async def submit_feedback(
-        request: Request,  # ADDED: Required for SlowAPI
-        feedback_request: FeedbackRequest
-    ):
-        """
-        Submit user feedback on a response
-        
-        Rate limited to 20 requests per hour.
-        """
-        feedback_id = str(uuid.uuid4())
-        
-        feedback_entry = {
-            "feedback_id": feedback_id,
-            "query": feedback_request.query,
-            "response_id": feedback_request.response_id,
-            "rating": feedback_request.rating,
-            "feedback_text": feedback_request.feedback_text,
-            "issues": feedback_request.issues,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        # Store feedback (in production, use database)
-        feedback_store.append(feedback_entry)
-        
-        logger.info(f"Feedback received: {feedback_id} - Rating: {feedback_request.rating}")
-        
-        return FeedbackResponse(
-            status="success",
-            message="Feedback submitted successfully",
-            feedback_id=feedback_id
-        )
-    
-    
+  
     return router
 
 def log_to_monitor(result: dict):

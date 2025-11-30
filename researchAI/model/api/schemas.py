@@ -1,6 +1,3 @@
-"""
-Pydantic schemas for API requests and responses
-"""
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
@@ -137,56 +134,4 @@ class MetricsResponse(BaseModel):
     avg_fairness_score: float
     cache_hit_rate: float
     uptime: float
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
-
-
-# Stats schemas
-class StatsResponse(BaseModel):
-    """Response schema for stats endpoint"""
-    papers_index: Dict[str, Any]
-    news_index: Dict[str, Any]
-    total_documents: int
-    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "papers_index": {
-                    "dense": {"total_vectors": 1500},
-                    "sparse": {"total_documents": 1500}
-                },
-                "news_index": {
-                    "dense": {"total_vectors": 2000},
-                    "sparse": {"total_documents": 2000}
-                },
-                "total_documents": 3500
-            }
-        }
-
-
-# Feedback schemas
-class FeedbackRequest(BaseModel):
-    """Request schema for user feedback"""
-    query: str
-    response_id: Optional[str] = None
-    rating: int = Field(..., ge=1, le=5, description="Rating from 1-5")
-    feedback_text: Optional[str] = Field(None, max_length=1000)
-    issues: Optional[List[str]] = Field(None, description="List of issues: 'inaccurate', 'biased', 'incomplete', etc.")
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "What are the latest AI trends?",
-                "rating": 4,
-                "feedback_text": "Good response but could include more recent sources",
-                "issues": ["incomplete"]
-            }
-        }
-
-
-class FeedbackResponse(BaseModel):
-    """Response schema for feedback submission"""
-    status: str
-    message: str
-    feedback_id: str
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())

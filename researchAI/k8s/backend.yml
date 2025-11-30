@@ -22,7 +22,7 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "AIzaSyCtQep_DWpUzGtPmzJSbpr8jPq3k-tVkF8"
+  GOOGLE_API_KEY: "your-API-key"
   GCP_PROJECT_ID: "mlops-lab4-477622"
 
 ---

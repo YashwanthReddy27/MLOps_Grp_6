@@ -23,7 +23,7 @@ spec:
       containers:
         - name: rag-frontend
           # TODO: replace with your actual Artifact Registry frontend image
-          image: REGION-docker.pkg.dev/PROJECT_ID/researchai-services/frontend:latest
+          image: us-central1-docker.pkg.dev/mlops-lab4-477622/rag-docker/frontend:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8501   # Streamlit default port
@@ -45,11 +45,11 @@ spec:
             periodSeconds: 20
           resources:
             requests:
-              cpu: "200m"
-              memory: "512Mi"
+              cpu: "100m"
+              memory: "256Mi"
             limits:
-              cpu: "1"
-              memory: "2Gi"
+              cpu: "500m"
+              memory: "1Gi"
 
 ---
 # 2) Frontend Service (external load balancer)

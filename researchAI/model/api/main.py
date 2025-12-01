@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from pipeline import TechTrendsRAGPipeline
 from api.routes import create_api_router
 from utils.logger import setup_logging
+import mlflow
 
 # Setup logging
 setup_logging()
@@ -37,7 +38,14 @@ async def lifespan(app: FastAPI):
     # Startup
     global pipeline
     logger.info("Starting up RAG Pipeline API...")
-    
+
+    try:
+        if mlflow.active_run() is not None:
+            mlflow.end_run()
+    except Exception as e:
+        logger.error(f"Failed to initialize due to previous mlflow runs still being active: {e}")
+        raise
+
     try:
         # Initialize pipeline
         pipeline = TechTrendsRAGPipeline(enable_tracking=True)
@@ -59,23 +67,10 @@ async def lifespan(app: FastAPI):
     
     yield
     
-    # # Shutdown
-    # logger.info("Shutting down RAG Pipeline API...")
-    # pipeline = None
-    # logger.info("✓ Shutdown complete")
-
     # Shutdown
     logger.info("Shutting down RAG Pipeline API...")
-    
-    # Clean up any active MLflow runs
-    try:
-        if mlflow.active_run() is not None:
-            mlflow.end_run()
-    except Exception as e:
-        logger.warning(f"Error cleaning up MLflow: {e}")
-    
     pipeline = None
-    logger.info("✅ Shutdown complete")
+    logger.info("✓ Shutdown complete")
 
 
 # Create FastAPI app

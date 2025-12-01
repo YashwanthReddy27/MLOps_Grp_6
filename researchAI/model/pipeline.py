@@ -115,10 +115,31 @@ class TechTrendsRAGPipeline:
         start_time = time.time()
         
         self.logger.info(f"Processing query: {query}")
-        
+
         if self.tracker:
-            self.tracker.start_run()
-            self.tracker.log_config()
+            try:
+                self.tracker.start_run()
+                self.tracker.log_config()
+            except Exception as e:
+                self.logger.warning(f"Failed to start MLflow run: {e}")
+            # Try to end any existing run first
+            try:
+                import mlflow
+                if mlflow.active_run() is not None:
+                    mlflow.end_run()
+            except:
+                pass
+            # Try starting again
+            try:
+                self.tracker.start_run()
+                self.tracker.log_config()
+            except Exception as e2:
+                self.logger.error(f"Failed to start MLflow run after cleanup: {e2}")
+                # Continue without tracking rather than failing the query
+                self.tracker = None
+        # if self.tracker:
+        #     self.tracker.start_run()
+        #     self.tracker.log_config()
         
         self.logger.info("Retrieving relevant documents")
         retrieved_docs = self.retriever.retrieve(

@@ -59,10 +59,23 @@ async def lifespan(app: FastAPI):
     
     yield
     
+    # # Shutdown
+    # logger.info("Shutting down RAG Pipeline API...")
+    # pipeline = None
+    # logger.info("✓ Shutdown complete")
+
     # Shutdown
     logger.info("Shutting down RAG Pipeline API...")
+    
+    # Clean up any active MLflow runs
+    try:
+        if mlflow.active_run() is not None:
+            mlflow.end_run()
+    except Exception as e:
+        logger.warning(f"Error cleaning up MLflow: {e}")
+    
     pipeline = None
-    logger.info("✓ Shutdown complete")
+    logger.info("✅ Shutdown complete")
 
 
 # Create FastAPI app

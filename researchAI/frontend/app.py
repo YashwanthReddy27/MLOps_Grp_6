@@ -24,13 +24,35 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
-    /* Hide Streamlit header and menu */
+    /* Hide only specific parts of header, NOT the whole header */
     #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
+    
+    /* Hide "Made with Streamlit" footer */
     footer {visibility: hidden;}
     
-    /* Optional: Hide "Deploy" button specifically */
+    /* Hide Deploy button */
     .stDeployButton {display: none;}
+    
+    /* Hide the "☰" menu in top-right */
+    button[kind="header"] {
+        visibility: hidden;
+    }
+    
+    /* BUT keep the sidebar toggle visible! */
+    [data-testid="collapsedControl"] {
+        visibility: visible !important;
+        display: block !important;
+        opacity: 1 !important;
+    }
+    
+    /* Style the sidebar toggle button */
+    [data-testid="collapsedControl"] button {
+        background-color: #1976D2 !important;
+        color: white !important;
+        border-radius: 4px !important;
+        padding: 0.5rem !important;
+    }
+    
     /* Main container */
     .main {
         padding: 2rem;

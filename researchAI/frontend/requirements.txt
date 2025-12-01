@@ -9,3 +9,6 @@ plotly>=5.17.0
 
 # Data handling
 pandas>=2.1.0
+
+# MLflow
+mlflow>=2.9.0

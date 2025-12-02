@@ -19,19 +19,17 @@ data "google_service_account" "existing" {
   account_id = "terraform-sa"
 }
 
-# ───────────────────────────────────────────────
-# CREATE SERVICE ACCOUNT ONLY IF NOT EXISTING
-# ───────────────────────────────────────────────
 resource "google_service_account" "custom_service_account" {
-  count        = data.google_service_account.existing.email == "" ? 1 : 0
-  project      = "karthikdevfest"
   account_id   = "terraform-sa"
   display_name = "terraform Service Account"
-}
+  project      = "karthikdevfest"
 
-# Get the email no matter if it came from data or resource
-locals {
-  sa_email = data.google_service_account.existing.email != "" ? data.google_service_account.existing.email : google_service_account.custom_service_account[0].email
+  # Only create the service account if it doesn't already exist
+  lifecycle {
+    prevent_destroy = false
+    ignore_changes  = [display_name]
+  }
+  
 }
 
 # ───────────────────────────────────────────────
@@ -39,9 +37,15 @@ locals {
 # ───────────────────────────────────────────────
 resource "google_project_iam_member" "custom_service_account" {
   project = "karthikdevfest"
-  member  = "serviceAccount:${local.sa_email}"
+  member  = "serviceAccount:terraform-sa@karthikdevfest.iam.gserviceaccount.com"
   role    = "roles/composer.worker"
+
+  lifecycle {
+    ignore_changes = [member]  # Prevent unnecessary recreation if the member email is unchanged
+  }
 }
+
+
 
 # ───────────────────────────────────────────────
 # COMPOSER ENVIRONMENT USING SAME SA
@@ -49,12 +53,14 @@ resource "google_project_iam_member" "custom_service_account" {
 resource "google_composer_environment" "example_environment" {
   name     = "rag-environment"
   provider = google-beta
+  region   = "us-east1"
+  project  = "karthikdevfest"
 
   depends_on = [
     google_project_iam_member.custom_service_account,
     google_project_service.composer_api
   ]
-
+ 
   config {
     software_config {
       image_version = "composer-3-airflow-3.1.0-build.2"
@@ -79,7 +85,8 @@ resource "google_composer_environment" "example_environment" {
     }
 
     node_config {
-      service_account = local.sa_email
+      service_account = "terraform-sa@karthikdevfest.iam.gserviceaccount.com"
     }
   }
+
 }

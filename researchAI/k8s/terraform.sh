@@ -1,0 +1,1 @@
+terraform import google_composer_environment.example_environment "projects/karthikdevfest/locations/us-east1/environments/rag-environment"

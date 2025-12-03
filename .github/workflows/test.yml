@@ -1,13 +1,18 @@
-name: Sync Cloud Composer folders to GitHub Actions Runner
+name: Sync Cloud Composer
 
 on:
+  push: 
+      branches:
+        - feature/UI+backend
+        - main
   workflow_dispatch:
 
 jobs:
-  sync:
+  syncCloudComposer:
     runs-on: ubuntu-latest
 
     env:
+      PYTHON_VERSION: '3.11'
       COMPOSER_ENV: "rag-environment"
       COMPOSER_REGION: "us-east1"   # e.g. us-central1
 

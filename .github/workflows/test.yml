@@ -2,9 +2,9 @@ name: Sync Cloud Composer
 
 on:
   push: 
-      branches:
-        - feature/UI+backend
-        - main
+    branches:
+      - feature/UI+backend
+      - main
   workflow_dispatch:
 
 jobs:

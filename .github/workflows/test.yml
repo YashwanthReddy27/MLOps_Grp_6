@@ -1,0 +1,76 @@
+name: Sync Cloud Composer
+
+on:
+  push: 
+    branches:
+      - feature/UI+backend
+      - main
+  workflow_dispatch:
+
+jobs:
+  syncCloudComposer:
+    name: sync with Cloud Composer
+    runs-on: ubuntu-latest
+    environment: mlops
+
+    env:
+      PYTHON_VERSION: '3.11'
+      COMPOSER_ENV: "rag-environment"
+      COMPOSER_REGION: "us-east1"   # e.g. us-central1
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    # Step 1 — Authenticate using service account key
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_DVC_KEY }}
+
+    - name: Set up gcloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+
+    # Step 2 — Fetch the Composer bucket name dynamically
+    - name: Get Composer DAG bucket prefix
+      id: composer
+      run: |
+        BUCKET_PREFIX=$(gcloud composer environments describe "$COMPOSER_ENV" \
+          --location "$COMPOSER_REGION" \
+          --format="value(config.dagGcsPrefix)")
+        
+        # Extract just bucket name (gs://bucket-name)
+        echo "BUCKET_PREFIX=$BUCKET_PREFIX" >> $GITHUB_ENV
+
+        # Also extract raw bucket name for convenience
+        RAW_BUCKET=$(echo $BUCKET_PREFIX | sed 's|gs://||' | cut -d'/' -f1)
+        echo "BUCKET_NAME=$RAW_BUCKET" >> $GITHUB_ENV
+
+        echo "Composer bucket: $BUCKET_PREFIX"
+        echo "Raw bucket name: $RAW_BUCKET"
+
+    # Step 3 — Sync folders from the bucket → GitHub runner
+    - name: Sync DAGs folder
+      run: |
+        mkdir -p composer_sync/dags
+        gsutil -m rsync -r "$BUCKET_PREFIX" composer_sync/dags
+
+    - name: Sync Data folder
+      run: |
+        mkdir -p composer_sync/data
+        gsutil -m rsync -r "gs://$BUCKET_NAME/data" composer_sync/data
+
+    - name: Sync Logs folder
+      run: |
+        mkdir -p composer_sync/logs
+        gsutil -m rsync -r "gs://$BUCKET_NAME/logs" composer_sync/logs
+
+    # Optional — Upload logs as an artifact for download
+    - name: Upload logs artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: composer-logs
+        path: composer_sync/logs
+
+    - name: Show synced files
+      run: ls -R composer_sync

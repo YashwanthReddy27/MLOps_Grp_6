@@ -9,7 +9,9 @@ on:
 
 jobs:
   syncCloudComposer:
+    name: sync with Cloud Composer
     runs-on: ubuntu-latest
+    environment: mlops
 
     env:
       PYTHON_VERSION: '3.11'

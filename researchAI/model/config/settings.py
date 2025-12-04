@@ -122,6 +122,7 @@ class RAGConfig(BaseModel):
     cache: CacheConfig = CacheConfig()
     bias_detection: BiasDetectionConfig = BiasDetectionConfig()
     fastapi: FastAPISettings = FastAPISettings()
+    gcp_config: GCPConfig = GCPConfig()
     
     # MLflow tracking - LOCAL FILE STORAGE
     mlflow_tracking_uri: str = Field(

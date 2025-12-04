@@ -29,8 +29,8 @@ rag-env/
 /dist
 
 # Project Specific
-# faiss_indexes/
-# bm25_indexes/
+faiss_indexes/
+bm25_indexes/
 cache/
 logs/
 *.log
@@ -45,3 +45,9 @@ mlartifacts/
 *.tmp
 *.bak
 *~
+
+/test/
+bin/
+*.diff
+# downloaded model
+downloaded-model/

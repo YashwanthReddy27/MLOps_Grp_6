@@ -22,7 +22,7 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "your-API-key"
+  GOOGLE_API_KEY: "AIzaSyCtQep_DWpUzGtPmzJSbpr8jPq3k-tVkF8"
   GCP_PROJECT_ID: "mlops-lab4-477622"
 
 ---
@@ -47,7 +47,7 @@ spec:
       containers:
         - name: rag-backend
           image: us-central1-docker.pkg.dev/mlops-lab4-477622/rag-docker/backend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
@@ -59,13 +59,13 @@ spec:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 20
           resources:
             requests:

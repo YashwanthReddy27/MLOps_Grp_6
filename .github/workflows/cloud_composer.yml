@@ -33,6 +33,7 @@ jobs:
 
     - name: Run terraform config
       run: |
+        sudo apt install terraform
         cd researchAI/k8s
         terraform init
         ./terraform.sh

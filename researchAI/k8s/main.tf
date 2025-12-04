@@ -1,28 +1,20 @@
 provider "google-beta" {
-  project = "karthikdevfest"
+  project = "mlops-gcp-lab1"
   region  = "us-east1"
 }
 
 resource "google_project_service" "composer_api" {
-  project                             = "karthikdevfest"
+  project                             = "mlops-gcp-lab1"
   provider                            = google-beta
   service                             = "composer.googleapis.com"
   disable_on_destroy                  = false
   check_if_service_has_usage_on_destroy = true
 }
 
-# ───────────────────────────────────────────────
-# LOOKUP EXISTING SERVICE ACCOUNT (if present)
-# ───────────────────────────────────────────────
-data "google_service_account" "existing" {
-  project    = "karthikdevfest"
-  account_id = "terraform-sa"
-}
-
 resource "google_service_account" "custom_service_account" {
   account_id   = "terraform-sa"
   display_name = "terraform Service Account"
-  project      = "karthikdevfest"
+  project      = "mlops-gcp-lab1"
 
   # Only create the service account if it doesn't already exist
   lifecycle {
@@ -36,9 +28,11 @@ resource "google_service_account" "custom_service_account" {
 # IAM BINDING USING LOCAL VALUE
 # ───────────────────────────────────────────────
 resource "google_project_iam_member" "custom_service_account" {
-  project = "karthikdevfest"
-  member  = "serviceAccount:terraform-sa@karthikdevfest.iam.gserviceaccount.com"
+  project = "mlops-gcp-lab1"
+  member  = "serviceAccount:mlops-gcp-lab1-sa@mlops-gcp-lab1.iam.gserviceaccount.com"
   role    = "roles/composer.worker"
+
+  depends_on = [ google_service_account.custom_service_account ]
 
   lifecycle {
     ignore_changes = [member]  # Prevent unnecessary recreation if the member email is unchanged
@@ -54,9 +48,10 @@ resource "google_composer_environment" "example_environment" {
   name     = "rag-environment"
   provider = google-beta
   region   = "us-east1"
-  project  = "karthikdevfest"
+  project  = "mlops-gcp-lab1"
 
   depends_on = [
+    google_service_account.custom_service_account,
     google_project_iam_member.custom_service_account,
     google_project_service.composer_api
   ]
@@ -85,7 +80,7 @@ resource "google_composer_environment" "example_environment" {
     }
 
     node_config {
-      service_account = "terraform-sa@karthikdevfest.iam.gserviceaccount.com"
+      service_account = "terraform-sa@mlops-gcp-lab1.iam.gserviceaccount.com"
     }
   }
 

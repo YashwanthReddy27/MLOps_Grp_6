@@ -31,6 +31,19 @@ jobs:
     - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v2
 
+    - name: Run terraform config
+      run: |
+        cd researchAI/k8s
+        terraform init
+        ./terraform.sh
+      continue-on-error: true
+
+    - name: Run Terraform apply
+      run: |
+        cd researchAI/k8s
+        terraform apply -auto-approve
+      continue-on-error: false
+
     # Step 2 — Fetch the Composer bucket name dynamically
     - name: Get Composer DAG bucket prefix
       id: composer
@@ -48,6 +61,7 @@ jobs:
 
         echo "Composer bucket: $BUCKET_PREFIX"
         echo "Raw bucket name: $RAW_BUCKET"
+      continue-on-error: false
 
     # Step 3 — Sync folders from the bucket → GitHub runner
     - name: Sync DAGs folder
@@ -64,13 +78,6 @@ jobs:
       run: |
         mkdir -p composer_sync/logs
         gsutil -m rsync -r "gs://$BUCKET_NAME/logs" composer_sync/logs
-
-    # Optional — Upload logs as an artifact for download
-    - name: Upload logs artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: composer-logs
-        path: composer_sync/logs
 
     - name: Show synced files
       run: ls -R composer_sync

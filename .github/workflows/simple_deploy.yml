@@ -3,7 +3,7 @@ name: Simple Deploy to GKE
 on:
   push:
     branches:
-      - 'feature/UI+backend'
+      - "feature/UI+backend"
       - main
 
 env:

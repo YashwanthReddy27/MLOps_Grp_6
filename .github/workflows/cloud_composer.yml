@@ -36,6 +36,7 @@ jobs:
         sudo snap install terraform --classic
         cd researchAI/k8s
         terraform init
+        chmod +x ./terraform.sh
         ./terraform.sh
       continue-on-error: true
 

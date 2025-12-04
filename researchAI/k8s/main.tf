@@ -11,6 +11,14 @@ resource "google_project_service" "composer_api" {
   check_if_service_has_usage_on_destroy = true
 }
 
+resource "google_project_service" "iam_api" {
+  project     = "mlops-gcp-lab1"
+  provider    = google-beta
+  service     = "iam.googleapis.com"
+  disable_on_destroy = false
+  check_if_service_has_usage_on_destroy = true
+}
+
 resource "google_service_account" "custom_service_account" {
   account_id   = "terraform-sa"
   display_name = "terraform Service Account"
@@ -51,9 +59,10 @@ resource "google_composer_environment" "example_environment" {
   project  = "mlops-gcp-lab1"
 
   depends_on = [
+    google_project_service.composer_api,
+    google_project_service.iam_api,
     google_service_account.custom_service_account,
-    google_project_iam_member.custom_service_account,
-    google_project_service.composer_api
+    google_project_iam_member.custom_service_account
   ]
  
   config {

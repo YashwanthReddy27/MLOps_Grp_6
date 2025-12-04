@@ -22,7 +22,9 @@ class NewsAPIPipeline:
     News API Pipeline to fetch, process, categorize, and store tech news articles.
     """
     def __init__(self):
-        with open('./common/config/secrets.yaml') as f:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(base_path, "common", "config", "secrets.yaml")
+        with open(config_path) as f:
             self.config = yaml.safe_load(f)
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)

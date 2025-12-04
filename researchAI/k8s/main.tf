@@ -37,7 +37,7 @@ resource "google_service_account" "custom_service_account" {
 # ───────────────────────────────────────────────
 resource "google_project_iam_member" "custom_service_account" {
   project = "mlops-gcp-lab1"
-  member  = "serviceAccount:mlops-gcp-lab1-sa@mlops-gcp-lab1.iam.gserviceaccount.com"
+  member  = "serviceAccount:terraform-sa@mlops-gcp-lab1.iam.gserviceaccount.com"
   role    = "roles/composer.worker"
 
   depends_on = [ google_service_account.custom_service_account ]

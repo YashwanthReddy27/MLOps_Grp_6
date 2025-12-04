@@ -22,7 +22,7 @@ class NewsAPIPipeline:
     News API Pipeline to fetch, process, categorize, and store tech news articles.
     """
     def __init__(self):
-        with open('/dags/common/config/secrets.yaml') as f:
+        with open('./common/config/secrets.yaml') as f:
             self.config = yaml.safe_load(f)
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)

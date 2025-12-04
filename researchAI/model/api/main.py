@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+# from utils.artifact_registry import ArtifactRegistryPusher
 import uvicorn
 
 # # Add parent directory to path for imports
@@ -46,6 +47,21 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize due to previous mlflow runs still being active: {e}")
         raise
 
+    # Pull indexes from Artifact Registry
+    # try:
+    #     project_id = os.getenv("GCP_PROJECT_ID")
+    #     if project_id:
+    #         logger.info("Pulling indexes from Artifact Registry...")
+    #         pusher = ArtifactRegistryPusher(
+    #             project_id=project_id,
+    #             location="us-central1",
+    #             repository="rag-models"
+    #         )
+    #         pusher.pull_latest(destination_dir="/app")
+    #         logger.info("Indexes pulled from Artifact Registry!")
+    # except Exception as e:
+    #     logger.warning(f"Could not pull indexes from registry: {e}. Using existing indexes if available.")
+
     try:
         # Initialize pipeline
         pipeline = TechTrendsRAGPipeline(enable_tracking=True)
@@ -53,13 +69,13 @@ async def lifespan(app: FastAPI):
         # Load existing indexes
         logger.info("Loading indexes...")
         if pipeline.load_indexes():
-            logger.info("✓ Indexes loaded successfully")
+            logger.info(" Indexes loaded successfully")
             stats = pipeline.retriever.get_index_stats()
             logger.info(f"Index stats: {stats}")
         else:
-            logger.warning("⚠ No indexes found. You need to index documents first.")
+            logger.warning(" No indexes found. You need to index documents first.")
         
-        logger.info("✓ RAG Pipeline API started successfully")
+        logger.info(" RAG Pipeline API started successfully")
         
     except Exception as e:
         logger.error(f"Failed to initialize pipeline: {e}")
@@ -70,7 +86,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down RAG Pipeline API...")
     pipeline = None
-    logger.info("✓ Shutdown complete")
+    logger.info("Shutdown complete")
 
 
 # Create FastAPI app

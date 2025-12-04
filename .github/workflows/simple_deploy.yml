@@ -2,7 +2,11 @@ name: Simple Deploy to GKE
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - feature/UI+backend
+      - main
+      
+  workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
@@ -24,35 +28,62 @@ jobs:
     
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
-    
+
+    - name: Check if cluster exists
+      id: check_cluster
+      run: |
+        if gcloud container clusters describe rag-cluster --zone=us-central1-a --project=$PROJECT_ID &>/dev/null; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create GKE cluster
+      if: steps.check_cluster.outputs.exists == 'false'
+      run: |
+        gcloud container clusters create rag-cluster \
+          --zone us-central1-a \
+          --num-nodes 2 \
+          --machine-type n1-standard-2 \
+          --disk-size 50 \
+          --enable-autoscaling \
+          --min-nodes 2 \
+          --max-nodes 4 \
+          --scopes=https://www.googleapis.com/auth/cloud-platform \
+          --project $PROJECT_ID
+
     - name: Configure Docker
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev
-    
-    - name: Build and Push Backend
+
+    - name: Deploy to namespace to Kubernetes
       run: |
-        cd model
-        docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/backend:latest .
-        docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/backend:latest
-    
+        kubectl apply -f k8s/namespace.yaml
+
     - name: Build and Push Frontend
       run: |
         cd frontend
-        docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest .
-        docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest
+        docker buildx build --platform linux/amd64 -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest . --push
+    
+    - name: Build and Push Backend
+      run: |
+        cd researchAI/model
+        docker buildx build --platform linux/amd64 -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/backend:latest . --push
     
     - name: Get GKE Credentials
       run: |
-        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
-          --zone=${{ env.GKE_ZONE }} \
+        gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER }} \
+          --zone=${{ secrets.GKE_ZONE }} \
           --project=${{ secrets.GCP_PROJECT_ID }}
-    
+
+    - name: Delete the existing deployment if any
+      run: |
+        kubectl delete deployment rag-frontend rag-backend -n rag-system
+        
     - name: Deploy to Kubernetes
       run: |
-        kubectl apply -f k8s/namespace.yaml
         kubectl apply -f k8s/backend.yaml
         kubectl apply -f k8s/frontend.yaml
-        kubectl apply -f k8s/monitoring.yaml
     
     - name: Wait for deployment
       run: |
@@ -60,6 +91,10 @@ jobs:
           deployment/rag-backend -n rag-system
         kubectl wait --for=condition=available --timeout=300s \
           deployment/rag-frontend -n rag-system
+
+    - name: Check pod status
+      run: |
+        kubectl get pods -n rag-system
     
     - name: Get service URLs
       run: |

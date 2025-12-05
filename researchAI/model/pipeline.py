@@ -11,21 +11,18 @@ from evaluation.model_bias_detector import RAGBiasDetector
 from evaluation.metrics import RAGMetrics
 from evaluation.experiment_tracker import ExperimentTracker
 from utils.logger import setup_logging
-from deployment.artifact_registry_pusher import ArtifactRegistryPusher
-from config.settings import config
-from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class TechTrendsRAGPipeline:
     """Complete RAG pipeline for technology trends"""
     
-    def __init__(self, enable_tracking: bool = True):
+    def __init__(self, enable_tracking: bool = True, enable_monitoring: bool = True):
         """
         Initialize RAG pipeline
         
         Args:
-            enable_cache: Enable response caching
             enable_tracking: Enable MLflow experiment tracking
+            enable_monitoring: Enable hybrid monitoring (local + GCP)
         """
         setup_logging()
         self.logger = logging.getLogger(__name__)
@@ -40,15 +37,39 @@ class TechTrendsRAGPipeline:
         self.validator = ResponseValidator()
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
-        self.project_id = config.gcp_config.project_id
-        self.location = config.gcp_config.location
-        self.repository = config.gcp_config.artifact_repository
         self.tracker = ExperimentTracker() if enable_tracking else None
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
+
         self.logger.info("Pipeline initialized successfully")
-        if not self.project_id:
-            raise ValueError("GCP project_id is required")
     
+    def _initialize_monitoring(self):
+        """Initialize hybrid monitoring"""
+        try:
+            from monitoring.hybrid_monitor import HybridMonitor
+            import os
+            
+            project_id = os.getenv('GCP_PROJECT_ID')
+            
+            self.monitoring = HybridMonitor(
+                project_id=project_id,
+                enable_gcp=True  # Will try GCP, fall back to simple monitor
+            )
+            
+            # Log status
+            status = self.monitoring.get_status()
+            self.logger.info(f"✓ Monitoring enabled in {status['mode']} mode")
+            
+            if status['simple_monitor']['available']:
+                self.logger.info("  ✓ Simple Monitor: Active")
+            if status['gcp_monitor']['available']:
+                self.logger.info("  ✓ GCP Cloud Monitoring: Active")
+            
+        except ImportError as e:
+            self.logger.warning(f"Hybrid monitor not available: {e}")
+            self.logger.info("Continuing without monitoring")
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize monitoring: {e}")
+
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
         """
@@ -97,52 +118,13 @@ class TechTrendsRAGPipeline:
             True if successful
         """
         self.logger.info("Loading indexes")
-        try:
-            pusher = ArtifactRegistryPusher(
-                project_id=self.project_id,
-                location=self.location,
-                repository=self.repository
-            )
-            
-            # Pull artifact (latest or specific version)
-            result = pusher.pull_latest(destination_dir="./model")
-            
-            self.logger.info(f"Artifact pulled: version {result['version']}")
-            
-            # Update retriever paths to point to the model directory
-            import shutil
-            
-            # Copy FAISS indexes to the expected location
-            model_faiss = Path("./model/faiss_indexes")
-            target_faiss = Path(config.vector_store.persist_directory)
-            
-            if model_faiss.exists():
-                target_faiss.mkdir(parents=True, exist_ok=True)
-                for file in model_faiss.glob("*"):
-                    shutil.copy2(file, target_faiss / file.name)
-                self.logger.info(f"Copied FAISS indexes to {target_faiss}")
-            
-            # Copy BM25 indexes to the expected location
-            model_bm25 = Path("./model/bm25_indexes")
-            target_bm25 = Path(config.bm25.persist_directory)
-            
-            if model_bm25.exists():
-                target_bm25.mkdir(parents=True, exist_ok=True)
-                for file in model_bm25.glob("*"):
-                    shutil.copy2(file, target_bm25 / file.name)
-                self.logger.info(f"Copied BM25 indexes to {target_bm25}")
-            
-            success = self.retriever.load_indexes()
-            
-            if success:
-                stats = self.retriever.get_index_stats()
-                self.logger.info(f"Indexes loaded: {stats}")
-            
-            return success
-
-        except Exception as e:
-            self.logger.error(f"Error loading from Artifact Registry: {e}")
-            raise
+        success = self.retriever.load_indexes()
+        
+        if success:
+            stats = self.retriever.get_index_stats()
+            self.logger.info(f"Indexes loaded: {stats}")
+        
+        return success
 
     def query(self, query: str, 
          filters: Optional[Dict[str, Any]] = None,
@@ -272,6 +254,13 @@ class TechTrendsRAGPipeline:
                 bias_report=fairness_report
             )
             self.tracker.end_run()
+        
+         # Log to monitoring
+        if self.monitoring:
+            try:
+                self.monitoring.log_query(final_result)
+            except Exception as e:
+                self.logger.warning(f"Failed to log to monitoring: {e}")
         
         self.logger.info(f"Query completed in {response_time:.2f}s")
         return final_result

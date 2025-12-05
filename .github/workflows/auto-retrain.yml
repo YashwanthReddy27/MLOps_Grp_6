@@ -1,6 +1,11 @@
 name: Auto Retrain on Health Issues
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/auto-retrain.yml'  # Only trigger when this file changes
   schedule:
     # Check every 6 hours
     - cron: '0 */6 * * *'

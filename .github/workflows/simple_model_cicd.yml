@@ -3,8 +3,9 @@ name: Simple RAG Model CI/CD
 on:
   push: 
     branches:
-      - fixes/model-ci-cd
+      - feature/UI+backend
       - main
+
   workflow_dispatch:
 
 env:
@@ -69,6 +70,13 @@ jobs:
           fi
         id: check_data
 
+      - name: Authenticate to Google Cloud
+        if: steps.check_data.outputs.has_data == 'true'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        continue-on-error: false
+
       - name: Run Indexing Script
         if: steps.check_data.outputs.has_data == 'true'
         env:
@@ -99,13 +107,6 @@ jobs:
       #     git add logs.dvc
       #     git commit -m "Updated dvc ref"
       #     git push
-
-      - name: Authenticate to Google Cloud
-        if: steps.check_data.outputs.has_data == 'true'
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-        continue-on-error: true
       
       - name: Set up Google Cloud SDK
         if: steps.check_data.outputs.has_data == 'true'
@@ -132,8 +133,7 @@ jobs:
             $PUSH_FLAG \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --location ${{ env.GCP_LOCATION }} \
-            --repository ${{ env.GCP_REPOSITORY }} \
-            --version "v$(date +%Y%m%d-%H%M%S)"
+            --repository ${{ env.GCP_REPOSITORY }}
           
           if [ -f artifact_path.txt ]; then
             cp artifact_path.txt ${{ github.workspace }}/artifact_path.txt
@@ -159,23 +159,6 @@ jobs:
             echo "evaluation_passed=false" >> $GITHUB_OUTPUT
             echo "status=FAILED" >> $GITHUB_OUTPUT
           fi
-
-      - name: Push updated indexes to repository
-        if: steps.check_data.outputs.has_data == 'true' && steps.check_evaluation.outputs.evaluation_passed == 'true'
-        run: |
-          git lfs install
-          git lfs track "researchAI/model/bm25_indexes/**"
-          git lfs track "researchAI/model/faiss_indexes/**"
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git add .gitattributes
-          git add researchAI/model/bm25_indexes/
-          git add researchAI/model/faiss_indexes/
-          echo "Staged changes:"
-          git diff --staged --name-status
-          git diff --staged --quiet || git commit -m "Update indexes after indexing [skip ci]"
-          git lfs push origin ${{ github.ref_name }}
-          git push
         
       - name: Upload evaluation report
         if: steps.check_data.outputs.has_data == 'true'

@@ -22,7 +22,7 @@ class NewsAPIPipeline:
     News API Pipeline to fetch, process, categorize, and store tech news articles.
     """
     def __init__(self):
-        with open('dags/common/config/secrets.yaml') as f:
+        with open("/home/airflow/gcs/dags/common/config/secrets.yaml") as f:
             self.config = yaml.safe_load(f)
         self.logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO)
@@ -188,7 +188,7 @@ class NewsAPIPipeline:
             if new_articles:
                 # Get current timestamp for the filename
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f'/opt/airflow/data/raw/tech_news_{timestamp}.json'
+                filename = f'/home/airflow/gcs/data/raw/tech_news_{timestamp}.json'
                 
                 # Prepare output data
                 output_data = {
@@ -308,7 +308,7 @@ class NewsAPIPipeline:
 
             # Save categorized data
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            categorized_file = f'/opt/airflow/data/cleaned/tech_news_categorized_{timestamp}.json'
+            categorized_file = f'/home/airflow/gcs/data/cleaned/tech_news_categorized_{timestamp}.json'
             
             categorized_data = {
                 'keywords_config': self.NEWS_KEYWORDS,
@@ -571,14 +571,14 @@ class NewsAPIPipeline:
 
             # Clean up raw files
             deleted_raw = file_mgr.cleanup_old_files(
-                '/opt/airflow/data/raw',
+                '/home/airflow/gcs/data/raw',
                 'tech_news_',
                 days=retention_days
             )
             
             # Clean up categorized files
             deleted_categorized = file_mgr.cleanup_old_files(
-                '/opt/airflow/data/cleaned',
+                '/home/airflow/gcs/data/cleaned',
                 'tech_news_categorized_',
                 days=retention_days
             )

@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2025-11-30T18:53:44.190365",
+    "validation_score": 0.9390918016691214,
+    "fairness_score": 0.6152515879666105,
+    "response_time": 3.3596689701080322,
+    "num_sources": 8
+  },
+  {
+    "timestamp": "2025-11-30T19:13:41.642504",
+    "validation_score": 0.7785436893203883,
+    "fairness_score": 0.4873843323678214,
+    "response_time": 3.872061014175415,
+    "num_sources": 8
+  }
+]

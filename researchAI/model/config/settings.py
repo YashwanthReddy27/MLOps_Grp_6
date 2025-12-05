@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+class FastAPISettings(BaseModel):
+    rate_limit_query: str = "10/minute"
+    rate_limit_feedback: str = "20/hour"
 
 class EmbeddingConfig(BaseModel):
     """Embedding model configuration"""
@@ -118,6 +121,8 @@ class RAGConfig(BaseModel):
     bm25: BM25Config = BM25Config()
     cache: CacheConfig = CacheConfig()
     bias_detection: BiasDetectionConfig = BiasDetectionConfig()
+    fastapi: FastAPISettings = FastAPISettings()
+    gcp_config: GCPConfig = GCPConfig()
     
     # MLflow tracking - LOCAL FILE STORAGE
     mlflow_tracking_uri: str = Field(

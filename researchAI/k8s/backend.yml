@@ -22,8 +22,8 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "YOUR_GOOGLE_API_KEY"
-  GCP_PROJECT_ID: "YOUR_GCP_PROJECT_ID"
+  GOOGLE_API_KEY: "AIzaSyCtQep_DWpUzGtPmzJSbpr8jPq3k-tVkF8"
+  GCP_PROJECT_ID: "mlops-lab4-477622"
 
 ---
 # 3) Backend Deployment (FastAPI / Uvicorn)
@@ -35,7 +35,7 @@ metadata:
   labels:
     app: rag-backend
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: rag-backend
@@ -46,9 +46,8 @@ spec:
     spec:
       containers:
         - name: rag-backend
-          # TODO: replace with your actual Artifact Registry backend image
-          image: REGION-docker.pkg.dev/PROJECT_ID/researchai-services/backend:latest
-          imagePullPolicy: IfNotPresent
+          image: us-central1-docker.pkg.dev/mlops-lab4-477622/rag-docker/backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
           envFrom:
@@ -60,21 +59,21 @@ spec:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 20
+            initialDelaySeconds: 60
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/health
               port: 8000
-            initialDelaySeconds: 30
+            initialDelaySeconds: 90
             periodSeconds: 20
           resources:
             requests:
-              cpu: "500m"
-              memory: "1Gi"
+              cpu: "200m"
+              memory: "384Mi"
             limits:
-              cpu: "2"
-              memory: "4Gi"
+              cpu: "1"
+              memory: "1Gi"
 
 ---
 # 4) Backend Service (internal cluster access)

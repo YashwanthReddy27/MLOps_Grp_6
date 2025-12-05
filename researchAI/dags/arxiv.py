@@ -22,7 +22,7 @@ from common.file_management import FileManager
 class ArxivPipeline:
 
     def __init__(self):
-        self.deduplication_manager = DeduplicationManager('arxiv')
+        self.deduplication_manager = DeduplicationManager('arxiv', base_dir = '/home/airflow/gcs/data')
         self.text_cleaner = TextCleaner()
         self.category_manager = CategoryManager()
         self.data_validator = DataValidator()
@@ -258,7 +258,7 @@ class ArxivPipeline:
             if new_papers:
                 # Get current timestamp for the filename
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                filename = f'/opt/airflow/data/raw/arxiv_papers_{timestamp}.json'
+                filename = f'/home/airflow/gcs/data/raw/arxiv_papers_{timestamp}.json'
                 
                 # Prepare output data
                 output_data = {
@@ -394,7 +394,7 @@ class ArxivPipeline:
             
             # Save processed data
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            processed_file = f'/opt/airflow/data/cleaned/arxiv_papers_processed_{timestamp}.json'
+            processed_file = f'/home/airflow/gcs/data/cleaned/arxiv_papers_processed_{timestamp}.json'
             
             processed_data = {
                 'keywords_config': self.ARXIV_KEYWORDS,
@@ -578,14 +578,14 @@ class ArxivPipeline:
 
             # Clean up raw files
             deleted_raw = file_mgr.cleanup_old_files(
-                '/opt/airflow/data/raw',
+                '/home/airflow/gcs/data/raw',
                 'arxiv_papers_',
                 days=retention_days
             )
             
             # Clean up processed files
             deleted_processed = file_mgr.cleanup_old_files(
-                '/opt/airflow/data/cleaned',
+                '/home/airflow/gcs/data/cleaned',
                 'arxiv_papers_processed_',
                 days=retention_days
             )

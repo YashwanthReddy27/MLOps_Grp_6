@@ -33,8 +33,10 @@ jobs:
 
     - name: Run terraform config
       run: |
+        sudo snap install terraform --classic
         cd researchAI/k8s
         terraform init
+        chmod +x ./terraform.sh
         ./terraform.sh
       continue-on-error: true
 
@@ -81,3 +83,32 @@ jobs:
 
     - name: Show synced files
       run: ls -R composer_sync
+    
+    - name: Copy dags to Cloud Composer bucket
+      run: |
+        cp composer_sync/dags/airflow_monitoring.py researchAI/dags/
+        gsutil -m rsync -r researchAI/dags "gs://$BUCKET_NAME/dags"
+    
+    - name: dvc install
+      run: |
+        pip install dvc[gs]
+    
+    - name: Set up GCP credentials
+      run: | 
+        echo ' ${{ secrets.GCP_SA_DVC_KEY }}'  > gcp-key.json
+        chmod 600 gcp-key.json
+    
+    - name: DVC setup
+      run: |
+        dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+        dvc remote modify --local myremote credentialpath  "gcp-key.json"
+  
+    - name: DVC pull
+      run: |
+        cd researchAI
+        dvc pull
+    
+    - name: Copy data and logs
+      run: |
+        cp -r composer_sync/data/* researchAI/data/
+        cp -r composer_sync/logs/* researchAI/logs/

@@ -67,7 +67,7 @@ jobs:
         # Run indexing to update model
         python indexing_script.py
         
-        echo "✅ Model retrained"
+        echo " Model retrained"
     
     - name: Evaluate new model
       if: steps.health.outputs.needs_retraining == 'true'

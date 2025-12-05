@@ -11,6 +11,9 @@ from evaluation.model_bias_detector import RAGBiasDetector
 from evaluation.metrics import RAGMetrics
 from evaluation.experiment_tracker import ExperimentTracker
 from utils.logger import setup_logging
+from deployment.artifact_registry_pusher import ArtifactRegistryPusher
+from config.settings import config
+from pathlib import Path
 logger = logging.getLogger(__name__)
 
 class TechTrendsRAGPipeline:
@@ -37,10 +40,14 @@ class TechTrendsRAGPipeline:
         self.validator = ResponseValidator()
         self.fairness_detector = RAGBiasDetector()
         self.metrics_calculator = RAGMetrics()
+        self.project_id = config.gcp_config.project_id
+        self.location = config.gcp_config.location
+        self.repository = config.gcp_config.artifact_repository
         self.tracker = ExperimentTracker() if enable_tracking else None
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
-
         self.logger.info("Pipeline initialized successfully")
+        if not self.project_id:
+            raise ValueError("GCP project_id is required")
     
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
@@ -90,13 +97,52 @@ class TechTrendsRAGPipeline:
             True if successful
         """
         self.logger.info("Loading indexes")
-        success = self.retriever.load_indexes()
-        
-        if success:
-            stats = self.retriever.get_index_stats()
-            self.logger.info(f"Indexes loaded: {stats}")
-        
-        return success
+        try:
+            pusher = ArtifactRegistryPusher(
+                project_id=self.project_id,
+                location=self.location,
+                repository=self.repository
+            )
+            
+            # Pull artifact (latest or specific version)
+            result = pusher.pull_latest(destination_dir="./model")
+            
+            self.logger.info(f"Artifact pulled: version {result['version']}")
+            
+            # Update retriever paths to point to the model directory
+            import shutil
+            
+            # Copy FAISS indexes to the expected location
+            model_faiss = Path("./model/faiss_indexes")
+            target_faiss = Path(config.vector_store.persist_directory)
+            
+            if model_faiss.exists():
+                target_faiss.mkdir(parents=True, exist_ok=True)
+                for file in model_faiss.glob("*"):
+                    shutil.copy2(file, target_faiss / file.name)
+                self.logger.info(f"Copied FAISS indexes to {target_faiss}")
+            
+            # Copy BM25 indexes to the expected location
+            model_bm25 = Path("./model/bm25_indexes")
+            target_bm25 = Path(config.bm25.persist_directory)
+            
+            if model_bm25.exists():
+                target_bm25.mkdir(parents=True, exist_ok=True)
+                for file in model_bm25.glob("*"):
+                    shutil.copy2(file, target_bm25 / file.name)
+                self.logger.info(f"Copied BM25 indexes to {target_bm25}")
+            
+            success = self.retriever.load_indexes()
+            
+            if success:
+                stats = self.retriever.get_index_stats()
+                self.logger.info(f"Indexes loaded: {stats}")
+            
+            return success
+
+        except Exception as e:
+            self.logger.error(f"Error loading from Artifact Registry: {e}")
+            raise
 
     def query(self, query: str, 
          filters: Optional[Dict[str, Any]] = None,
@@ -115,10 +161,31 @@ class TechTrendsRAGPipeline:
         start_time = time.time()
         
         self.logger.info(f"Processing query: {query}")
-        
+
         if self.tracker:
-            self.tracker.start_run()
-            self.tracker.log_config()
+            try:
+                self.tracker.start_run()
+                self.tracker.log_config()
+            except Exception as e:
+                self.logger.warning(f"Failed to start MLflow run: {e}")
+            # Try to end any existing run first
+            try:
+                import mlflow
+                if mlflow.active_run() is not None:
+                    mlflow.end_run()
+            except:
+                pass
+            # Try starting again
+            try:
+                self.tracker.start_run()
+                self.tracker.log_config()
+            except Exception as e2:
+                self.logger.error(f"Failed to start MLflow run after cleanup: {e2}")
+                # Continue without tracking rather than failing the query
+                self.tracker = None
+        # if self.tracker:
+        #     self.tracker.start_run()
+        #     self.tracker.log_config()
         
         self.logger.info("Retrieving relevant documents")
         retrieved_docs = self.retriever.retrieve(

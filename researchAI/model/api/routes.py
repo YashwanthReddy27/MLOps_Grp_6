@@ -1,19 +1,16 @@
-"""
-API Routes for RAG Pipeline
-"""
 import logging
 import time
-import uuid
-from typing import Callable, Dict, Any
+from typing import Callable
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from monitoring.monitor import SimpleMonitor
+
 from api.schemas import (
-    QueryRequest, QueryResponse, IndexUpdateRequest, IndexUpdateResponse,
-    HealthResponse, MetricsResponse, StatsResponse, FeedbackRequest, FeedbackResponse,
+    QueryRequest, QueryResponse, HealthResponse, MetricsResponse,
     Source, BiasReport
 )
 
@@ -32,9 +29,7 @@ metrics_store = {
     "start_time": time.time()
 }
 
-# In-memory feedback storage (in production, use database)
-feedback_store = []
-
+from config.settings import config 
 
 def create_api_router(get_pipeline: Callable) -> APIRouter:
     """
@@ -97,20 +92,15 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             logger.error(f"Error establishing baseline: {e}")
             return {"status": "error", "message": str(e)}
     
-    
-    # ===== Query Endpoint =====
+
     @router.post("/query", response_model=QueryResponse, tags=["query"])
-    @limiter.limit("10/minute")  # Rate limit: 10 requests per minute
+    @limiter.limit(config.fastapi.rate_limit_query)
     async def query(
-        request: Request,  # ADDED: Required for SlowAPI
+        request: Request,
         query_request: QueryRequest,
         background_tasks: BackgroundTasks
     ):
-        """
-        Process a RAG query
-        
-        Rate limited to 10 requests per minute per IP.
-        """
+        """Process a RAG query"""
         pipeline = get_pipeline()
         
         if pipeline is None:
@@ -126,9 +116,6 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
                 enable_streaming=query_request.enable_streaming
             )
             
-            # Debug: Log what keys are actually in the result
-            logger.debug(f"Pipeline result keys: {list(result.keys())}")
-            
             # Extract values with safe defaults
             response_time = result.get('response_time', 0.0)
             validation = result.get('validation', {})
@@ -137,25 +124,10 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             fairness_score = bias_report.get('overall_fairness_score', 0.0)
             from_cache = result.get('from_cache', False)
             
-            # Update metrics in background
-            background_tasks.add_task(
-                update_metrics,
-                response_time,
-                validation_score,
-                fairness_score,
-                from_cache
-            )
-            
-            # Add monitoring in background (add this line)
-            background_tasks.add_task(log_to_monitor, response)
-
-
-            # Format response with safe defaults
             # Handle sources safely
             sources_list = []
             for source_data in result.get('sources', []):
                 try:
-                    # Ensure source has all required fields
                     source_obj = Source(
                         number=source_data.get('number', 0),
                         title=source_data.get('title', 'Unknown'),
@@ -172,7 +144,6 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             
             # Handle BiasReport with all required fields
             if bias_report and isinstance(bias_report, dict):
-                # Add required fields if missing
                 bias_report_data = {
                     'overall_fairness_score': bias_report.get('overall_fairness_score', 0.0),
                     'diversity_metrics': bias_report.get('diversity_metrics', {}),
@@ -184,7 +155,6 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
                 }
                 bias_report_obj = BiasReport(**bias_report_data)
             else:
-                # Create default BiasReport
                 bias_report_obj = BiasReport(
                     overall_fairness_score=0.0,
                     diversity_metrics={},
@@ -195,6 +165,7 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
                     timestamp=datetime.now().isoformat()
                 )
             
+            # CREATE RESPONSE OBJECT FIRST (before background tasks)
             response = QueryResponse(
                 query=result.get('query', query_request.query),
                 response=result.get('response', ''),
@@ -207,13 +178,25 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
                 from_cache=from_cache
             )
             
+            # NOW add background tasks AFTER response is created
+            background_tasks.add_task(
+                update_metrics,
+                response_time,
+                validation_score,
+                fairness_score,
+                from_cache
+            )
+            
+            # Add monitoring in background
+            background_tasks.add_task(log_to_monitor, result)  # Pass result, not response
+            
             logger.info(f"Query processed successfully in {response_time:.2f}s")
             return response
             
         except Exception as e:
             logger.error(f"Error processing query: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
-    
+            raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")    
+
     # ===== Metrics Endpoint =====
     @router.get("/metrics", response_model=MetricsResponse, tags=["monitoring"])
     async def get_metrics():
@@ -253,73 +236,7 @@ def create_api_router(get_pipeline: Callable) -> APIRouter:
             logger.error(f"Error checking health: {e}")
             return {"status": "ERROR", "message": str(e)}
     
-    
-    # ===== Stats Endpoint =====
-    @router.get("/stats", response_model=StatsResponse, tags=["monitoring"])
-    async def get_stats():
-        """
-        Get index statistics
-        """
-        pipeline = get_pipeline()
-        
-        if pipeline is None:
-            raise HTTPException(status_code=503, detail="Pipeline not initialized")
-        
-        try:
-            stats = pipeline.retriever.get_index_stats()
-            
-            total_docs = (
-                stats['papers']['dense']['total_vectors'] +
-                stats['news']['dense']['total_vectors']
-            )
-            
-            return StatsResponse(
-                papers_index=stats['papers'],
-                news_index=stats['news'],
-                total_documents=total_docs
-            )
-            
-        except Exception as e:
-            logger.error(f"Error getting stats: {e}", exc_info=True)
-            raise HTTPException(status_code=500, detail=f"Error getting stats: {str(e)}")
-    
-    
-    # ===== Feedback Endpoint =====
-    @router.post("/feedback", response_model=FeedbackResponse, tags=["feedback"])
-    @limiter.limit("20/hour")
-    async def submit_feedback(
-        request: Request,  # ADDED: Required for SlowAPI
-        feedback_request: FeedbackRequest
-    ):
-        """
-        Submit user feedback on a response
-        
-        Rate limited to 20 requests per hour.
-        """
-        feedback_id = str(uuid.uuid4())
-        
-        feedback_entry = {
-            "feedback_id": feedback_id,
-            "query": feedback_request.query,
-            "response_id": feedback_request.response_id,
-            "rating": feedback_request.rating,
-            "feedback_text": feedback_request.feedback_text,
-            "issues": feedback_request.issues,
-            "timestamp": datetime.now().isoformat()
-        }
-        
-        # Store feedback (in production, use database)
-        feedback_store.append(feedback_entry)
-        
-        logger.info(f"Feedback received: {feedback_id} - Rating: {feedback_request.rating}")
-        
-        return FeedbackResponse(
-            status="success",
-            message="Feedback submitted successfully",
-            feedback_id=feedback_id
-        )
-    
-    
+  
     return router
 
 def log_to_monitor(result: dict):

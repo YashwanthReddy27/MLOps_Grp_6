@@ -38,10 +38,9 @@ class PipelineValidator:
         
         # Add default directory options
         dir_options.extend([
-            Path('/opt/airflow/dags/common/data_schema'),  # DAGs directory
-            Path('/opt/airflow/data/ge_artifacts'),  # Airflow data directory
-            Path('/opt/airflow/ge_artifacts'),       # Alternative Airflow location
-            Path('/tmp/ge_artifacts'),               # Temp directory (always writable)
+            Path('/home/airflow/gcs/dags/common/data_schema'),  # DAGs directory
+            Path('/home/airflow/gcs/data/ge_artifacts'),  # Airflow data directory
+            Path('/home/airflow/gcs/ge_artifacts')      # Alternative Airflow location
         ])
         
         # Try each directory option until one works
@@ -54,10 +53,10 @@ class PipelineValidator:
                 self.expectations_dir = self.ge_root_dir / "expectations"
                 self.expectations_dir.mkdir(parents=True, exist_ok=True)
 
-                self.validations_dir = Path('/opt/airflow/data/ge_artifacts') / pipeline_name / "validations"
+                self.validations_dir = Path('/home/airflow/gcs/data/ge_artifacts') / pipeline_name / "validations"
                 self.validations_dir.mkdir(parents=True, exist_ok=True)
 
-                self.uncommitted_dir = Path('/opt/airflow/data/ge_artifacts') / pipeline_name / "uncommitted"
+                self.uncommitted_dir = Path('/home/airflow/gcs/data/ge_artifacts') / pipeline_name / "uncommitted"
                 self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
                 
                 # If we get here, directories were created successfully

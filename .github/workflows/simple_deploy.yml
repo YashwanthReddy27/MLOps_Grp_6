@@ -121,4 +121,4 @@ jobs:
         kubectl get service rag-frontend -n rag-system -o wide
         echo ""
         echo "To access services, get the external IPs:"
-        kubectl get services -n rag-system
+        kubectl get services -n rag-system 

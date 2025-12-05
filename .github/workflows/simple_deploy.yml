@@ -2,8 +2,7 @@ name: Simple Deploy to GKE
 
 on:
   push:
-    branches:
-      - feature/UI+backend
+    branches: [ feature/UI+backend ]
   workflow_dispatch:
 
 env:

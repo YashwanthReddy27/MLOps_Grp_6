@@ -21,6 +21,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     
+    # Add debug step to see directory structure
+    - name: Debug - List directory structure
+      run: |
+        echo "Current directory:"
+        pwd
+        echo "Directory contents:"
+        ls -la
+        echo "Checking for model directory:"
+        find . -name "model" -type d
+    
     - name: Authenticate to GCP
       uses: google-github-actions/auth@v1
       with:
@@ -32,7 +42,7 @@ jobs:
     - name: Check if cluster exists
       id: check_cluster
       run: |
-        if gcloud container clusters describe rag-cluster --zone=us-central1-a --project=$PROJECT_ID &>/dev/null; then
+        if gcloud container clusters describe rag-cluster --zone=us-central1-a --project=${{ secrets.GCP_PROJECT_ID }} &>/dev/null; then
           echo "exists=true" >> $GITHUB_OUTPUT
         else
           echo "exists=false" >> $GITHUB_OUTPUT
@@ -50,25 +60,31 @@ jobs:
           --min-nodes 2 \
           --max-nodes 4 \
           --scopes=https://www.googleapis.com/auth/cloud-platform \
-          --project $PROJECT_ID
+          --project ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Configure Docker
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev
 
-    - name: Deploy to namespace to Kubernetes
+    - name: Deploy namespace to Kubernetes
       run: |
         kubectl apply -f k8s/namespace.yaml
 
     - name: Build and Push Frontend
       run: |
         cd frontend
-        docker buildx build --platform linux/amd64 -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest . --push
+        docker buildx build --platform linux/amd64 \
+          -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest \
+          . --push
     
     - name: Build and Push Backend
       run: |
-        cd researchAI/model
-        docker buildx build --platform linux/amd64 -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/backend:latest . --push
+        # Based on your files, the model directory is at the root
+        # Not inside researchAI/model
+        cd model
+        docker buildx build --platform linux/amd64 \
+          -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/backend:latest \
+          . --push
     
     - name: Get GKE Credentials
       run: |
@@ -76,9 +92,9 @@ jobs:
           --zone=${{ env.GKE_ZONE }} \
           --project=${{ secrets.GCP_PROJECT_ID }}
 
-    - name: Delete the existing deployment if any
+    - name: Delete existing deployment if any
       run: |
-        kubectl delete deployment rag-frontend rag-backend -n rag-system
+        kubectl delete deployment rag-frontend rag-backend -n rag-system --ignore-not-found=true
         
     - name: Deploy to Kubernetes
       run: |
@@ -99,6 +115,10 @@ jobs:
     - name: Get service URLs
       run: |
         echo "Backend URL:"
-        kubectl get service rag-backend -n rag-system
+        kubectl get service rag-backend -n rag-system -o wide
+        echo ""
         echo "Frontend URL:"
-        kubectl get service rag-frontend -n rag-system
+        kubectl get service rag-frontend -n rag-system -o wide
+        echo ""
+        echo "To access services, get the external IPs:"
+        kubectl get services -n rag-system

@@ -17,8 +17,8 @@ from common.bias_detector import BiasDetector
 
 
 bias_detector = BiasDetector(
-    data_path="/opt/airflow/data/cleaned/",
-    output_dir="/opt/airflow/data/bias_reports",
+    data_path="/home/airflow/gcs/data/cleaned/",
+    output_dir="/home/airflow/gcs/data/bias_reports",
     data_type="arxiv"
 )
 

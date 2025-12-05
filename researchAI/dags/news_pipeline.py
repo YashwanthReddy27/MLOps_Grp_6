@@ -16,8 +16,8 @@ from common.data_validation import validate_data_quality
 from common.bias_detector import BiasDetector
 
 bias_detector = BiasDetector(
-    data_path="/opt/airflow/data/cleaned/",
-    output_dir="/opt/airflow/data/bias_reports/",
+    data_path="/home/airflow/gcs/data/cleaned/",
+    output_dir="/home/airflow/gcs/data/bias_reports/",
     data_type="tech_news"
 )
 
@@ -44,73 +44,9 @@ with DAG(
     default_args=default_args,
     description='Create/Update Great Expectations schema for News API pipeline (Run manually)',
     schedule=None,  # Manual trigger only
-    
     catchup=False,
     tags=['news', 'schema', 'great-expectations', 'setup', 'manual'],
-    doc_md="""
-    ## News API Pipeline Schema Creation
-    
-    **Purpose**: Create or update the Great Expectations validation schema
-    
-    **When to Run**:
-    - ✅ First-time setup (before running validation pipeline)
-    - ✅ After significant changes to data structure
-    - ✅ When enrichment process changes
-    - ✅ When adding/removing fields
-    - ✅ To update expectations based on new data patterns
-    - ❌ NOT on a schedule - this is a manual maintenance task
-    
-    **Prerequisites**:
-    - Run `tech_news_enriched_with_validation` at least once to generate training data
-    - Or specify a custom training file in DAG run config
-    
-    **How to Run**:
-    
-    1. **Default (uses most recent data)**:
-       - Click "Trigger DAG" button in Airflow UI
-       - Uses most recent categorized news file as training data
-    
-    2. **Custom training file**:
-       - Click "Trigger DAG w/ config"
-       - Provide configuration:
-       ```json
-       {
-         "training_file": "/opt/airflow/data/cleaned/tech_news_categorized_20250101.json"
-       }
-       ```
-    
-    3. **Overwrite existing schema**:
-       - Use config:
-       ```json
-       {
-         "overwrite_schema": true
-       }
-       ```
-    
-    **What It Does**:
-    1. Loads training data from specified or most recent file
-    2. Analyzes enriched content structure and statistics
-    3. Generates expectation suite (schema) with expectations for:
-       - Basic fields (title, description, url)
-       - Enriched content fields
-       - Category and keyword fields
-       - Metadata fields
-    4. Saves schema to:
-       - `/opt/airflow/data/ge_artifacts/news_api/expectations/news_api_suite.json`
-       - `/opt/airflow/data/schema/news_api_expectations.json` (for version control)
-    5. Sends email notification with details
-    
-    **After Running**:
-    1. ✓ Review generated schema file
-    2. ✓ Commit schema to git: `data/schema/news_api_expectations.json`
-    3. ✓ Run validation pipeline - it will now succeed
-    4. ✓ Monitor future validation results
-    
-    **Schema Safety**:
-    - Existing schemas are NOT overwritten by default
-    - Must explicitly pass `overwrite_schema: true` to recreate
-    - Protects against accidental schema deletion
-    """,
+    doc_md=""" News API Pipeline Schema Creation""",
 ) as schema_dag:
     
     create_schema_task = PythonOperator(

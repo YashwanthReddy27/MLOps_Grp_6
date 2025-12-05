@@ -13,12 +13,12 @@ class FileManager:
     """File system operations for data pipelines"""
     
     @staticmethod
-    def ensure_directories(base_dir: str = '/opt/airflow/data') -> None:
+    def ensure_directories(base_dir: str = '/home/airflow/gcs/dags/') -> None:
         """
         Create standard directory structure for data pipelines
         
         Args:
-            base_dir: Base directory path (default: /opt/airflow/data)
+            base_dir: Base directory path (default: /home/airflow/gcs/data)
             
         Creates:
             - {base_dir}/raw - Raw data files

@@ -14,7 +14,7 @@ from logging import getLogger
 class DeduplicationManager:
     """Manages deduplication across pipelines"""
     
-    def __init__(self, pipeline_name: str, base_dir: str = '/opt/airflow/data'):
+    def __init__(self, pipeline_name: str, base_dir: str = '/home/airflow/gcs/data'):
         """
         Initialize deduplication manager
         

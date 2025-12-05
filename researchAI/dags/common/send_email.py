@@ -9,9 +9,7 @@ class AlertEmail:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        config_path = os.path.join(base_path, "config", "email_config.yaml")
-        with open(config_path, "r") as f:
+        with open("/home/airflow/gcs/dags/common/config/email_config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
             self.logger.info("Email configuration loaded successfully.")
 

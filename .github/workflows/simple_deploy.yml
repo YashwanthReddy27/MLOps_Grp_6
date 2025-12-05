@@ -73,6 +73,7 @@ jobs:
 
     - name: Deploy namespace to Kubernetes
       run: |
+        cd researchAI
         kubectl apply -f k8s/namespace.yml
 
     - name: Build and Push Frontend
@@ -86,7 +87,7 @@ jobs:
       run: |
         # Based on your files, the model directory is at the root
         # Not inside researchAI/model
-        cd model
+        cd researchAI/model
         docker buildx build --platform linux/amd64 \
           -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/backend:latest \
           . --push
@@ -103,6 +104,7 @@ jobs:
         
     - name: Deploy to Kubernetes
       run: |
+        cd researchAI
         kubectl apply -f k8s/backend.yml
         kubectl apply -f k8s/frontend.yml
     

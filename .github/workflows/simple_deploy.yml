@@ -73,7 +73,7 @@ jobs:
 
     - name: Deploy namespace to Kubernetes
       run: |
-        kubectl apply -f k8s/namespace.yaml
+        kubectl apply -f k8s/namespace.yml
 
     - name: Build and Push Frontend
       run: |
@@ -103,8 +103,8 @@ jobs:
         
     - name: Deploy to Kubernetes
       run: |
-        kubectl apply -f k8s/backend.yaml
-        kubectl apply -f k8s/frontend.yaml
+        kubectl apply -f k8s/backend.yml
+        kubectl apply -f k8s/frontend.yml
     
     - name: Wait for deployment
       run: |

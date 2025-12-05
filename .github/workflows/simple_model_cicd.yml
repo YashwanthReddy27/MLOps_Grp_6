@@ -3,9 +3,9 @@ name: Simple RAG Model CI/CD
 on:
   push: 
     branches:
-      - feature/UI+backend
-      -main
-      
+      # - feature/UI+backend
+      - main
+
   workflow_dispatch:
 
 env:

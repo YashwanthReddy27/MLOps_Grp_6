@@ -6,7 +6,7 @@ on:
       - feature/UI+backend
       - main
 
-  workflow_dispatch:
+  workflow_dispatch: 
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

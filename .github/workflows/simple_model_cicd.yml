@@ -4,6 +4,8 @@ on:
   push: 
     branches:
       - feature/UI+backend
+      -main
+      
   workflow_dispatch:
 
 env:

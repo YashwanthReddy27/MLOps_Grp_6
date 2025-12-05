@@ -40,6 +40,10 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
 
+    - name: Install gke-gcloud-auth-plugin
+      run: |
+        gcloud components install gke-gcloud-auth-plugin --quiet
+
     - name: Check if cluster exists
       id: check_cluster
       run: |
@@ -65,7 +69,7 @@ jobs:
 
     - name: Configure Docker
       run: |
-        gcloud auth configure-docker us-central1-docker.pkg.dev
+        gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
     - name: Deploy namespace to Kubernetes
       run: |

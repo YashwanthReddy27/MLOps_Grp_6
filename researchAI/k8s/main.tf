@@ -69,6 +69,9 @@ resource "google_composer_environment" "example_environment" {
     software_config {
       image_version = "composer-3-airflow-3.1.0-build.2"
 
+      airflow_config_overrides = {
+        "dag_processor-dag_file_processor_timeout" = "100"
+      }
       pypi_packages = {
         pandas                        = ""
         scikit-learn                  = ""
@@ -86,6 +89,7 @@ resource "google_composer_environment" "example_environment" {
         fairlearn                     = ""
         dvc                           = "[gs]"
       }
+
     }
 
     node_config {

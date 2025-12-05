@@ -112,4 +112,3 @@ jobs:
       run: |
         cp -r composer_sync/data/* researchAI/data/
         cp -r composer_sync/logs/* researchAI/logs/
-

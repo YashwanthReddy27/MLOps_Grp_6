@@ -27,7 +27,6 @@ mlops-gcp-key.json
 
 gc_credentials.json
 
-
 # Local .terraform directories
 **/.terraform/*
 .terraform*

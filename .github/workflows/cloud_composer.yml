@@ -3,8 +3,9 @@ name: Sync Cloud Composer
 on:
   push: 
     branches:
-      - feature/UI+backend
       - main
+    paths:
+      - '.github/workflows/cloud_composer.yml'  # Only trigger when this file changes
   workflow_dispatch:
 
 jobs:

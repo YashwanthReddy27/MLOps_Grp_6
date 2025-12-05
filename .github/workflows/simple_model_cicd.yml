@@ -3,8 +3,9 @@ name: Simple RAG Model CI/CD
 on:
   push: 
     branches:
-      - feature/UI+backend
       - main
+    paths:
+      - '.github/workflows/simple_model_cicd.yml'  # Only trigger when this file changes
 
   workflow_dispatch:
 

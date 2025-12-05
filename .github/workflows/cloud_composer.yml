@@ -107,6 +107,9 @@ jobs:
       run: |
         cd researchAI
         dvc pull
-        cp -f composer_sync/data/* data/
-        cp -f composer_sync/logs/* logs/
+    
+    - name: Copy data and logs
+      run: |
+        cp -f composer_sync/data/* researchAI/data/
+        cp -f composer_sync/logs/* researchAI/logs/
 

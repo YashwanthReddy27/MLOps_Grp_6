@@ -66,6 +66,7 @@ resource "google_composer_environment" "example_environment" {
   ]
  
   config {
+    environment_size = "ENVIRONMENT_SIZE_LARGE"
     software_config {
       image_version = "composer-3-airflow-3.1.0-build.2"
 

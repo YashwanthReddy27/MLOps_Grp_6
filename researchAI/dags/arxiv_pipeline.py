@@ -1,6 +1,5 @@
 """
-arXiv AI Research Pipeline with Explicit Schema Creation
-Location: /app/dags/arxiv_pipeline_with_validation.py
+arXiv AI Research Pipeline
 """
 
 from datetime import datetime, timedelta
@@ -46,66 +45,7 @@ with DAG(
     description='Create/Update Great Expectations schema for arXiv pipeline (Run manually)',
     schedule=None,  # Manual trigger only - no automatic schedule
     catchup=False,
-    tags=['arxiv', 'schema', 'great-expectations', 'setup', 'manual'],
-    doc_md="""
-    ## arXiv Pipeline Schema Creation
-    
-    **Purpose**: Create or update the Great Expectations validation schema
-    
-    **When to Run**:
-    - ✅ First-time setup (before running validation pipeline)
-    - ✅ After significant changes to data structure
-    - ✅ When adding/removing columns
-    - ✅ To update expectations based on new data patterns
-    - ❌ NOT on a schedule - this is a manual maintenance task
-    
-    **Prerequisites**:
-    - Run `arxiv_ai_research_with_validation` at least once to generate training data
-    - Or specify a custom training file in DAG run config
-    
-    **How to Run**:
-    
-    1. **Default (uses most recent data)**:
-       - Click "Trigger DAG" button in Airflow UI
-       - Uses most recent processed arXiv file as training data
-    
-    2. **Custom training file**:
-       - Click "Trigger DAG w/ config"
-       - Provide configuration:
-       ```json
-       {
-         "training_file": "/opt/airflow/data/cleaned/arxiv_papers_processed_20250101.json"
-       }
-       ```
-    
-    3. **Overwrite existing schema**:
-       - Use config:
-       ```json
-       {
-         "overwrite_schema": true
-       }
-       ```
-    
-    **What It Does**:
-    1. Loads training data from specified or most recent file
-    2. Analyzes data structure and statistics
-    3. Generates expectation suite (schema) with ~20-50 expectations
-    4. Saves schema to:
-       - `/opt/airflow/data/ge_artifacts/arxiv/expectations/arxiv_suite.json`
-       - `/opt/airflow/data/schema/arxiv_expectations.json` (for version control)
-    5. Sends email notification with details
-    
-    **After Running**:
-    1. ✓ Review generated schema file
-    2. ✓ Commit schema to git: `data/schema/arxiv_expectations.json`
-    3. ✓ Run validation pipeline - it will now succeed
-    4. ✓ Monitor future validation results
-    
-    **Schema Safety**:
-    - Existing schemas are NOT overwritten by default
-    - Must explicitly pass `overwrite_schema: true` to recreate
-    - Protects against accidental schema deletion
-    """,
+    tags=['arxiv data file schema'],
 ) as schema_dag:
     
     create_schema_task = PythonOperator(
@@ -140,27 +80,7 @@ with DAG(
     schedule='0 0 * * *',  # Run daily at midnight
     catchup=False,
     max_active_runs=1,
-    tags=['arxiv', 'research', 'ai', 'papers', 'automated', 'ge', 'validation'],
-    doc_md="""
-    ## arXiv AI Research Pipeline with Data Validation
-    
-    **Prerequisites**:
-    - Schema must exist (run `arxiv_create_schema` DAG first)
-    
-    **Pipeline Flow**:
-    1. Fetch papers from arXiv API
-    2. Process and categorize using LLM
-    3. **Validate data quality** (requires schema)
-    4. Load to PostgreSQL (only if validation passes)
-    5. Cleanup old files
-    
-    **Validation Behavior**:
-    - ❌ **FAILS if schema doesn't exist** (by design)
-    - ✅ Continues if anomalies detected (with alerts)
-    - 📧 Sends alerts for missing schema or anomalies
-    
-    **Schedule**: Daily at midnight
-    """,
+    tags=['arxiv', 'research', 'ai', 'papers'],
 ) as dag:
     
     # Task 1: Fetch papers from arXiv
@@ -214,24 +134,5 @@ with DAG(
         doc_md="""Detects bias in the processed data using Fairlearn.""",
     )
 
-    
-    # Task 4: Load to PostgreSQL
-    load_db_task = PythonOperator(
-        task_id='load_to_postgresql',
-        python_callable=arxiv.load_to_postgresql,
-        
-        doc_md=""" Loads validated data to PostgreSQL database. Only runs if validation succeeds.""",
-    )
-    
-    # Task 5: Cleanup old files
-    cleanup_task = PythonOperator(
-        task_id='cleanup_old_files',
-        python_callable=arxiv.cleanup_old_files,
-        
-        doc_md="""
-        Removes files older than retention period.
-        """,
-    )
-
     # Set task dependencies - validation happens BEFORE database load
-    fetch_papers_task >> process_task >> validate_task >> detect_bias_task >> load_db_task >> cleanup_task
+    fetch_papers_task >> process_task >> validate_task >> detect_bias_task

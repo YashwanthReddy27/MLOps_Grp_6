@@ -75,11 +75,6 @@ resource "google_composer_environment" "example_environment" {
       }
       pypi_packages = {
         pandas                        = ""
-        scikit-learn                  = ""
-        torch                         = ""
-        transformers                  = ""
-        sentencepiece                 = ""
-        kneed                         = ""
         requests                      = ""
         apache-airflow-providers-postgres = ""
         great-expectations            = ">=0.18.8"

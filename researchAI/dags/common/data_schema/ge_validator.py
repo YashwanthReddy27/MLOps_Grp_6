@@ -166,16 +166,6 @@ class PipelineValidator:
                 json.dump(suite_dict, f, indent=2)
             self.logger.info(f"[{self.pipeline_name}] ✓ Saved to expectations folder")
 
-            # Save to version control folder
-            project_root = self.ge_root_dir.parent.parent
-            schema_dir = project_root / "data" / "schema"
-            schema_dir.mkdir(parents=True, exist_ok=True)
-            vc_suite_path = schema_dir / f"{self.pipeline_name}_expectations.json"
-            self.logger.info(f"[{self.pipeline_name}] Saving suite to version control: {vc_suite_path}")
-            with open(vc_suite_path, "w") as f:
-                json.dump(suite_dict, f, indent=2)
-            self.logger.info(f"[{self.pipeline_name}] ✓ Saved to version control")
-
             # Save metadata to uncommitted folder
             metadata = {
                 'created_at': datetime.now().isoformat(),
@@ -189,11 +179,11 @@ class PipelineValidator:
             metadata_path = self.uncommitted_dir / f"schema_metadata_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
+            
             self.logger.info(f"[{self.pipeline_name}] ✓ Saved metadata to uncommitted")
             self.logger.info(f"✅ [{self.pipeline_name}] Schema created successfully")
             self.logger.info(f"   - Expectations: {len(suite_dict.get('expectations', []))}")
             self.logger.info(f"   - GE artifacts: {ge_suite_path}")
-            self.logger.info(f"   - Version control: {vc_suite_path}")
             self.logger.info(f"   - Metadata: {metadata_path}")
             return True
             

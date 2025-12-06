@@ -82,12 +82,20 @@ jobs:
 
     - name: Show synced files
       run: ls -R composer_sync
+
+    # Step 4 — Delete existing DAGs from Composer bucket
+    - name: Delete existing DAGs from Cloud Composer bucket
+      run: |
+        echo "Deleting existing DAGs from gs://$BUCKET_NAME/dags ..."
+        gsutil -m rm -r "gs://$BUCKET_NAME/dags/*" || true
     
+    # Step 5 — Copy files from GitHub runner → Composer bucket
     - name: Copy dags to Cloud Composer bucket
       run: |
         cp composer_sync/dags/airflow_monitoring.py researchAI/dags/
         gsutil -m rsync -r researchAI/dags "gs://$BUCKET_NAME/dags"
     
+    # Step 6 — Pull data files using DVC
     - name: dvc install
       run: |
         pip install dvc[gs]

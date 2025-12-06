@@ -77,7 +77,7 @@ resource "google_composer_environment" "example_environment" {
         pandas                        = ""
         requests                      = ""
         apache-airflow-providers-postgres = ""
-        great-expectations            = ">=0.18.8"
+        great-expectations            = "==0.18.8"
         sqlalchemy                    = ""
         beautifulsoup4                = ""
         lxml                          = ""

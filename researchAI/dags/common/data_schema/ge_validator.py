@@ -15,7 +15,7 @@ import sys
 class PipelineValidator:
     """Manages Great Expectations validation for a specific pipeline"""
     
-    def __init__(self, pipeline_name: str, base_dir: Optional[str] = None):
+    def __init__(self, pipeline_name: str, base_dir: Path = Path('/home/airflow/gcs/data/ge_artifacts')):
         """Initialize validator"""
         
         logging.basicConfig(level=logging.INFO)
@@ -30,65 +30,29 @@ class PipelineValidator:
         self.pipeline_name = pipeline_name
         self.expectation_suite_name = f"{pipeline_name}_suite"
         
-        # Try multiple directory locations in order of preference
-        dir_options = []
-        
-        if base_dir:
-            dir_options.append(Path(base_dir).resolve())
-        
-        # Add default directory options
-        dir_options.extend([
-            Path('/home/airflow/gcs/dags/common/data_schema'),  # DAGs directory
-            Path('/home/airflow/gcs/data/ge_artifacts'),  # Airflow data directory
-            Path('/home/airflow/gcs/ge_artifacts')      # Alternative Airflow location
-        ])
-        
-        # Try each directory option until one works
-        for base_path in dir_options:
-            try:
-                self.ge_root_dir = base_path / pipeline_name
-                
-                # Attempt to create all directories
-                self.ge_root_dir.mkdir(parents=True, exist_ok=True)
-                self.expectations_dir = self.ge_root_dir / "expectations"
-                self.expectations_dir.mkdir(parents=True, exist_ok=True)
-
-                self.validations_dir = Path('/home/airflow/gcs/data/ge_artifacts') / pipeline_name / "validations"
-                self.validations_dir.mkdir(parents=True, exist_ok=True)
-
-                self.uncommitted_dir = Path('/home/airflow/gcs/data/ge_artifacts') / pipeline_name / "uncommitted"
-                self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
-                
-                # If we get here, directories were created successfully
-                self.logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
-                self.logger.info(f"Great Expectations version: {ge.__version__}")
-                self.logger.info(f"Expectations dir: {self.expectations_dir}")
-                self.logger.info(f"Validations dir: {self.validations_dir}")
-                self.logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
-
-                # Success - exit the method
-                return
-                
-            except (PermissionError, OSError) as e:
-                self.logger.warning(f"Could not create directories at {base_path}: {e}")
-                continue
-        
-        # If we get here, all directory options failed
-        # Set up attributes with tmp directory as last resort
-        self.ge_root_dir = Path('/tmp') / f"ge_artifacts_{pipeline_name}_{os.getpid()}"
         try:
+            self.ge_root_dir = base_dir / pipeline_name
+            
+            # Attempt to create all directories
             self.ge_root_dir.mkdir(parents=True, exist_ok=True)
             self.expectations_dir = self.ge_root_dir / "expectations"
             self.expectations_dir.mkdir(parents=True, exist_ok=True)
+
             self.validations_dir = self.ge_root_dir / "validations"
             self.validations_dir.mkdir(parents=True, exist_ok=True)
+
             self.uncommitted_dir = self.ge_root_dir / "uncommitted"
             self.uncommitted_dir.mkdir(parents=True, exist_ok=True)
-
-            self.logger.warning(f"Using temporary directory: {self.ge_root_dir}")
+            
+            # If we get here, directories were created successfully
+            self.logger.info(f"Initializing GE validator for '{pipeline_name}' at: {self.ge_root_dir}")
+            self.logger.info(f"Great Expectations version: {ge.__version__}")
             self.logger.info(f"Expectations dir: {self.expectations_dir}")
             self.logger.info(f"Validations dir: {self.validations_dir}")
             self.logger.info(f"Uncommitted dir: {self.uncommitted_dir}")
+
+            # Success - exit the method
+            return
 
         except Exception as e:
             # Final fallback - set attributes even if directories don't exist
@@ -441,3 +405,4 @@ class PipelineValidator:
             self.logger.warning(f"[{self.pipeline_name}] Could not save report: {e}")
 
         return report_data
+

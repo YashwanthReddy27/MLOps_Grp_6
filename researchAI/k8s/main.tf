@@ -108,9 +108,9 @@ resource "google_storage_bucket" "composer_logs_bucket" {
 }
 
 resource "google_logging_project_sink" "composer_logs_sink" {
-  name        = "composer-logs-sink"
+  name        = "airflow-logs-sink"
   destination = "storage.googleapis.com/${google_storage_bucket.composer_logs_bucket.name}"
-  filter = "resource.type=\"cloud_composer_environment\" AND resource.labels.environment_id=\"${google_composer_environment.example_environment.name}\""
+  filter = "resource.type=cloud_composer_environment AND resource.labels.environment_name=\"${google_composer_environment.example_environment.name}\""
   unique_writer_identity = true
   project = "mlops-gcp-lab1"
   depends_on = [ google_storage_bucket.composer_logs_bucket ]

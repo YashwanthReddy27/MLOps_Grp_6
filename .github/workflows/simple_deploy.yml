@@ -68,10 +68,10 @@ jobs:
           --project ${{ secrets.GCP_PROJECT_ID }}
 
     - name: Get GKE Credentials
-    run: |
-      gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
-        --zone=${{ env.GKE_ZONE }} \
-        --project=${{ secrets.GCP_PROJECT_ID }}
+      run: |
+        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+          --zone=${{ env.GKE_ZONE }} \
+          --project=${{ secrets.GCP_PROJECT_ID }}
 
     - name: Configure Docker
       run: |

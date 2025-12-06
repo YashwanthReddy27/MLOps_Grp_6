@@ -17,6 +17,7 @@ class TechTrendsRAGPipeline:
     """Complete RAG pipeline for technology trends"""
     
     def __init__(self, enable_tracking: bool = True, enable_monitoring: bool = True):
+        
         """
         Initialize RAG pipeline
         
@@ -41,6 +42,10 @@ class TechTrendsRAGPipeline:
         self.logger.info(f"Tracker is {'enabled' if self.tracker else 'not enabled!'}")
 
         self.logger.info("Pipeline initialized successfully")
+
+        self.monitoring = None
+        if enable_monitoring:
+            self._initialize_monitoring()
     
     def _initialize_monitoring(self):
         """Initialize hybrid monitoring"""

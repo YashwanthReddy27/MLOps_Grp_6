@@ -48,32 +48,37 @@ class TechTrendsRAGPipeline:
             self._initialize_monitoring()
     
     def _initialize_monitoring(self):
-        """Initialize hybrid monitoring"""
+        """Initialize GCP monitoring via HybridMonitor"""
         try:
-            from monitoring.hybrid_monitor import HybridMonitor
+            from monitoring import HybridMonitor
             import os
-            
-            project_id = os.getenv('GCP_PROJECT_ID')
-            
+
+            project_id = os.getenv("GCP_PROJECT_ID")
+
             self.monitoring = HybridMonitor(
                 project_id=project_id,
-                enable_gcp=True  # Will try GCP, fall back to simple monitor
+                model_name="techtrends-rag",
+                enable_gcp=True,
             )
-            
-            # Log status
+
             status = self.monitoring.get_status()
-            self.logger.info(f"✓ Monitoring enabled in {status['mode']} mode")
-            
-            if status['simple_monitor']['available']:
-                self.logger.info("  ✓ Simple Monitor: Active")
-            if status['gcp_monitor']['available']:
-                self.logger.info("  ✓ GCP Cloud Monitoring: Active")
-            
+            mode = status.get("mode", "unknown")
+            gcp_status = status.get("gcp_monitor", {})
+
+            self.logger.info(f"✓ Monitoring initialized (mode={mode})")
+            self.logger.info(
+                "  ✓ GCP Cloud Monitoring: %s (project_id=%s)",
+                "Active" if gcp_status.get("available") else "Unavailable",
+                gcp_status.get("project_id", "not_set"),
+            )
+
         except ImportError as e:
             self.logger.warning(f"Hybrid monitor not available: {e}")
             self.logger.info("Continuing without monitoring")
+            self.monitoring = None
         except Exception as e:
             self.logger.warning(f"Failed to initialize monitoring: {e}")
+            self.monitoring = None
 
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):

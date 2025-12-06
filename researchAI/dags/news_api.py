@@ -275,7 +275,7 @@ class NewsAPIPipeline:
                 enriched = {
                     'article_id': self.deduplication_manager.generate_hash(title_clean, article.get('url', '')),
                     'title': title_clean,
-                    'description': self.extract_article_content(url=article.get('url')),
+                    'description': self.extract_article_content(url=article.get('url')) if self.extract_article_content(url=article.get('url')) else desc_clean,
                     'url': article.get('url'),
                     'source_name': article.get('source', {}).get('name'),
                     'author': article.get('author') or 'Unknown',

@@ -4,8 +4,6 @@ on:
   push: 
     branches:
       - main
-    paths:
-      - '.github/workflows/cloud_composer.yml'  # Only trigger when this file changes
   workflow_dispatch:
 
 jobs:

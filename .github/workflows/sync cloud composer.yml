@@ -29,21 +29,13 @@ jobs:
 
     - name: Set up gcloud CLI
       uses: google-github-actions/setup-gcloud@v2
-
-    - name: Run terraform config
+    
+    - name: set the secrets
       run: |
-        sudo snap install terraform --classic
-        cd researchAI/k8s
-        terraform init
-        chmod +x ./terraform.sh
-        ./terraform.sh
-      continue-on-error: true
-
-    - name: Run Terraform apply
-      run: |
-        cd researchAI/k8s
-        terraform apply -auto-approve
-      continue-on-error: false
+        cd researchAI/dags/common/config
+        echo "news_api=${{ secrets.NEWS_API }}" > secrets.yaml
+        echo "HF_API=${{ secrets.HF_API }}" >> secrets.yaml
+        echo "${{ secrets.EMAIL_SENDER_PASSWORD }}" >> email_config.yaml
 
     # Step 2 — Fetch the Composer bucket name dynamically
     - name: Get Composer DAG bucket prefix
@@ -74,11 +66,6 @@ jobs:
       run: |
         mkdir -p composer_sync/data
         gsutil -m rsync -r "gs://$BUCKET_NAME/data" composer_sync/data
-
-    - name: Sync Logs folder
-      run: |
-        mkdir -p composer_sync/logs
-        gsutil -m rsync -r "gs://$BUCKET_NAME/logs" composer_sync/logs
 
     - name: Show synced files
       run: ls -R composer_sync
@@ -115,7 +102,34 @@ jobs:
         cd researchAI
         dvc pull
     
-    - name: Copy data and logs
-      run: |
+    - name: Copy data
+      run: | 
         cp -r composer_sync/data/* researchAI/data/
-        cp -r composer_sync/logs/* researchAI/logs/
+
+    - name: Sync logs folder
+      run: |
+        mkdir -p composer_sync/logs
+        gsutil -m rsync -r "gs://composer-logs-bucket-mlops-gcp-lab1/" composer_sync/logs
+    
+    - name: Copy logs
+      run: | 
+        if [ -d "composer_sync/logs" ] && [ "$(ls -A composer_sync/logs)" ]; then
+            cp -r composer_sync/logs/* researchAI/logs/
+        else
+            echo "No logs to copy."
+        fi
+
+    #- name: dvc add and push
+    #  run: |
+    #    cd researchAI
+    #    dvc add data/
+    #    dvc push
+    
+    #- name: git add and commit
+    #  run: |
+    #    cd researchAI
+    #    git config --global user.name "github-actions"
+    #    git config --global user.email "github-actions@github.com"
+    #    git add  data.dvc
+    #    git commit -m "Sync data from Cloud Composer $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+    #    git push

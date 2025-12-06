@@ -5,6 +5,7 @@ Fetches and categorizes AI research papers from arXiv using the same keywords as
 
 from datetime import datetime, timedelta
 import json
+from pathlib import Path
 import requests
 import logging
 import xml.etree.ElementTree as ET
@@ -37,8 +38,15 @@ class ArxivPipeline:
             'retries': 1,
             'retry_delay': timedelta(minutes=5),
         }
+
+        # === Logging setup ===
+        base_log_dir = Path("/home/airflow/gcs/logs")
+        base_log_dir.mkdir(parents=True, exist_ok=True)  # ensure directory exists
+        log_file_path = base_log_dir / f"{__name__}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        
+        logging.basicConfig(filename=log_file_path, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
+
 
         # CONFIGURATION: AI research keywords (aligned with news pipeline)
         self.ARXIV_KEYWORDS = {

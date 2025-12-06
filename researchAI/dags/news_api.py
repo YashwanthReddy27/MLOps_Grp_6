@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from pathlib import Path
 import requests
 import logging
 from bs4 import BeautifulSoup
@@ -22,8 +23,12 @@ class NewsAPIPipeline:
     def __init__(self):
         with open("/home/airflow/gcs/dags/common/config/secrets.yaml") as f:
             self.config = yaml.safe_load(f)
+        # === Logging setup ===
+        base_log_dir = Path("/home/airflow/gcs/logs")
+        base_log_dir.mkdir(parents=True, exist_ok=True)  # ensure directory exists
+        log_file_path = base_log_dir / f"{__name__}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        logging.basicConfig(filename=log_file_path, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(level=logging.INFO)
         self.deduplication_manager = DeduplicationManager('news')
         self.text_cleaner = TextCleaner()
         self.category_manager = CategoryManager()

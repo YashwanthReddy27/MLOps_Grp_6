@@ -67,6 +67,12 @@ jobs:
           --scopes=https://www.googleapis.com/auth/cloud-platform \
           --project ${{ secrets.GCP_PROJECT_ID }}
 
+    - name: Get GKE Credentials
+    run: |
+      gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+        --zone=${{ env.GKE_ZONE }} \
+        --project=${{ secrets.GCP_PROJECT_ID }}
+
     - name: Configure Docker
       run: |
         gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
@@ -91,12 +97,6 @@ jobs:
         docker buildx build --platform linux/amd64 \
           -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/backend:latest \
           . --push
-    
-    - name: Get GKE Credentials
-      run: |
-        gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
-          --zone=${{ env.GKE_ZONE }} \
-          --project=${{ secrets.GCP_PROJECT_ID }}
 
     - name: Delete existing deployment if any
       run: |

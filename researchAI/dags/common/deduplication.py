@@ -8,7 +8,8 @@ import json
 import os
 from datetime import datetime
 from typing import Dict, List, Callable
-from logging import getLogger
+import logging
+from pathlib import Path
 
 
 class DeduplicationManager:
@@ -26,7 +27,14 @@ class DeduplicationManager:
         self.hash_dir = f'{base_dir}/hashes'
         self.hash_file = f'{self.hash_dir}/{pipeline_name}_hashes.json'
         os.makedirs(self.hash_dir, exist_ok=True)
-        self.logger = getLogger(__name__)
+        # === Logging setup ===
+        base_log_dir = Path("/home/airflow/gcs/logs")
+        base_log_dir.mkdir(parents=True, exist_ok=True)  # ensure directory exists
+        log_file_path = base_log_dir / f"{__name__}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        
+        logging.basicConfig(filename=log_file_path, level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
+
         self.logger.info(f"[DEDUP] Initialized DeduplicationManager for {pipeline_name}")
     
     def generate_hash(self, *fields) -> str:

@@ -3,12 +3,20 @@ from email.message import EmailMessage
 import yaml
 import logging
 import os
+from pathlib import Path
+from datetime import datetime
 
 class AlertEmail:
 
     def __init__(self):
+        # === Logging setup ===
+        base_log_dir = Path("/home/airflow/gcs/logs")
+        base_log_dir.mkdir(parents=True, exist_ok=True)  # ensure directory exists
+        log_file_path = base_log_dir / f"{__name__}_{datetime.now().strftime('%Y-%m-%d')}.log"
+        
+        logging.basicConfig(filename=log_file_path, level=logging.INFO)
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
+
         with open("/home/airflow/gcs/dags/common/config/email_config.yaml", "r") as f:
             self.config = yaml.safe_load(f)
             self.logger.info("Email configuration loaded successfully.")

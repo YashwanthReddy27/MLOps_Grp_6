@@ -129,14 +129,15 @@ jobs:
     - name: git add and commit
       run: |
         cd researchAI
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
+        git status
+        git config user.name "GitHub Actions Bot"
+        git config user.email "actions@github.com"
         git add  data.dvc logs.dvc
         if git diff --cached --quiet; then
             echo "No staged changes found."
-          else
-            echo "Staged changes found."
-            git commit -m "Sync data from Cloud Composer $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
-            git push
-          fi
-        
+        else
+          echo "Staged changes found."
+          git commit -m "Sync data from Cloud Composer $(date +'%Y-%m-%d %H:%M:%S')" || echo "No changes to commit"
+          git push
+        fi
+      

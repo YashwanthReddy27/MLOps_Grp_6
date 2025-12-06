@@ -33,9 +33,9 @@ jobs:
     - name: set the secrets
       run: |
         cd researchAI/dags/common/config
-        echo "news_api=${{ secrets.NEWS_API }}" > secrets.yaml
-        echo "HF_API=${{ secrets.HF_API }}" >> secrets.yaml
-        echo "${{ secrets.EMAIL_SENDER_PASSWORD }}" >> email_config.yaml
+        echo "news_api: \"${{ secrets.NEWS_API }}\"" > secrets.yaml
+        echo "HF_API: \"${{ secrets.HF_API }}\"" >> secrets.yaml
+        echo " \"${{ secrets.EMAIL_SENDER_PASSWORD }}\"" >> email_config.yaml
 
     # Step 2 — Fetch the Composer bucket name dynamically
     - name: Get Composer DAG bucket prefix

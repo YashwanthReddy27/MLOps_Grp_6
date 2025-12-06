@@ -84,7 +84,7 @@ jobs:
 
     - name: Build and Push Frontend
       run: |
-        cd frontend
+        cd researchAI/frontend
         docker buildx build --platform linux/amd64 \
           -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/rag-docker/frontend:latest \
           . --push

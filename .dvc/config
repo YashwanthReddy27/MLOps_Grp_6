@@ -2,4 +2,3 @@
     remote = myremote
 ['remote "myremote"']
     url = gs://mlops-gcp-dvc
-    credentialpath = C:\Users\chara\OneDrive\Desktop\MLOps_Grp_6\researchAI\gc_credentials.json

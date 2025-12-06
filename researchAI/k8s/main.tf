@@ -94,3 +94,31 @@ resource "google_composer_environment" "example_environment" {
   }
 
 }
+
+
+
+# ───────────────────────────────────────────────
+# LOGGING SINK TO GCS BUCKET
+# ───────────────────────────────────────────────
+resource "google_storage_bucket" "composer_logs_bucket" {
+  name          = "composer-logs-bucket-mlops-gcp-lab1"
+  location      = "us-east1"
+  project = "mlops-gcp-lab1"
+  force_destroy = true
+}
+
+resource "google_logging_project_sink" "composer_logs_sink" {
+  name        = "composer-logs-sink"
+  destination = "storage.googleapis.com/${google_storage_bucket.composer_logs_bucket.name}"
+  filter = "resource.type=\"cloud_composer_environment\" AND resource.labels.environment_id=\"${google_composer_environment.example_environment.name}\""
+  unique_writer_identity = true
+  project = "mlops-gcp-lab1"
+  depends_on = [ google_storage_bucket.composer_logs_bucket ]
+}
+
+resource "google_storage_bucket_iam_member" "composer_logs_sink_writer" {
+  bucket = google_storage_bucket.composer_logs_bucket.name
+  role   = "roles/storage.objectCreator"
+  member = google_logging_project_sink.composer_logs_sink.writer_identity
+  depends_on = [ google_logging_project_sink.composer_logs_sink ]
+}

@@ -50,12 +50,12 @@ class TechTrendsRAGPipeline:
     def _initialize_monitoring(self):
         """Initialize GCP monitoring via HybridMonitor"""
         try:
-            from monitoring import HybridMonitor
+            from monitoring.gcp_monitoring import HybridMonitor
             import os
 
             project_id = os.getenv("GCP_PROJECT_ID")
 
-            self.monitoring = HybridMonitor(
+            self.monitoring= HybridMonitor(
                 project_id=project_id,
                 model_name="techtrends-rag",
                 enable_gcp=True,
@@ -268,7 +268,7 @@ class TechTrendsRAGPipeline:
          # Log to monitoring
         if self.monitoring:
             try:
-                self.monitoring.log_query(final_result)
+                self.monitoring.monitoring.log_query(final_result)
             except Exception as e:
                 self.logger.warning(f"Failed to log to monitoring: {e}")
         

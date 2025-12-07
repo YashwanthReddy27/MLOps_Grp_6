@@ -18,14 +18,15 @@ logger = logging.getLogger(__name__)
 
 class TechTrendsRAGPipeline:
     """Complete RAG pipeline for technology trends"""
-    
-    def __init__(self, enable_tracking: bool = True):
+
+    def __init__(self, enable_tracking: bool = True, enable_monitoring: bool = True):
         """
         Initialize RAG pipeline
         
         Args:
             enable_cache: Enable response caching
             enable_tracking: Enable MLflow experiment tracking
+            enable_monitoring: Enable hybrid monitoring (local + GCP)
         """
         setup_logging()
         self.logger = logging.getLogger(__name__)
@@ -48,6 +49,42 @@ class TechTrendsRAGPipeline:
         self.logger.info("Pipeline initialized successfully")
         if not self.project_id:
             raise ValueError("GCP project_id is required")
+        self.monitoring = None
+        if enable_monitoring:
+            self._initialize_monitoring()
+
+    def _initialize_monitoring(self):
+        """Initialize GCP monitoring via HybridMonitor"""
+        try:
+            from monitoring.gcp_monitoring import HybridMonitor
+            import os
+
+            project_id = os.getenv("GCP_PROJECT_ID")
+
+            self.monitoring= HybridMonitor(
+                project_id=project_id,
+                model_name="techtrends-rag",
+                enable_gcp=True,
+            )
+
+            status = self.monitoring.get_status()
+            mode = status.get("mode", "unknown")
+            gcp_status = status.get("gcp_monitor", {})
+
+            self.logger.info(f"✓ Monitoring initialized (mode={mode})")
+            self.logger.info(
+                "  ✓ GCP Cloud Monitoring: %s (project_id=%s)",
+                "Active" if gcp_status.get("available") else "Unavailable",
+                gcp_status.get("project_id", "not_set"),
+            )
+
+        except ImportError as e:
+            self.logger.warning(f"Hybrid monitor not available: {e}")
+            self.logger.info("Continuing without monitoring")
+            self.monitoring = None
+        except Exception as e:
+            self.logger.warning(f"Failed to initialize monitoring: {e}")
+            self.monitoring = None
     
     def index_documents(self, papers: List[Dict[str, Any]] = None,
                        news: List[Dict[str, Any]] = None):
@@ -272,6 +309,13 @@ class TechTrendsRAGPipeline:
                 bias_report=fairness_report
             )
             self.tracker.end_run()
+        
+        # Log to monitoring
+        if self.monitoring:
+            try:
+                self.monitoring.log_query(final_result)
+            except Exception as e:
+                self.logger.warning(f"Failed to log to monitoring: {e}")
         
         self.logger.info(f"Query completed in {response_time:.2f}s")
         return final_result

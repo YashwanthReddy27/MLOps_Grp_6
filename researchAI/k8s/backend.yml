@@ -44,6 +44,7 @@ spec:
       labels:
         app: rag-backend
     spec:
+      serviceAccountName: rag-backend-sa
       containers:
         - name: rag-backend
           image: us-central1-docker.pkg.dev/mlops-lab4-477622/rag-docker/backend:latest

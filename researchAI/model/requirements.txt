@@ -49,14 +49,17 @@ pytest>=7.4.0
 # GCP Artifact Registry 
 google-cloud-artifact-registry>=1.11.0
 google-cloud-storage>=2.10.0
-google-auth>=2.23.0
+
 
 # DVC 
 dvc[gs]
 
 # GCP Monitoring Dependencies
-google-cloud-monitoring==2.28.0
-google-auth==2.27.0
+# GCP Monitoring Dependencies
+google-cloud-monitoring>=2.21.0,<2.26.0
+google-auth>=2.27.0
+google-api-core>=2.15.0
+protobuf>=4.21.0,<5.0.0
 google-api-python-client==2.116.0
 
 # Numeric / data

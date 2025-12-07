@@ -268,7 +268,7 @@ class TechTrendsRAGPipeline:
          # Log to monitoring
         if self.monitoring:
             try:
-                self.monitoring.monitoring.log_query(final_result)
+                self.monitoring.log_query(final_result)
             except Exception as e:
                 self.logger.warning(f"Failed to log to monitoring: {e}")
         

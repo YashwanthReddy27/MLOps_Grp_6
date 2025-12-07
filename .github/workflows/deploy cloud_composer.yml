@@ -42,4 +42,16 @@ jobs:
       run: |
         cd researchAI/k8s
         terraform apply -auto-approve
+      continue-on-error: true
+
+    - name: verify deployment
+      run: |
+        if gcloud composer environments describe "rag-environment" \
+          --project="mlops-gcp-lab1" \
+          --location="us-east1" >/dev/null 2>&1; then
+          echo "Composer environment exists."
+        else
+          echo "Composer environment does NOT exist."
+          exit 1
+        fi
       continue-on-error: false

@@ -1,6 +1,10 @@
 """
 Monitoring for the RAG pipeline: model decay + data drift (with Evidently).
 
+Compatible with:
+- Python 3.11
+- google-cloud-monitoring>=2.21.0,<2.26.0
+
 Public API:
 
     monitor = HybridMonitor(...)
@@ -22,11 +26,8 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+# Imports for google-cloud-monitoring 2.21.x - 2.25.x with Python 3.11
 from google.cloud import monitoring_v3
-from google.cloud.monitoring_v3 import MetricServiceClient
-from google.cloud.monitoring_v3.types.metric import TimeSeries, Point, TimeInterval
-from google.api import metric_pb2
-from google.api import label_pb2
 from google.protobuf import timestamp_pb2
 
 logger = logging.getLogger(__name__)
@@ -66,14 +67,19 @@ class GCPModelMonitor:
     reference_df: Optional[pd.DataFrame] = field(default=None, init=False)
 
     def __post_init__(self) -> None:
-        self.client = MetricServiceClient()
-        self.project_name = f"projects/{self.project_id}"
-        logger.info(
-            "Initialized GCPModelMonitor(project=%s, model=%s)",
-            self.project_id,
-            self.model_name,
-        )
-        self._ensure_metric_descriptors()
+        try:
+            self.client = monitoring_v3.MetricServiceClient()
+            self.project_name = f"projects/{self.project_id}"
+            logger.info(
+                "Initialized GCPModelMonitor(project=%s, model=%s)",
+                self.project_id,
+                self.model_name,
+            )
+            self._ensure_metric_descriptors()
+        except Exception as e:
+            logger.error(f"Failed to initialize MetricServiceClient: {e}")
+            logger.error("Ensure GOOGLE_APPLICATION_CREDENTIALS is set or running on GCP")
+            raise
 
     # ----------------- public API -----------------
 
@@ -86,13 +92,19 @@ class GCPModelMonitor:
         """
         metrics = query_result.get("metrics", {}) or {}
 
+        # Try to get validation score from multiple possible locations
         validation_score = (
-            query_result.get("validation_score")
+            query_result.get("validation", {}).get("overall_score")
+            or query_result.get("validation_score")
             or metrics.get("overall_score")
             or metrics.get("validation_score")
         )
+        
+        # Try to get fairness score from multiple possible locations
         fairness_score = (
-            query_result.get("fairness_score") or metrics.get("fairness_score")
+            query_result.get("bias_report", {}).get("overall_fairness_score")
+            or query_result.get("fairness_score")
+            or metrics.get("fairness_score")
         )
 
         if validation_score is not None:
@@ -192,38 +204,43 @@ class GCPModelMonitor:
     def _log_data_features(self, features: Dict[str, Any]) -> None:
         self.current_batch.append(features)
         if len(self.current_batch) > self.window_size:
-            self.current_batch = self.current_batch[-self.window_size :]
+            self.current_batch = self.current_batch[-self.window_size:]
 
     def _ensure_metric_descriptors(self) -> None:
-        metric_kinds = {
-            "validation_score":metric_pb2.MetricDescriptor.MetricKind.GAUGE,
-            "fairness_score": metric_pb2.MetricDescriptor.MetricKind.GAUGE,
-            "data_drift_score": metric_pb2.MetricDescriptor.MetricKind.GAUGE,
-        }
+        """Create metric descriptors in GCP Monitoring"""
+        metric_configs = [
+            ("validation_score", "RAG validation score"),
+            ("fairness_score", "RAG fairness score"),
+            ("data_drift_score", "RAG data drift score"),
+        ]
 
-        for name, kind in metric_kinds.items():
-            full_name = f"{self.metric_prefix}/{name}"
-            descriptor = metric_pb2.MetricDescriptor(
-                type=full_name,
-                metric_kind=kind,
-                value_type= metric_pb2.MetricDescriptor.ValueType.DOUBLE,
-                description=f"RAG {name.replace('_', ' ')}",
+        for name, description in metric_configs:
+            full_type = f"{self.metric_prefix}/{name}"
+            
+            # Create MetricDescriptor using monitoring_v3 types
+            descriptor = monitoring_v3.MetricDescriptor(
+                type=full_type,
+                metric_kind=monitoring_v3.MetricDescriptor.MetricKind.GAUGE,
+                value_type=monitoring_v3.MetricDescriptor.ValueType.DOUBLE,
+                description=description,
                 labels=[
-                    label_pb2.LabelDescriptor(
+                    monitoring_v3.LabelDescriptor(
                         key="model_name",
-                        value_type=label_pb2.LabelDescriptor.ValueType.STRING,
+                        value_type=monitoring_v3.LabelDescriptor.ValueType.STRING,
                         description="RAG model name",
                     )
                 ],
             )
+            
             try:
                 self.client.create_metric_descriptor(
                     name=self.project_name,
                     metric_descriptor=descriptor,
                 )
-            except Exception:
+                logger.info(f"Created metric descriptor: {full_type}")
+            except Exception as e:
                 # Most often AlreadyExists; keep quiet
-                pass
+                logger.debug(f"Metric descriptor {full_type} may already exist: {e}")
 
     def write_time_series(
         self,
@@ -231,21 +248,25 @@ class GCPModelMonitor:
         value: float,
         timestamp: Optional[datetime] = None,
     ) -> None:
+        """Write a time series data point to GCP Monitoring"""
         if timestamp is None:
             timestamp = datetime.utcnow()
 
         seconds = int(timestamp.timestamp())
         nanos = int((timestamp.timestamp() - seconds) * 1e9)
 
-        series = TimeSeries()
+        # Create TimeSeries
+        series = monitoring_v3.TimeSeries()
         series.metric.type = f"{self.metric_prefix}/{metric_name}"
-        series.resource.type = "global"
         series.metric.labels["model_name"] = self.model_name
+        series.resource.type = "global"
+        series.resource.labels["project_id"] = self.project_id
 
-        point = Point()
+        # Create Point with interval
+        point = monitoring_v3.Point()
         point.value.double_value = float(value)
-        point.interval.start_time.seconds = seconds
-        point.interval.start_time.nanos = nanos
+        
+        # Set the end time for GAUGE metrics
         point.interval.end_time.seconds = seconds
         point.interval.end_time.nanos = nanos
 
@@ -256,10 +277,12 @@ class GCPModelMonitor:
                 name=self.project_name,
                 time_series=[series],
             )
+            logger.debug(f"Wrote metric {metric_name}={value}")
         except Exception as e:
             logger.warning("Failed to write metric %s: %s", metric_name, e)
 
     def _check_model_decay(self) -> Dict[str, Any]:
+        """Check for model performance decay"""
         if not self.validation_scores and not self.fairness_scores:
             return {
                 "recent_validation_score": None,
@@ -291,6 +314,7 @@ class GCPModelMonitor:
         }
 
     def _detect_data_drift(self) -> Dict[str, Any]:
+        """Detect data distribution drift using Evidently or fallback heuristic"""
         if not self.current_batch:
             return {
                 "status": "no_current_data",
@@ -397,6 +421,16 @@ class GCPModelMonitor:
 # ---------------------------------------------------------------------------
 
 class HybridMonitor:
+    """
+    High-level monitoring wrapper for RAG pipeline.
+    
+    Provides a simple interface for:
+    - Logging query metrics
+    - Checking model health
+    - Detecting when retraining is needed
+    - Setting baselines for drift detection
+    """
+    
     def __init__(
         self,
         project_id: Optional[str] = None,
@@ -429,6 +463,7 @@ class HybridMonitor:
             self.gcp_monitor = None
 
     def log_query(self, query_result: Dict[str, Any]) -> None:
+        """Log metrics from a query result"""
         if not self.gcp_monitor:
             return
         try:
@@ -437,6 +472,7 @@ class HybridMonitor:
             self.logger.warning("GCP monitor logging failed: %s", e)
 
     def check_health(self) -> Dict[str, Any]:
+        """Check overall model health"""
         if not self.gcp_monitor:
             return {
                 "status": "ERROR",
@@ -457,6 +493,7 @@ class HybridMonitor:
             }
 
     def should_trigger_retraining(self) -> Dict[str, Any]:
+        """Check if model retraining should be triggered"""
         if not self.gcp_monitor:
             return {
                 "should_retrain": False,
@@ -476,6 +513,7 @@ class HybridMonitor:
             }
 
     def set_baseline(self) -> None:
+        """Set baseline for drift detection using Evidently"""
         if not self.gcp_monitor:
             self.logger.warning("Cannot set baseline: GCP monitor not available")
             return
@@ -486,6 +524,7 @@ class HybridMonitor:
             self.logger.warning("GCP baseline failed: %s", e)
 
     def get_status(self) -> Dict[str, Any]:
+        """Get monitoring system status"""
         return {
             "gcp_monitor": {
                 "available": self.gcp_monitor is not None,
@@ -502,6 +541,21 @@ def add_monitoring_to_pipeline(
     model_name: str = "rag-model",
     enable_gcp: bool = True,
 ) -> HybridMonitor:
+    """
+    Add monitoring to an existing RAG pipeline.
+    
+    This wraps the pipeline's query method to automatically log metrics
+    after each query.
+    
+    Args:
+        pipeline: The RAG pipeline instance
+        project_id: GCP project ID (or from GCP_PROJECT_ID env var)
+        model_name: Name for the model in metrics
+        enable_gcp: Whether to enable GCP Cloud Monitoring
+        
+    Returns:
+        HybridMonitor instance attached to the pipeline
+    """
     monitoring = HybridMonitor(
         project_id=project_id,
         model_name=model_name,

@@ -101,7 +101,7 @@ resource "google_composer_environment" "example_environment" {
 # LOGGING SINK TO GCS BUCKET
 # ───────────────────────────────────────────────
 resource "google_storage_bucket" "composer_logs_bucket" {
-  name          = "airflow-logs-bucket-mlops-gcp-lab1"
+  name          = "composer-logs-bucket-mlops-gcp-lab1"
   location      = "us-east1"
   project = "mlops-gcp-lab1"
   force_destroy = true

@@ -1,0 +1,46 @@
+Data pipeline deployment details:
+
+Cloud Provider: GCP
+Required: Project to be pre-created
+Location: us-east1
+Cloud resources: Storage Bucket, Log Router, Cloud Composer (GCP managed airflow V3)
+Cloud IAM: Service Account with authentication keys and appropriate role.
+
+Infra deployment:
+IaC: Terraform
+Linux environment: GitHub Actions provided
+GitHub workflow file: .github\workflows\"deploy cloud_composer.yml"
+Terraform: researchAI\k8s\terraform.sh and researchAI\k8s\main.tf
+
+Description of .github/workflows/"deploy cloud_composer.yml":
+This workflow files has two important files to work with Terraform integrated with GCP.
+We need to import the existing resources from the GCP Project onto terraform managed state. This includes IAM api, service account, Cloud Composer Api, Log Routers, and Cloud Composer Environment details.
+
+To achieve this we need to run the researchAI\k8s\terraform.sh and terraform will create a terraform.tfstate file. This file is used by terraform to contract with our expected configuration provided in the researchAI\k8s\main.tf file. 
+
+Next step is to run the researchAI\k8s\main.tf file. Terraform plan previews the plan if any changes are needed to GCP project envirnoment and terraforma apply will apply the changes.
+
+################################
+Data sync between GitHub repo and Cloud Composer:
+
+All the dags are sync with Cloud Composer bucket so the newly created dags are pushed to the Cloud Composer bucket's dags folder. The data generated from airflow is stored in the Cloud Composer bucket's data folder. The Cloud Composer's logs are managed by GCP (logs are not stored in Cloud Composer bucket). We created a Log Router with log sink rule to get a copy of the logs into our own storage bucket. 
+
+The data files and log files need to be dvc tracked so this is automated using .github\workflows\"sync cloud composer.yml".
+
+Descripton of .github\workflows\"sync cloud composer.yml":
+This workflow basically:
+1. Authenticaes with gcloud CLI to the gcp project.
+2. Checkout the code to current dir
+3. downloads the dags and data files from Cloud Composer bucket into a temp location
+4. Deletes the old dags on Cloud Composer bucket dag folder
+5. Copies the new dags fromr repo on to Cloud Composer bucket dag folder
+6. Move to the dvc tracked location on repo and fetch the existing data files and log files from remote
+7. Copies the Cloud Composer bucket's data files and log files into DVC feteched data and logs folders.
+8. DVC the new data and logs into remote by updating data.dvc and logs.dvc files.
+9. Commits the new .dvc files to repo on GitHub 
+
+#####################################
+
+GitHub Actions automation:
+
+Workflow files: .github\workflows\deploy cloud_composer.yml and .github\workflows\sync cloud composer.yml

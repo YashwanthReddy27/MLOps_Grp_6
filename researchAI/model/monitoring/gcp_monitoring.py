@@ -128,6 +128,12 @@ class GCPModelMonitor:
             self._append_window(self.validation_scores, float(validation_score))
         if fairness_score is not None:
             self._append_window(self.fairness_scores, float(fairness_score))
+        
+        now = datetime.now(timezone.utc)
+        decay_info = self._check_model_decay()
+        decay_score = decay_info.get("overall_decay_score")
+        if decay_score is not None:
+            self.write_time_series("model_decay_score", float(decay_score), now)
 
         now = datetime.now(timezone.utc)
         if validation_score is not None:
@@ -240,6 +246,7 @@ class GCPModelMonitor:
             "validation_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
             "fairness_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
             "data_drift_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
+            "model_decay_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
         }
 
         for name, kind in metric_kinds.items():

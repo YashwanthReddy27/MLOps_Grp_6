@@ -22,7 +22,7 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "AIzaSyCtQep_DWpUzGtPmzJSbpr8jPq3k-tVkF8"
+  GOOGLE_API_KEY: "your-api-key"
   GCP_PROJECT_ID: "mlops-lab4-477622"
 
 ---
@@ -44,7 +44,6 @@ spec:
       labels:
         app: rag-backend
     spec:
-      serviceAccountName: rag-backend-sa
       containers:
         - name: rag-backend
           image: us-central1-docker.pkg.dev/mlops-lab4-477622/rag-docker/backend:latest

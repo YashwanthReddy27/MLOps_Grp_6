@@ -55,13 +55,14 @@ google-cloud-storage>=2.10.0
 dvc[gs]
 
 # GCP Monitoring Dependencies
-# GCP Monitoring Dependencies
-google-cloud-monitoring>=2.21.0,<2.26.0
-google-auth>=2.27.0
+google-cloud-monitoring==2.25.0
+google-auth>=2.27.0,<2.42.0  # Fixed upper bound
 google-api-core>=2.15.0
-protobuf>=4.21.0,<5.0.0
+protobuf>=4.21.0,<5.0.0  # Fixed upper bound
 google-api-python-client==2.116.0
+google-cloud-core>=2.4.2,<3.0.0  # Added for storage compatibility
 
+# ... rest of your requirements
 # Numeric / data
 numpy>=1.24.0
 pandas>=1.5.0

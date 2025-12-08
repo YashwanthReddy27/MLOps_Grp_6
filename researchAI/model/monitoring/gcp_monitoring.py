@@ -20,22 +20,29 @@ from __future__ import annotations
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 
-# Imports for google-cloud-monitoring 2.21.x - 2.25.x with Python 3.11
-from google.cloud import monitoring_v3
-from google.protobuf import timestamp_pb2
+try:
+    from google.cloud.monitoring_v3 import MetricServiceClient
+    from google.cloud.monitoring_v3.types import TimeSeries, Point, TimeInterval
+    import google.protobuf.timestamp_pb2 as timestamp_pb2
+    from google.api import metric_pb2 as ga_metric
+    from google.api import label_pb2 as ga_label
+    _GCP_MONITORING_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Google Cloud Monitoring not available: {e}")
+    _GCP_MONITORING_AVAILABLE = False
+    MetricServiceClient = None
 
 logger = logging.getLogger(__name__)
 
 try:
     from evidently.report import Report
     from evidently.metric_preset import DataDriftPreset
-
     _EVIDENTLY_AVAILABLE = True
 except Exception:
     _EVIDENTLY_AVAILABLE = False
@@ -56,7 +63,7 @@ class GCPModelMonitor:
     fairness_threshold: float = 0.6
     data_drift_threshold: float = 0.15
 
-    client: monitoring_v3.MetricServiceClient = field(init=False)
+    client: Any = field(init=False, default=None)
     project_name: str = field(init=False)
 
     validation_scores: List[float] = field(default_factory=list, init=False)
@@ -65,10 +72,20 @@ class GCPModelMonitor:
     # Data drift storage
     current_batch: List[Dict[str, Any]] = field(default_factory=list, init=False)
     reference_df: Optional[pd.DataFrame] = field(default=None, init=False)
+    
+    # Rate limiting for GCP metric writes
+    last_write_time: Dict[str, datetime] = field(default_factory=dict, init=False)
+    min_write_interval_seconds: int = 60  # Minimum 60 seconds between writes
 
     def __post_init__(self) -> None:
+        if not _GCP_MONITORING_AVAILABLE:
+            raise ImportError(
+                "google-cloud-monitoring is not installed or not properly configured. "
+                "Install with: pip install google-cloud-monitoring>=2.21.0,<2.26.0"
+            )
+        
         try:
-            self.client = monitoring_v3.MetricServiceClient()
+            self.client = MetricServiceClient()
             self.project_name = f"projects/{self.project_id}"
             logger.info(
                 "Initialized GCPModelMonitor(project=%s, model=%s)",
@@ -88,7 +105,7 @@ class GCPModelMonitor:
         Ingest a query result and update:
         - validation/fairness scores (decay)
         - feature batch (drift)
-        - 3 GCP metrics: validation_score, fairness_score, data_drift_score (later)
+        - 3 GCP metrics: validation_score, fairness_score, data_drift_score
         """
         metrics = query_result.get("metrics", {}) or {}
 
@@ -112,16 +129,28 @@ class GCPModelMonitor:
         if fairness_score is not None:
             self._append_window(self.fairness_scores, float(fairness_score))
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if validation_score is not None:
             self.write_time_series("validation_score", float(validation_score), now)
         if fairness_score is not None:
             self.write_time_series("fairness_score", float(fairness_score), now)
 
-        # Optional features for drift
+        # Log data features for drift detection
         features = query_result.get("features")
         if isinstance(features, dict):
             self._log_data_features(features)
+        
+        # Calculate and log drift score periodically
+        # Only compute drift if we have enough data points
+        if len(self.current_batch) >= 10:
+            try:
+                drift_result = self._detect_data_drift()
+                drift_score = drift_result.get("overall_drift_score")
+                if drift_score is not None:
+                    # Note: write_time_series has built-in rate limiting
+                    self.write_time_series("data_drift_score", float(drift_score), now)
+            except Exception as e:
+                logger.debug(f"Failed to calculate drift score: {e}")
 
     def get_monitoring_summary(self) -> Dict[str, Any]:
         decay = self._check_model_decay()
@@ -129,7 +158,7 @@ class GCPModelMonitor:
 
         return {
             "model_name": self.model_name,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "thresholds": {
                 "performance": self.performance_threshold,
                 "fairness": self.fairness_threshold,
@@ -207,40 +236,35 @@ class GCPModelMonitor:
             self.current_batch = self.current_batch[-self.window_size:]
 
     def _ensure_metric_descriptors(self) -> None:
-        """Create metric descriptors in GCP Monitoring"""
-        metric_configs = [
-            ("validation_score", "RAG validation score"),
-            ("fairness_score", "RAG fairness score"),
-            ("data_drift_score", "RAG data drift score"),
-        ]
+        metric_kinds = {
+            "validation_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
+            "fairness_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
+            "data_drift_score": ga_metric.MetricDescriptor.MetricKind.GAUGE,
+        }
 
-        for name, description in metric_configs:
-            full_type = f"{self.metric_prefix}/{name}"
-            
-            # Create MetricDescriptor using monitoring_v3 types
-            descriptor = monitoring_v3.MetricDescriptor(
-                type=full_type,
-                metric_kind=monitoring_v3.MetricDescriptor.MetricKind.GAUGE,
-                value_type=monitoring_v3.MetricDescriptor.ValueType.DOUBLE,
-                description=description,
+        for name, kind in metric_kinds.items():
+            full_name = f"{self.metric_prefix}/{name}"
+            descriptor = ga_metric.MetricDescriptor(
+                type=full_name,
+                metric_kind=kind,
+                value_type=ga_metric.MetricDescriptor.ValueType.DOUBLE,
+                description=f"RAG {name.replace('_', ' ')}",
                 labels=[
-                    monitoring_v3.LabelDescriptor(
+                    ga_label.LabelDescriptor(
                         key="model_name",
-                        value_type=monitoring_v3.LabelDescriptor.ValueType.STRING,
+                        value_type=ga_label.LabelDescriptor.ValueType.STRING,
                         description="RAG model name",
                     )
                 ],
             )
-            
             try:
                 self.client.create_metric_descriptor(
                     name=self.project_name,
                     metric_descriptor=descriptor,
                 )
-                logger.info(f"Created metric descriptor: {full_type}")
-            except Exception as e:
+            except Exception:
                 # Most often AlreadyExists; keep quiet
-                logger.debug(f"Metric descriptor {full_type} may already exist: {e}")
+                pass
 
     def write_time_series(
         self,
@@ -248,36 +272,49 @@ class GCPModelMonitor:
         value: float,
         timestamp: Optional[datetime] = None,
     ) -> None:
-        """Write a time series data point to GCP Monitoring"""
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
-        seconds = int(timestamp.timestamp())
-        nanos = int((timestamp.timestamp() - seconds) * 1e9)
-
-        # Create TimeSeries
-        series = monitoring_v3.TimeSeries()
-        series.metric.type = f"{self.metric_prefix}/{metric_name}"
-        series.metric.labels["model_name"] = self.model_name
-        series.resource.type = "global"
-        series.resource.labels["project_id"] = self.project_id
-
-        # Create Point with interval
-        point = monitoring_v3.Point()
-        point.value.double_value = float(value)
-        
-        # Set the end time for GAUGE metrics
-        point.interval.end_time.seconds = seconds
-        point.interval.end_time.nanos = nanos
-
-        series.points.append(point)
+        # Check if we've written this metric too recently
+        if metric_name in self.last_write_time:
+            time_since_last = (timestamp - self.last_write_time[metric_name]).total_seconds()
+            if time_since_last < self.min_write_interval_seconds:
+                logger.debug(
+                    f"Skipping write for {metric_name}: only {time_since_last:.1f}s since last write "
+                    f"(minimum {self.min_write_interval_seconds}s)"
+                )
+                return
 
         try:
+            # Create the time series object
+            series = TimeSeries()
+            series.metric.type = f"{self.metric_prefix}/{metric_name}"
+            series.resource.type = "global"
+            series.metric.labels["model_name"] = self.model_name
+
+            # Create interval with end_time
+            now = timestamp_pb2.Timestamp()
+            now.FromDatetime(timestamp)
+            
+            interval = TimeInterval(end_time=now)
+            
+            # Create point with interval
+            point = Point(
+                interval=interval,
+                value={"double_value": float(value)}
+            )
+            
+            series.points.append(point)
+
             self.client.create_time_series(
                 name=self.project_name,
                 time_series=[series],
             )
-            logger.debug(f"Wrote metric {metric_name}={value}")
+            
+            # Track successful write
+            self.last_write_time[metric_name] = timestamp
+            logger.debug(f"Successfully wrote metric {metric_name}={value}")
+            
         except Exception as e:
             logger.warning("Failed to write metric %s: %s", metric_name, e)
 

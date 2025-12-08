@@ -71,9 +71,9 @@ class TechTrendsRAGPipeline:
             mode = status.get("mode", "unknown")
             gcp_status = status.get("gcp_monitor", {})
 
-            self.logger.info(f"✓ Monitoring initialized (mode={mode})")
+            self.logger.info(f"[OK] Monitoring initialized (mode={mode})")
             self.logger.info(
-                "  ✓ GCP Cloud Monitoring: %s (project_id=%s)",
+                "  [OK] GCP Cloud Monitoring: %s (project_id=%s)",
                 "Active" if gcp_status.get("available") else "Unavailable",
                 gcp_status.get("project_id", "not_set"),
             )
@@ -309,10 +309,12 @@ class TechTrendsRAGPipeline:
                 bias_report=fairness_report
             )
             self.tracker.end_run()
-        
+
+        self.logger.info("Monitor")
         # Log to monitoring
         if self.monitoring:
             try:
+                self.logger.info("Monitor2")
                 self.monitoring.log_query(final_result)
             except Exception as e:
                 self.logger.warning(f"Failed to log to monitoring: {e}")

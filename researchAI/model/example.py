@@ -86,7 +86,8 @@ def main():
     print("Setting up Tech Trends RAG Pipeline with Fairness Detection...")
     
     pipeline = TechTrendsRAGPipeline(
-        enable_tracking=True
+        enable_tracking=True,
+        enable_monitoring = True
     )
     
     if args.load_existing:

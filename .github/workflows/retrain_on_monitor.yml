@@ -1,0 +1,536 @@
+name: Monitoring-Triggered Retraining and Deployment
+
+on:
+  # Run on schedule (e.g., daily at midnight UTC)
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      force_retrain:
+        description: 'Force retraining regardless of metrics'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: '3.11'
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_LOCATION: 'us-central1'
+  GCP_REPOSITORY: 'rag-models'
+  GKE_CLUSTER: rag-cluster
+  GKE_ZONE: us-central1-a
+
+permissions:
+  contents: write
+
+jobs:
+  check-metrics:
+    name: Check Monitoring Metrics
+    runs-on: ubuntu-latest
+    environment: mlops
+    outputs:
+      should_retrain: ${{ steps.check_decision.outputs.should_retrain }}
+      drift_detected: ${{ steps.check_decision.outputs.drift_detected }}
+      decay_detected: ${{ steps.check_decision.outputs.decay_detected }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-cloud-monitoring==2.21.0
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Fetch Monitoring Metrics and Make Decision
+        id: fetch_metrics
+        run: |
+          cd researchAI/model
+          python check_monitoring_metrics.py \
+            --project-id ${{ env.GCP_PROJECT_ID }} \
+            --model-name rag-model \
+            --lookback-hours 24 \
+            --output monitoring_decision.json
+        continue-on-error: true
+      
+      - name: Parse Decision
+        id: check_decision
+        run: |
+          cd researchAI/model
+          # Check if monitoring decision file exists
+          if [ ! -f monitoring_decision.json ]; then
+            echo "⚠️ No monitoring data available, skipping retraining"
+            echo "should_retrain=false" >> $GITHUB_OUTPUT
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+            echo "decay_detected=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Parse the JSON decision
+          SHOULD_RETRAIN=$(jq -r '.should_retrain' monitoring_decision.json)
+          DRIFT_DETECTED=$(jq -r '.data_drift.drift_detected' monitoring_decision.json)
+          DECAY_DETECTED=$(jq -r '.model_decay.decay_detected' monitoring_decision.json)
+          
+          # Override if force_retrain is true
+          if [ "${{ github.event.inputs.force_retrain }}" == "true" ]; then
+            echo "🔴 Force retraining enabled by user"
+            SHOULD_RETRAIN="true"
+          fi
+          
+          echo "should_retrain=$SHOULD_RETRAIN" >> $GITHUB_OUTPUT
+          echo "drift_detected=$DRIFT_DETECTED" >> $GITHUB_OUTPUT
+          echo "decay_detected=$DECAY_DETECTED" >> $GITHUB_OUTPUT
+          
+          if [ "$SHOULD_RETRAIN" == "true" ]; then
+            echo "🔴 Retraining will be triggered"
+          else
+            echo "✅ No retraining needed"
+          fi
+      
+      - name: Upload monitoring decision
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-decision
+          path: researchAI/model/monitoring_decision.json
+          retention-days: 30
+
+  retrain-model:
+    name: Retrain RAG Model
+    needs: check-metrics
+    if: needs.check-metrics.outputs.should_retrain == 'true'
+    runs-on: ubuntu-latest
+    environment: mlops
+    outputs:
+      training_completed: ${{ steps.training_status.outputs.completed }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r researchAI/model/requirements.txt
+      
+      - name: Download NLTK data
+        run: |
+          python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
+      
+      - name: Set up GCP credentials for DVC
+        run: |
+          echo '${{ secrets.GCP_SA_DVC_KEY }}' > gcp-key.json
+          chmod 600 gcp-key.json
+      
+      - name: Configure DVC remote
+        run: |
+          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote modify --local myremote credentialpath "gcp-key.json"
+      
+      - name: DVC Pull Data
+        run: |
+          cd researchAI
+          ls -alth
+          dvc pull
+      
+      - name: Check if data folder exists
+        run: |
+          if [ ! -d "researchAI/data/cleaned" ] || [ -z "$(ls -A researchAI/data/cleaned)" ]; then
+            echo "⚠️ No data files found in cleaned folder. Nothing to retrain."
+            echo "has_data=false" >> $GITHUB_OUTPUT
+          else
+            echo "✓ Data folder exists with files. Proceeding with retraining..."
+            echo "has_data=true" >> $GITHUB_OUTPUT
+          fi
+        id: check_data
+      
+      - name: Authenticate to Google Cloud
+        if: steps.check_data.outputs.has_data == 'true'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+        continue-on-error: false
+      
+      - name: Run Retraining (Indexing Script)
+        if: steps.check_data.outputs.has_data == 'true'
+        env:
+          PYTHONPATH: ${{ github.workspace }}/researchAI/model
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: |
+          cd researchAI/model
+          cd faiss_indexes
+          ls -alth
+          cd ..
+          
+          echo "🔄 Starting model retraining..."
+          python indexing_script.py
+          
+          echo "✅ Retraining completed"
+          cd ../..
+        id: run_training
+      
+      - name: DVC Push after Retraining
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          cd researchAI
+          chmod +x dvc/dvc.sh
+          ./dvc/dvc.sh
+        continue-on-error: false
+      
+      - name: Commit DVC changes
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          cd researchAI
+          git add data.dvc
+          git add logs.dvc
+          git commit -m "Updated model indexes after retraining - triggered by monitoring" || echo "No changes to commit"
+          git push
+      
+      - name: Set training status
+        id: training_status
+        run: |
+          if [ "${{ steps.check_data.outputs.has_data }}" == "true" ]; then
+            echo "completed=true" >> $GITHUB_OUTPUT
+          else
+            echo "completed=false" >> $GITHUB_OUTPUT
+          fi
+
+  evaluate-model:
+    name: Evaluate Retrained Model
+    needs: retrain-model
+    if: needs.retrain-model.outputs.training_completed == 'true'
+    runs-on: ubuntu-latest
+    environment: mlops
+    outputs:
+      evaluation_passed: ${{ steps.check_evaluation.outputs.evaluation_passed }}
+      artifact_path: ${{ steps.check_evaluation.outputs.artifact_path }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r researchAI/model/requirements.txt
+      
+      - name: Download NLTK data
+        run: |
+          python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab'); nltk.download('stopwords')"
+      
+      - name: Set up GCP credentials for DVC
+        run: |
+          echo '${{ secrets.GCP_SA_DVC_KEY }}' > gcp-key.json
+          chmod 600 gcp-key.json
+      
+      - name: Configure DVC and Pull
+        run: |
+          dvc remote add -d -f myremote ${{ secrets.GCP_DVC_BUCKET }}
+          dvc remote modify --local myremote credentialpath "gcp-key.json"
+          cd researchAI
+          ls -alth
+          dvc pull
+      
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
+        continue-on-error: true
+      
+      - name: Run Model Evaluation
+        continue-on-error: true
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          PYTHONPATH: ${{ github.workspace }}/researchAI/model
+        run: |
+          cd researchAI/model
+          
+          PUSH_FLAG="--push-to-registry"
+          echo "Will push to Artifact Registry if evaluation passes"
+          
+          python evaluation/simple_evaluate.py \
+            --test-data test_queries_with_expected.csv \
+            --output evaluation_report.json \
+            $PUSH_FLAG \
+            --project-id ${{ env.GCP_PROJECT_ID }} \
+            --location ${{ env.GCP_LOCATION }} \
+            --repository ${{ env.GCP_REPOSITORY }}
+          
+          if [ -f artifact_path.txt ]; then
+            cp artifact_path.txt ${{ github.workspace }}/artifact_path.txt
+          fi
+          cp evaluation_report.json ${{ github.workspace }}/evaluation_report.json
+        id: evaluation
+      
+      - name: Check Evaluation Results
+        id: check_evaluation
+        run: |
+          if [ -f evaluation_report.json ]; then
+            STATUS=$(jq -r '.aggregate_metrics.status' evaluation_report.json)
+            echo "status=$STATUS" >> $GITHUB_OUTPUT
+            
+            if [ "$STATUS" = "FAILED" ]; then
+              echo "⚠️ Model evaluation FAILED thresholds."
+              echo "evaluation_passed=false" >> $GITHUB_OUTPUT
+            else
+              echo "✓ Model evaluation PASSED thresholds."
+              echo "evaluation_passed=true" >> $GITHUB_OUTPUT
+              
+              # Get artifact path if available
+              if [ -f artifact_path.txt ]; then
+                ARTIFACT_PATH=$(cat artifact_path.txt)
+                echo "artifact_path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+              fi
+            fi
+          else
+            echo "evaluation_passed=false" >> $GITHUB_OUTPUT
+            echo "status=FAILED" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Upload evaluation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrained-evaluation-report
+          path: evaluation_report.json
+          retention-days: 90
+      
+      - name: Send Failure Email
+        if: steps.check_evaluation.outputs.evaluation_passed == 'false'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ RAG Model Retraining Evaluation FAILED - ${{ github.ref_name }}"
+          to: ${{ secrets.DEVELOPER_EMAIL }}
+          from: RAG Model Monitoring CI/CD
+          body: |
+            RAG Model Retraining Evaluation FAILED
+
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Run: ${{ github.run_number }}
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            VIEW FULL DETAILS
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
+
+  deploy-model:
+    name: Deploy to GKE
+    needs: [check-metrics, evaluate-model]
+    if: needs.evaluate-model.outputs.evaluation_passed == 'true'
+    runs-on: ubuntu-latest
+    environment: mlops
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Debug - List directory structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Directory contents:"
+          ls -la
+          echo "Checking for model directory:"
+          find . -name "model" -type d
+      
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
+      
+      - name: Check if GKE cluster exists
+        id: check_cluster
+        run: |
+          if gcloud container clusters describe ${{ env.GKE_CLUSTER }} --zone=${{ env.GKE_ZONE }} --project=${{ env.GCP_PROJECT_ID }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create GKE cluster
+        if: steps.check_cluster.outputs.exists == 'false'
+        run: |
+          gcloud container clusters create ${{ env.GKE_CLUSTER }} \
+            --zone ${{ env.GKE_ZONE }} \
+            --num-nodes 2 \
+            --machine-type n1-standard-2 \
+            --disk-size 50 \
+            --enable-autoscaling \
+            --min-nodes 2 \
+            --max-nodes 4 \
+            --scopes=https://www.googleapis.com/auth/cloud-platform \
+            --project ${{ env.GCP_PROJECT_ID }}
+      
+      - name: Get GKE Credentials
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+            --zone=${{ env.GKE_ZONE }} \
+            --project=${{ env.GCP_PROJECT_ID }}
+      
+      - name: Configure Docker
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+      
+      - name: Deploy namespace
+        run: |
+          cd researchAI
+          kubectl apply -f k8s/namespace.yml
+      
+      - name: Build and Push Frontend
+        run: |
+          cd researchAI/frontend
+          docker buildx build --platform linux/amd64 \
+            -t us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/rag-docker/frontend:latest \
+            . --push
+      
+      - name: Build and Push Backend
+        run: |
+          cd researchAI/model
+          docker buildx build --platform linux/amd64 \
+            -t us-central1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/rag-docker/backend:latest \
+            . --push
+      
+      - name: Delete existing deployments
+        run: |
+          kubectl delete deployment rag-frontend rag-backend -n rag-system --ignore-not-found=true
+      
+      - name: Deploy to Kubernetes
+        run: |
+          cd researchAI
+          kubectl apply -f k8s/backend.yml
+          kubectl apply -f k8s/frontend.yml
+      
+      - name: Wait for deployment
+        run: |
+          kubectl wait --for=condition=available --timeout=600s \
+            deployment/rag-backend -n rag-system
+          kubectl wait --for=condition=available --timeout=600s \
+            deployment/rag-frontend -n rag-system
+      
+      - name: Check pod status
+        run: |
+          echo "📊 Pod Status:"
+          kubectl get pods -n rag-system
+      
+      - name: Get deployment status
+        run: |
+          echo "📊 Deployment Status:"
+          kubectl get pods -n rag-system
+          echo ""
+          echo "🌐 Service URLs:"
+          kubectl get services -n rag-system
+          echo ""
+          echo "To access services, get the external IPs:"
+          kubectl get services -n rag-system
+
+  notify-completion:
+    name: Send Notification
+    needs: [check-metrics, retrain-model, evaluate-model, deploy-model]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download monitoring decision
+        uses: actions/download-artifact@v4
+        with:
+          name: monitoring-decision
+        continue-on-error: true
+      
+      - name: Prepare notification
+        id: prepare
+        run: |
+          if [ "${{ needs.check-metrics.outputs.should_retrain }}" == "true" ]; then
+            if [ "${{ needs.evaluate-model.outputs.evaluation_passed }}" == "true" ]; then
+              echo "status=SUCCESS" >> $GITHUB_OUTPUT
+              echo "subject=✅ Model Retraining and Deployment Successful" >> $GITHUB_OUTPUT
+            else
+              echo "status=FAILED" >> $GITHUB_OUTPUT
+              echo "subject=⚠️ Model Retraining Failed Evaluation" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=SKIPPED" >> $GITHUB_OUTPUT
+            echo "subject=ℹ️ No Retraining Required - Metrics Healthy" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Send Email Notification
+        if: needs.check-metrics.outputs.should_retrain == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: ${{ steps.prepare.outputs.subject }}
+          to: ${{ secrets.DEVELOPER_EMAIL }}
+          from: RAG Model Monitoring CI/CD
+          body: |
+            RAG Model Retraining Pipeline Completed
+            
+            Status: ${{ steps.prepare.outputs.status }}
+            Triggered by: Monitoring metrics check
+            Branch: ${{ github.ref_name }}
+            Run: ${{ github.run_number }}
+            
+            📊 MONITORING METRICS:
+            - Data Drift Detected: ${{ needs.check-metrics.outputs.drift_detected }}
+            - Model Decay Detected: ${{ needs.check-metrics.outputs.decay_detected }}
+            
+            🔄 RETRAINING:
+            - Completed: ${{ needs.retrain-model.result == 'success' }}
+            
+            ✅ EVALUATION:
+            - Passed: ${{ needs.evaluate-model.outputs.evaluation_passed }}
+            
+            🚀 DEPLOYMENT:
+            - Deployed: ${{ needs.deploy-model.result == 'success' }}
+            
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            VIEW FULL DETAILS
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true

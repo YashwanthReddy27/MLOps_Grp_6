@@ -4,9 +4,9 @@ on:
   push:
     branches:
       - main
-  # Run on schedule (e.g., daily at midnight UTC)
-  schedule:
-    - cron: '0 0 * * *'  # Daily at midnight
+  # # Run on schedule (e.g., daily at midnight UTC)
+  # schedule:
+  #   - cron: '0 0 * * *'  # Daily at midnight
 
   workflow_dispatch: 
   

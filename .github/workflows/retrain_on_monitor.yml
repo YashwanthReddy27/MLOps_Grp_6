@@ -210,7 +210,7 @@ jobs:
           cd researchAI
           chmod +x dvc/dvc.sh
           ./dvc/dvc.sh
-       continue-on-error: false
+        continue-on-error: false
       
       - name: Commit DVC changes
         if: steps.check_data.outputs.has_data == 'true'

@@ -61,7 +61,7 @@ jobs:
       - name: Fetch Monitoring Metrics and Make Decision
         id: fetch_metrics
         run: |
-          cd researchAI/model
+          cd researchAI/model/monitoring
           python check_monitoring_metrics.py \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --model-name techtrends-rag \

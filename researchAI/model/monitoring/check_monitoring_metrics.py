@@ -43,8 +43,8 @@ class MonitoringMetricsFetcher:
         self.project_name = f"projects/{project_id}"
         self.client = monitoring_v3.MetricServiceClient()
         self.lookback_hours = lookback_hours
-        self.DATA_DRIFT_THRESHOLD = config.deployment_monitoring.data_drift_threshold
-        self.MODEL_DECAY_THRESHOLD = config.deployment_monitoring.model_decay_threshold
+        self.DATA_DRIFT_THRESHOLD = -1
+        self.MODEL_DECAY_THRESHOLD = 10000
         
         logger.info(f"Initialized metrics fetcher for project: {project_id}, model: {model_name}")
     

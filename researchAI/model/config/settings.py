@@ -111,10 +111,6 @@ class GCPConfig(BaseModel):
         default_factory=lambda: os.getenv("GCP_ARTIFACT_REPOSITORY", "rag-models")
     )
     
-class DeploymentMonitoringConfig(BaseModel):
-    """Monitoring configuration"""
-    data_drift_threshold: float = -1
-    model_decay_threshold: float = 1000
 
 class RAGConfig(BaseModel):
     """Main RAG pipeline configuration"""
@@ -128,7 +124,6 @@ class RAGConfig(BaseModel):
     bias_detection: BiasDetectionConfig = BiasDetectionConfig()
     fastapi: FastAPISettings = FastAPISettings()
     gcp_config: GCPConfig = GCPConfig()
-    deployment_monitoring: DeploymentMonitoringConfig = DeploymentMonitoringConfig()
     
     # MLflow tracking - LOCAL FILE STORAGE
     mlflow_tracking_uri: str = Field(

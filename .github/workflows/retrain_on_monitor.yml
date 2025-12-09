@@ -61,8 +61,8 @@ jobs:
       - name: Fetch Monitoring Metrics and Make Decision
         id: fetch_metrics
         run: |
-          cd researchAI/model/monitoring
-          python check_monitoring_metrics.py \
+          cd researchAI/model
+          python monitoring/check_monitoring_metrics.py \
             --project-id ${{ env.GCP_PROJECT_ID }} \
             --model-name techtrends-rag \
             --lookback-hours 168 \

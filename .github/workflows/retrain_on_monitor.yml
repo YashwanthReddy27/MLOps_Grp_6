@@ -168,6 +168,7 @@ jobs:
           ls -alth
           dvc pull
       
+      
       - name: Check if data folder exists
         run: |
           if [ ! -d "researchAI/data/cleaned" ] || [ -z "$(ls -A researchAI/data/cleaned)" ]; then

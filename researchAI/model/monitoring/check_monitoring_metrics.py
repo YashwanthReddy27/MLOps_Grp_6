@@ -7,10 +7,11 @@ Compatible with:
 - google-cloud-monitoring>=2.21.0,<2.26.0
 """
 
+import os
 import sys
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 from google.cloud import monitoring_v3
 
@@ -58,7 +59,7 @@ class MonitoringMetricsFetcher:
         """
         try:
             # Time range: last N hours
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             start_time = now - timedelta(hours=self.lookback_hours)
             
             # Build the metric filter with model_name label
@@ -221,7 +222,7 @@ class MonitoringMetricsFetcher:
         
         result = {
             "should_retrain": should_retrain,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "lookback_hours": self.lookback_hours,
             "data_drift": drift_result,
             "model_decay": decay_result,
@@ -246,9 +247,9 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="Check GCP monitoring metrics for retraining decision")
-    parser.add_argument("--project-id", required=True, help="GCP Project ID")
-    parser.add_argument("--model-name", default="rag-model", help="Model name (must match label in gcp_monitoring.py)")
-    parser.add_argument("--lookback-hours", type=int, default=24, help="Hours of data to analyze")
+    parser.add_argument("--project-id", required=True, default=os.getenv("GCP_PROJECT_ID", ""), help="GCP Project ID")
+    parser.add_argument("--model-name", default="techtrends-rag", help="Model name (must match label in gcp_monitoring.py)")
+    parser.add_argument("--lookback-hours", type=int, default=168, help="Hours of data to analyze")
     parser.add_argument("--output", default="monitoring_decision.json", help="Output JSON file")
     
     args = parser.parse_args()

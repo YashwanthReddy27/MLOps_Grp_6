@@ -81,7 +81,7 @@ class GCPModelMonitor:
         if not _GCP_MONITORING_AVAILABLE:
             raise ImportError(
                 "google-cloud-monitoring is not installed or not properly configured. "
-                "Install with: pip install google-cloud-monitoring>=2.21.0,<2.26.0"
+                "Install with: pip install google-cloud-monitoring==2.25.0"
             )
         
         try:
@@ -612,7 +612,7 @@ class HybridMonitor:
     def __init__(
         self,
         project_id: Optional[str] = None,
-        model_name: str = "rag-model",
+        model_name: str = "techtrends-rag",
         enable_gcp: bool = True,
     ) -> None:
         self.logger = logging.getLogger(__name__)

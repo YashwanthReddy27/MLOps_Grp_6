@@ -78,6 +78,9 @@ Configure these in your repo settings:
 | `GOOGLE_API_KEY` | Gemini API key |
 | `EMAIL_USERNAME` | Gmail for notifications |
 | `EMAIL_PASSWORD` | Gmail app password |
+| `EMAIL_SENDER_PASSWORD` | Gmail app password |
+| `NEWS_API` | News Api key |
+| `HF_API` | Hugging Face Inference Api key |
 
 ---
 
@@ -91,12 +94,13 @@ git push origin main
 ```
 
 GitHub Actions will automatically:
-1. Deploy Cloud Composer infrastructure
-2. Build model indexes from cleaned data
-3. Evaluate model quality (must pass: validation ≥0.7, fairness ≥0.6)
-4. Push to Artifact Registry (if passed)
-5. Deploy backend + frontend to Kubernetes
-6. Set up monitoring with auto-retrain every 6 hours
+1. Deploy Cloud Composer infrastructure (Terraform)
+2. Sync new code changes to DAGs folder on Cloud Composer
+3. Build model indexes from cleaned data
+4. Evaluate model quality (must pass: validation ≥0.7, fairness ≥0.6)
+5. Push to Artifact Registry (if passed)
+6. Deploy backend + frontend to Kubernetes
+7. Set up monitoring with auto-retrain every 6 hours
 
 **Access your deployment:**
 ```bash
@@ -118,6 +122,7 @@ pip install -r model/requirements.txt
 **2. Set up DVC:**
 ```bash
 dvc remote add -d myremote gs://YOUR_BUCKET
+dvc remote modify --local myremote credentialpath  "gcp-key.json"
 dvc pull
 ```
 
@@ -159,7 +164,7 @@ The data pipeline runs on **Cloud Composer** (Managed Airflow V3) in **us-east1*
 **Region:** us-east1
 
 **Required Resources:**
-- Storage Bucket (for DAGs and data)
+- Storage Bucket (for data and logs)
 - Log Router (forwards logs to custom bucket)
 - Cloud Composer (Airflow V3 – GCP Managed)
 
@@ -183,16 +188,17 @@ This workflow prepares Terraform to manage existing and new GCP resources.
 
 **Key Functionality:**
 
-1. **Imports existing GCP resources** into Terraform state:
+
+1. **Runs `terraform.sh`:**
+   - Initializes Terraform
+   - Generates `terraform.tfstate` by importing GCP resources
+  
+2. **Imports existing GCP resources** into Terraform state:
    - IAM API
    - Service Accounts
    - Cloud Composer API
    - Log Routers
    - Cloud Composer Environment
-
-2. **Runs `terraform.sh`:**
-   - Initializes Terraform
-   - Generates `terraform.tfstate` by importing GCP resources
 
 3. **Uses `main.tf` configuration:**
    - Runs `terraform plan` to preview changes
@@ -222,12 +228,12 @@ Both data and logs are tracked using **DVC** for versioned storage and reproduci
 
 1. Authenticates with gcloud CLI to the GCP project
 2. Checks out code to current directory
-3. Downloads DAGs and data files from Cloud Composer bucket into temp location
+3. Downloads data and log files from Cloud Composer bucket into temp location
 4. Deletes old DAGs on Cloud Composer bucket DAG folder
 5. Copies new DAGs from repo onto Cloud Composer bucket DAG folder
 6. Moves to DVC tracked location on repo and fetches existing data/log files from remote
-7. Copies Cloud Composer bucket's data/log files into DVC fetched folders
-8. DVCs the new data and logs into remote by updating `data.dvc` and `logs.dvc` files
+7. Copies Cloud Composer bucket's data/log files into DVC tracked folders
+8. DVC index the new data and logs into remote by updating `data.dvc` and `logs.dvc` files
 9. Commits new `.dvc` files to repo on GitHub
 
 ### Data Pipeline Flow Diagram
@@ -303,9 +309,9 @@ Both data and logs are tracked using **DVC** for versioned storage and reproduci
 - **Responsibility:** Synchronize DAGs, data, and logs between Composer and GitHub repo
 - **Actions:**
   - Authenticates to GCP and retrieves Composer bucket details
-  - Downloads DAGs, data, and logs from Composer storage
-  - Replaces old DAGs in Composer with updated repo DAGs
-  - Pulls DVC data, merges new data/logs, and pushes updates
+  - Downloads data and logs from Composer storage
+  - Replaces old DAGs in Composer with updated DAGs from repo
+  - Pulls DVC data, merges new data/logs, and pushes updates to DVC remote
   - Commits updated DVC metadata back to GitHub
 - **Schedule:** Runs every 6 hours
 

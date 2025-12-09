@@ -110,6 +110,7 @@ class GCPConfig(BaseModel):
     artifact_repository: str = Field(
         default_factory=lambda: os.getenv("GCP_ARTIFACT_REPOSITORY", "rag-models")
     )
+    
 
 class DeploymentMonitoringConfig(BaseModel):
     """Monitoring configuration"""

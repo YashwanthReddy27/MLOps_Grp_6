@@ -4,8 +4,8 @@ on:
   push: 
     branches:
       - main
-    paths:
-      - '.github/workflows/simple_model_cicd.yml'  # Only trigger when this file changes
+  schedule:
+    - cron: '0 0 * * *'   # Every day at midnight (12:00 AM)
 
   workflow_dispatch:
 

@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight
+    - cron: '0 0 * * 3'  # Every Wednesday at midnight
   
   # Allow manual trigger
   workflow_dispatch:

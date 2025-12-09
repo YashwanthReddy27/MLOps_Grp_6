@@ -111,7 +111,6 @@ class GCPConfig(BaseModel):
         default_factory=lambda: os.getenv("GCP_ARTIFACT_REPOSITORY", "rag-models")
     )
     
-
 class DeploymentMonitoringConfig(BaseModel):
     """Monitoring configuration"""
     data_drift_threshold: float = -1

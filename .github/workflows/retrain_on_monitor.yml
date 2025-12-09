@@ -4,9 +4,8 @@ on:
   push:
     branches:
       - main
-  # # Run on schedule (e.g., daily at midnight UTC)
-  # schedule:
-  #   - cron: '0 0 * * *'  # Daily at midnight
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
   
   # Allow manual trigger
   workflow_dispatch:
@@ -52,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install google-cloud-monitoring==2.21.0
+          pip install google-cloud-monitoring==2.25.0
       
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
@@ -65,10 +64,9 @@ jobs:
           cd researchAI/model
           python check_monitoring_metrics.py \
             --project-id ${{ env.GCP_PROJECT_ID }} \
-            --model-name rag-model \
-            --lookback-hours 24 \
+            --model-name techtrends-rag \
+            --lookback-hours 168 \
             --output monitoring_decision.json
-        continue-on-error: true
       
       - name: Parse Decision
         id: check_decision
@@ -76,7 +74,7 @@ jobs:
           cd researchAI/model
           # Check if monitoring decision file exists
           if [ ! -f monitoring_decision.json ]; then
-            echo "⚠️ No monitoring data available, skipping retraining"
+            echo "No monitoring data available, skipping retraining"
             echo "should_retrain=false" >> $GITHUB_OUTPUT
             echo "drift_detected=false" >> $GITHUB_OUTPUT
             echo "decay_detected=false" >> $GITHUB_OUTPUT
@@ -90,7 +88,7 @@ jobs:
           
           # Override if force_retrain is true
           if [ "${{ github.event.inputs.force_retrain }}" == "true" ]; then
-            echo "🔴 Force retraining enabled by user"
+            echo "Force retraining enabled by user"
             SHOULD_RETRAIN="true"
           fi
           
@@ -99,9 +97,9 @@ jobs:
           echo "decay_detected=$DECAY_DETECTED" >> $GITHUB_OUTPUT
           
           if [ "$SHOULD_RETRAIN" == "true" ]; then
-            echo "🔴 Retraining will be triggered"
+            echo "Retraining will be triggered"
           else
-            echo "✅ No retraining needed"
+            echo "No retraining needed"
           fi
       
       - name: Upload monitoring decision
@@ -185,31 +183,31 @@ jobs:
           ls -alth
           cd ..
           
-          echo "🔄 Starting model retraining..."
+          echo "Starting model retraining..."
           python indexing_script.py
           
-          echo "✅ Retraining completed"
+          echo "Retraining completed"
           cd ../..
         id: run_training
       
-      - name: DVC Push after Retraining
-        if: steps.check_data.outputs.has_data == 'true'
-        run: |
-          cd researchAI
-          chmod +x dvc/dvc.sh
-          ./dvc/dvc.sh
-        continue-on-error: false
+      # - name: DVC Push after Retraining
+      #   if: steps.check_data.outputs.has_data == 'true'
+      #   run: |
+      #     cd researchAI
+      #     chmod +x dvc/dvc.sh
+      #     ./dvc/dvc.sh
+      #  continue-on-error: false
       
-      - name: Commit DVC changes
-        if: steps.check_data.outputs.has_data == 'true'
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          cd researchAI
-          git add data.dvc
-          git add logs.dvc
-          git commit -m "Updated model indexes after retraining - triggered by monitoring" || echo "No changes to commit"
-          git push
+      # - name: Commit DVC changes
+      #   if: steps.check_data.outputs.has_data == 'true'
+      #   run: |
+      #     git config user.name "GitHub Actions Bot"
+      #     git config user.email "actions@github.com"
+      #     cd researchAI
+      #     git add data.dvc
+      #     git add logs.dvc
+      #     git commit -m "Updated model indexes after retraining - triggered by monitoring" || echo "No changes to commit"
+      #     git push
       
       - name: Set training status
         id: training_status
@@ -457,15 +455,15 @@ jobs:
       
       - name: Check pod status
         run: |
-          echo "📊 Pod Status:"
+          echo "Pod Status:"
           kubectl get pods -n rag-system
       
       - name: Get deployment status
         run: |
-          echo "📊 Deployment Status:"
+          echo "Deployment Status:"
           kubectl get pods -n rag-system
           echo ""
-          echo "🌐 Service URLs:"
+          echo "Service URLs:"
           kubectl get services -n rag-system
           echo ""
           echo "To access services, get the external IPs:"
@@ -490,14 +488,14 @@ jobs:
           if [ "${{ needs.check-metrics.outputs.should_retrain }}" == "true" ]; then
             if [ "${{ needs.evaluate-model.outputs.evaluation_passed }}" == "true" ]; then
               echo "status=SUCCESS" >> $GITHUB_OUTPUT
-              echo "subject=✅ Model Retraining and Deployment Successful" >> $GITHUB_OUTPUT
+              echo "subject=Model Retraining and Deployment Successful" >> $GITHUB_OUTPUT
             else
               echo "status=FAILED" >> $GITHUB_OUTPUT
               echo "subject=⚠️ Model Retraining Failed Evaluation" >> $GITHUB_OUTPUT
             fi
           else
             echo "status=SKIPPED" >> $GITHUB_OUTPUT
-            echo "subject=ℹ️ No Retraining Required - Metrics Healthy" >> $GITHUB_OUTPUT
+            echo "subject=No Retraining Required - Metrics Healthy" >> $GITHUB_OUTPUT
           fi
       
       - name: Send Email Notification
@@ -519,17 +517,17 @@ jobs:
             Branch: ${{ github.ref_name }}
             Run: ${{ github.run_number }}
             
-            📊 MONITORING METRICS:
+            MONITORING METRICS:
             - Data Drift Detected: ${{ needs.check-metrics.outputs.drift_detected }}
             - Model Decay Detected: ${{ needs.check-metrics.outputs.decay_detected }}
             
-            🔄 RETRAINING:
+            RETRAINING:
             - Completed: ${{ needs.retrain-model.result == 'success' }}
             
-            ✅ EVALUATION:
+            EVALUATION:
             - Passed: ${{ needs.evaluate-model.outputs.evaluation_passed }}
             
-            🚀 DEPLOYMENT:
+            DEPLOYMENT:
             - Deployed: ${{ needs.deploy-model.result == 'success' }}
             
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

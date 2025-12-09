@@ -3,7 +3,7 @@ name: Deploy Cloud Composer
 on:
   push: 
     branches:
-      - main
+      # - main
   workflow_dispatch:
 
 jobs:

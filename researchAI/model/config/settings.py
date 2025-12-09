@@ -50,7 +50,7 @@ class RetrievalConfig(BaseModel):
 
 class GenerationConfig(BaseModel):
     """LLM generation configuration"""
-    model_name: str = "gemini-2.0-flash-001" 
+    model_name: str = "gemini-2.5-flash-lite" 
     temperature: float = 0.3
     max_tokens: int = 1000
     top_p: float = 0.9

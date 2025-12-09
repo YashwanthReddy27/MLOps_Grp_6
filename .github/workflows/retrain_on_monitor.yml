@@ -204,24 +204,24 @@ jobs:
           cd ../..
         id: run_training
       
-      # - name: DVC Push after Retraining
-      #   if: steps.check_data.outputs.has_data == 'true'
-      #   run: |
-      #     cd researchAI
-      #     chmod +x dvc/dvc.sh
-      #     ./dvc/dvc.sh
-      #  continue-on-error: false
+      - name: DVC Push after Retraining
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          cd researchAI
+          chmod +x dvc/dvc.sh
+          ./dvc/dvc.sh
+       continue-on-error: false
       
-      # - name: Commit DVC changes
-      #   if: steps.check_data.outputs.has_data == 'true'
-      #   run: |
-      #     git config user.name "GitHub Actions Bot"
-      #     git config user.email "actions@github.com"
-      #     cd researchAI
-      #     git add data.dvc
-      #     git add logs.dvc
-      #     git commit -m "Updated model indexes after retraining - triggered by monitoring" || echo "No changes to commit"
-      #     git push
+      - name: Commit DVC changes
+        if: steps.check_data.outputs.has_data == 'true'
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          cd researchAI
+          git add data.dvc
+          git add logs.dvc
+          git commit -m "Updated model indexes after retraining - triggered by monitoring" || echo "No changes to commit"
+          git push
       
       - name: Set training status
         id: training_status

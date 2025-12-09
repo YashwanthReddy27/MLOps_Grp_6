@@ -57,6 +57,14 @@ jobs:
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Debug - Check which Service Account is being used
+        run: |
+          echo "Current authenticated account:"
+          gcloud auth list
+          echo "---"
+          echo "Service account from secret:"
+          echo '${{ secrets.GCP_SA_KEY }}' | jq -r '.client_email
       
       - name: Fetch Monitoring Metrics and Make Decision
         id: fetch_metrics

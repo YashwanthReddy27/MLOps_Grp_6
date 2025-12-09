@@ -14,10 +14,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 from google.cloud import monitoring_v3
-current_dir = os.path.dirname(os.path.abspath(__file__))  # monitoring/
-parent_dir = os.path.dirname(current_dir)  # model/
-sys.path.insert(0, parent_dir)
-from config.settings import config
 
 logging.basicConfig(
     level=logging.INFO,

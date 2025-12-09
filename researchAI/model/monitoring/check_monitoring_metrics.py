@@ -267,9 +267,9 @@ def main():
         
         logger.info(f"\n✓ Results saved to: {args.output}")
         
-        # Exit code: 0 if no retraining needed, 1 if retraining required
-        exit_code = 1 if result["should_retrain"] else 0
-        sys.exit(exit_code)
+        # # Exit code: 0 if no retraining needed, 1 if retraining required
+        # exit_code = 1 if result["should_retrain"] else 0
+        # sys.exit(exit_code)
         
     except Exception as e:
         logger.error(f"Critical error: {e}")

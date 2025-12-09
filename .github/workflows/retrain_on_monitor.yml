@@ -58,6 +58,12 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
+      - name: Activate Service Account for gcloud
+        run: |
+          # The auth action creates a credentials file, we need to activate it
+          gcloud auth activate-service-account --key-file=${GOOGLE_GHA_CREDS_PATH}
+          gcloud config set project ${{ env.GCP_PROJECT_ID }}
+
       - name: Debug - Check which Service Account is being used
         run: |
           echo "Current authenticated account:"

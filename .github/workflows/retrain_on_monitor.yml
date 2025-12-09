@@ -85,7 +85,7 @@ jobs:
       - name: Parse Decision
         id: check_decision
         run: |
-          cd researchAI/model
+          cd researchAI/model/monitoring
           # Check if monitoring decision file exists
           if [ ! -f monitoring_decision.json ]; then
             echo "No monitoring data available, skipping retraining"

@@ -1,6 +1,5 @@
 # Deployment Guide
 
-
 This project deploys a **RAG-based research assistant** with two main components:
 
 1. **Data Pipeline** (Cloud Composer/Airflow) - Fetches and processes research papers and news
@@ -39,7 +38,7 @@ Everything runs on **Google Cloud Platform** with full CI/CD automation via **Gi
 │  GCS Buckets                  Artifact Registry             │
 │                                       ↓                     │
 │                               GKE (Kubernetes)              │
-│                    Backend (FastAPI) + Frontend (React)     │
+│                    Backend (FastAPI) + Frontend (Streamlit) │
 │                                       ↓                     │
 │                            Cloud Monitoring                 │
 │                    (Auto-retrain if performance drops)      │
@@ -188,7 +187,6 @@ This workflow prepares Terraform to manage existing and new GCP resources.
 
 **Key Functionality:**
 
-
 1. **Runs `terraform.sh`:**
    - Initializes Terraform
    - Generates `terraform.tfstate` by importing GCP resources
@@ -233,7 +231,7 @@ Both data and logs are tracked using **DVC** for versioned storage and reproduci
 5. Copies new DAGs from repo onto Cloud Composer bucket DAG folder
 6. Moves to DVC tracked location on repo and fetches existing data/log files from remote
 7. Copies Cloud Composer bucket's data/log files into DVC tracked folders
-8. DVC index the new data and logs into remote by updating `data.dvc` and `logs.dvc` files
+8. DVC indexes the new data and logs into remote by updating `data.dvc` and `logs.dvc` files
 9. Commits new `.dvc` files to repo on GitHub
 
 ### Data Pipeline Flow Diagram
@@ -351,9 +349,17 @@ data/cleaned/ (new data)
 
 #### 5. Auto-Retrain: `auto-retrain.yml`
 - **What:** Checks model health, retrains if needed
-- **When:** Every 6 hours
+- **When:** Every 6 hours or when workflow file changes
 - **Triggers:** Validation <0.7 OR Fairness <0.6 OR Drift >10%
-- **Output:** Automatic retraining and redeployment
+- **Actions:**
+  - Gets backend health from `/api/monitor/health` endpoint
+  - If `needs_retraining=true`: Pulls latest data from GCS
+  - Runs `indexing_script.py` to rebuild indexes
+  - Evaluates new model with `simple_evaluate.py`
+  - If new model PASSED: Triggers `simple-deploy.yml` workflow
+  - Sends Slack notification (if configured)
+  - Creates GitHub issue if retraining failed
+- **Output:** Automatic retraining and redeployment (only if new model passes quality gates)
 
 ### Monitoring & Auto-Retraining
 
@@ -443,7 +449,7 @@ Models only deploy if they pass these thresholds:
 - **Terraform** - Infrastructure as Code
 - **GitHub Actions** - CI/CD automation
 - **FastAPI** - Model serving backend
-- **React** - Frontend UI
+- **Streamlit** - Frontend UI
 
 ---
 

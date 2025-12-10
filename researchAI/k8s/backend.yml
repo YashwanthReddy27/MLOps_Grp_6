@@ -22,8 +22,8 @@ metadata:
   namespace: rag-system
 type: Opaque
 stringData:
-  GOOGLE_API_KEY: "your-api-key"
-  GCP_PROJECT_ID: "mlops-lab4-477622"
+  GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
 
 ---
 # 3) Backend Deployment (FastAPI / Uvicorn)

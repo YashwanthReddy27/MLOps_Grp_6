@@ -12,7 +12,9 @@ Everything runs on **Google Cloud Platform** with full CI/CD automation via **Gi
 
 ## Architecture
 
+![Arch Image](../imgs/MLops_Proj_finalarch.png)
 ```
+
 ┌─────────────────────────────────────────────────────────────┐
 │  GitHub (Push to main)                                      │
 └────────────┬────────────────────────────────────────────────┘

@@ -98,7 +98,15 @@ jobs:
     - name: Delete existing deployment if any
       run: |
         kubectl delete deployment rag-frontend rag-backend -n rag-system --ignore-not-found=true
-        
+
+    - name: Create backend secret
+      run: |
+        kubectl delete secret backend-secret -n rag-system --ignore-not-found=true
+        kubectl create secret generic backend-secret \
+          --from-literal=GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+          --from-literal=GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}" \
+          -n rag-system
+  
     - name: Deploy to Kubernetes
       run: |
         cd researchAI

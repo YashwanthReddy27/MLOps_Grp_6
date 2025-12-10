@@ -21,9 +21,6 @@ metadata:
   name: backend-secret
   namespace: rag-system
 type: Opaque
-stringData:
-  GOOGLE_API_KEY: "${{ secrets.GOOGLE_API_KEY }}"
-  GCP_PROJECT_ID: "${{ secrets.GCP_PROJECT_ID }}"
 
 ---
 # 3) Backend Deployment (FastAPI / Uvicorn)

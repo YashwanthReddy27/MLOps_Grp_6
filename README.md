@@ -1,13 +1,13 @@
 # MLOps_Grp_6
 
-### 1. [Data Pipeline](./data-pipeline/README.md)
+### 1. [Data Pipeline](./researchAI)
 Automated data ingestion and processing pipeline using Apache Airflow
 - News API integration
 - ArXiv research paper retrieval
 - Data validation and quality checks
 - **[ Detailed Documentation →](./researchAI/Readme.md)**
 
-### 2. [Model Development](./model-development/README.md)
+### 2. [Model Development](./researchAI/model/README.md)
 RAG (Retrieval-Augmented Generation) pipeline with hybrid retrieval
 - FAISS + BM25 hybrid search
 - Cross-encoder reranking
@@ -15,7 +15,7 @@ RAG (Retrieval-Augmented Generation) pipeline with hybrid retrieval
 - MLflow experiment tracking
 - **[ Detailed Documentation →](./researchAI/model/readme.md)**
 
-### 3. [Model Deployment](./deployment/README.md)
+### 3. [Model Deployment](./researchAI/k8s)
 Automated CI/CD pipeline for cloud deployment
 - GKE deployment (Cloud)
 - Model monitoring & drift detection

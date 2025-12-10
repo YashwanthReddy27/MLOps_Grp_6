@@ -23,7 +23,7 @@ metadata:
 type: Opaque
 stringData:
   GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GCP_PROJECT_ID: "mlops-lab4-477622"
 
 ---
 # 3) Backend Deployment (FastAPI / Uvicorn)

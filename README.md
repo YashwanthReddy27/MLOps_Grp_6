@@ -7,7 +7,7 @@ Automated data ingestion and processing pipeline using Apache Airflow
 - Data validation and quality checks
 - **[ Detailed Documentation →](./researchAI/Readme.md)**
 
-### 2. [Model Development](./researchAI/model/README.md)
+### 2. [Model Development](./researchAI/model)
 RAG (Retrieval-Augmented Generation) pipeline with hybrid retrieval
 - FAISS + BM25 hybrid search
 - Cross-encoder reranking

@@ -13,8 +13,8 @@ Everything runs on **Google Cloud Platform** with full CI/CD automation via **Gi
 ## Architecture
 
 ![Arch Image](../imgs/MLops_Proj_finalarch.png)
-```
 
+```
 ┌─────────────────────────────────────────────────────────────┐
 │  GitHub (Push to main)                                      │
 └────────────┬────────────────────────────────────────────────┘
@@ -27,7 +27,7 @@ Everything runs on **Google Cloud Platform** with full CI/CD automation via **Gi
 │  2. Sync Data Pipeline (every 6 hours)                      │
 │  3. Evaluate & Push Model                                   │
 │  4. Deploy to Kubernetes                                    │
-│  5. Monitor & Auto-Retrain (every 6 hours)                  │
+│  5. Monitor & Retrain (every 2 days)                        │
 └────────────┬────────────────────────────────────────────────┘
              │
              ▼
@@ -41,10 +41,10 @@ Everything runs on **Google Cloud Platform** with full CI/CD automation via **Gi
 │  GCS Buckets                  Artifact Registry             │
 │                                       ↓                     │
 │                               GKE (Kubernetes)              │
-│                    Backend (FastAPI) + Frontend (React)     │
+│                    Backend (FastAPI) + Frontend (Streamlit) │
 │                                       ↓                     │
 │                            Cloud Monitoring                 │
-│                    (Auto-retrain if performance drops)      │
+│                    (Check metrics & retrain if needed)      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -80,6 +80,7 @@ Configure these in your repo settings:
 | `GOOGLE_API_KEY` | Gemini API key |
 | `EMAIL_USERNAME` | Gmail for notifications |
 | `EMAIL_PASSWORD` | Gmail app password |
+| `DEVELOPER_EMAIL` | Email for deployment notifications |
 
 ---
 
@@ -98,7 +99,7 @@ GitHub Actions will automatically:
 3. Evaluate model quality (must pass: validation ≥0.7, fairness ≥0.6)
 4. Push to Artifact Registry (if passed)
 5. Deploy backend + frontend to Kubernetes
-6. Set up monitoring with auto-retrain every 6 hours
+6. Set up monitoring with scheduled metric checks every 2 days
 
 **Access your deployment:**
 ```bash
@@ -322,8 +323,8 @@ data/cleaned/ (new data)
   → simple_evaluate.py (quality check)
   → If passed: Push to Artifact Registry
   → Deploy to Kubernetes (backend + frontend)
-  → Monitor performance every 6 hours
-  → Auto-retrain if scores drop
+  → Monitor metrics every 2 days
+  → Retrain if drift/decay detected
 ```
 
 **Key Files:**
@@ -345,46 +346,80 @@ data/cleaned/ (new data)
 - **When:** Push to main
 - **Output:** Backend/frontend running with LoadBalancer IPs
 
-#### 5. Auto-Retrain: `auto-retrain.yml`
-- **What:** Checks model health, retrains if needed
-- **When:** Every 6 hours
-- **Triggers:** Validation <0.7 OR Fairness <0.6 OR Drift >10%
-- **Output:** Automatic retraining and redeployment
+#### 5. Monitoring-Triggered Retraining: `retrain_on_monitor.yml`
+- **What:** Checks GCP monitoring metrics and retrains if needed
+- **When:** Every 2 days at 6 AM (cron: `0 6 */2 * *`) or manual dispatch
+- **Manual Trigger Option:** Can force retrain via workflow dispatch
+- **Workflow Steps:**
+  1. **Check Metrics Job:**
+     - Fetches monitoring metrics from GCP (last 7 days)
+     - Runs `check_monitoring_metrics.py` to analyze drift and decay
+     - Outputs decision: `should_retrain`, `drift_detected`, `decay_detected`
+  2. **Retrain Model Job** (if `should_retrain=true`):
+     - Pulls latest data via DVC
+     - Runs `indexing_script.py` to rebuild indexes
+     - Pushes updated indexes to DVC
+     - Commits changes to GitHub
+  3. **Evaluate Model Job:**
+     - Runs `simple_evaluate.py` on retrained model
+     - Checks quality gates (validation ≥0.7, fairness ≥0.6)
+     - Only proceeds if evaluation PASSED
+  4. **Deploy Model Job** (if evaluation passed):
+     - Builds Docker images (frontend + backend)
+     - Pushes to Artifact Registry
+     - Deploys to GKE cluster
+  5. **Notify Completion Job:**
+     - Sends email with monitoring metrics, retraining status, and deployment result
+     - Creates notification with drift/decay detection details
+- **Triggers:** Data drift OR model decay detected in GCP monitoring metrics
+- **Output:** Automatic retraining and redeployment (only if new model passes quality gates)
 
-### Monitoring & Auto-Retraining
+### Monitoring & Retraining
 
-**Health Check Endpoint:**
+**Monitoring Approach:**
+- Uses **GCP Cloud Monitoring** to track custom metrics
+- Scheduled checks every 2 days via GitHub Actions
+- Analyzes last 7 days (168 hours) of metrics
+
+**Monitoring Script:**
 ```bash
-curl http://<BACKEND_IP>:8000/api/monitor/health
+# Located at: researchAI/model/monitoring/check_monitoring_metrics.py
+python check_monitoring_metrics.py \
+  --project-id YOUR_PROJECT_ID \
+  --model-name techtrends-rag \
+  --lookback-hours 168 \
+  --output monitoring_decision.json
 ```
 
-**Response (Healthy):**
+**Decision Output (`monitoring_decision.json`):**
 ```json
 {
-  "status": "HEALTHY",
-  "needs_retraining": false,
-  "avg_validation_score": 0.82,
-  "avg_fairness_score": 0.71
-}
-```
-
-**Response (Unhealthy - triggers retraining):**
-```json
-{
-  "status": "UNHEALTHY",
-  "needs_retraining": true,
+  "should_retrain": true,
+  "data_drift": {
+    "drift_detected": true,
+    "drift_score": 0.23
+  },
+  "model_decay": {
+    "decay_detected": true,
+    "avg_validation_score": 0.65,
+    "avg_fairness_score": 0.58
+  },
   "reasons": [
-    "Validation score 0.65 below 0.7",
-    "Fairness score 0.58 below 0.6"
+    "Validation score 0.65 below threshold 0.7",
+    "Data drift detected: 0.23 exceeds threshold 0.15"
   ]
 }
 ```
 
-**What happens on retrain:**
-1. Pull latest data from GCS
-2. Rebuild indexes with new data
-3. Evaluate new model
-4. Deploy if better than current
+**What happens when retraining is triggered:**
+1. Pull latest data from DVC
+2. Rebuild indexes with new data via `indexing_script.py`
+3. Evaluate new model with `simple_evaluate.py`
+4. If evaluation PASSED:
+   - Build Docker images
+   - Push to Artifact Registry
+   - Deploy to Kubernetes
+5. Send email notification with results
 
 ---
 
@@ -401,7 +436,8 @@ researchAI/
 │   ├── evaluation/
 │   │   └── simple_evaluate.py    # Quality gates
 │   ├── monitoring/
-│   │   └── gcp_monitoring.py     # Cloud monitoring
+│   │   ├── gcp_monitoring.py     # Cloud monitoring
+│   │   └── check_monitoring_metrics.py  # Metrics analysis
 │   └── api/
 │       └── main.py               # FastAPI backend
 ├── k8s/                          # Kubernetes & Terraform
@@ -439,7 +475,8 @@ Models only deploy if they pass these thresholds:
 - **Terraform** - Infrastructure as Code
 - **GitHub Actions** - CI/CD automation
 - **FastAPI** - Model serving backend
-- **React** - Frontend UI
+- **Streamlit** - Frontend UI
+- **GCP Cloud Monitoring** - Metrics tracking and alerting
 
 ---
 
@@ -453,13 +490,11 @@ kubectl get services -n rag-system
 # View logs
 kubectl logs -n rag-system deployment/rag-backend --tail=50
 
-# Check model health
-curl http://<BACKEND_IP>:8000/api/health
+# Manually trigger monitoring check and retrain
+gh workflow run retrain_on_monitor.yml
 
-# Manually trigger workflows
-gh workflow run simple_model_cicd.yml
-gh workflow run simple_deploy.yml
-gh workflow run auto-retrain.yml
+# Force retrain (bypass metrics check)
+gh workflow run retrain_on_monitor.yml -f force_retrain=true
 
 # Check DVC status
 dvc status
@@ -489,6 +524,10 @@ gcloud composer environments describe rag-environment --location=us-east1
 - Cause: Wrong credentials or bucket path
 - Fix: Verify `GCP_SA_DVC_KEY` secret, check bucket exists
 
+**5. Monitoring metrics not available**
+- Cause: GCP monitoring not configured or no queries logged
+- Fix: Ensure model has been running and processing queries for baseline
+
 ---
 
 ## Summary
@@ -501,6 +540,6 @@ The system handles:
 - Quality evaluation (gates)
 - Deployment (Kubernetes)
 - Monitoring (GCP Cloud Monitoring)
-- Auto-retraining (every 6 hours if performance drops)
+- Scheduled retraining checks (every 2 days with drift/decay detection)
 
 **Production-ready with zero manual intervention required.**

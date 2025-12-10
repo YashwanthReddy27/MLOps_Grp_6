@@ -1,13 +1,9 @@
 name: Simple Deploy to GKE
 
 on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '0 0 * * *'   # Every day at midnight (12:00 AM)
-
-  workflow_dispatch: 
+  workflow_run:
+    workflows: ["Simple RAG Model CI/CD"]
+    types: ["completed"]
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

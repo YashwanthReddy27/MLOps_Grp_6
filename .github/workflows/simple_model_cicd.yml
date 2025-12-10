@@ -5,7 +5,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '0 0 * * *'   # Every day at midnight (12:00 AM)
+    - cron: '0 1 * * *'   # Every day at midnight (1:00 AM)
 
   workflow_dispatch:
 

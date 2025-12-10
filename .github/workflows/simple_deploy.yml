@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: ["Simple RAG Model CI/CD"]
     types: ["completed"]
-  workflow dispatch: 
+  workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

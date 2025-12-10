@@ -5,7 +5,7 @@ Automated data ingestion and processing pipeline using Apache Airflow
 - News API integration
 - ArXiv research paper retrieval
 - Data validation and quality checks
-- **[📖 Detailed Documentation →](./researchAI/Readme.md)**
+- **[ Detailed Documentation →](./researchAI/Readme.md)**
 
 ### 2. [Model Development](./model-development/README.md)
 RAG (Retrieval-Augmented Generation) pipeline with hybrid retrieval
@@ -13,14 +13,14 @@ RAG (Retrieval-Augmented Generation) pipeline with hybrid retrieval
 - Cross-encoder reranking
 - Fairness & bias detection
 - MLflow experiment tracking
-- **[📖 Detailed Documentation →](./researchAI/model/readme.md)**
+- **[ Detailed Documentation →](./researchAI/model/readme.md)**
 
 ### 3. [Model Deployment](./deployment/README.md)
 Automated CI/CD pipeline for cloud deployment
 - GKE deployment (Cloud)
 - Model monitoring & drift detection
 - Auto-retraining triggers
-- **[📖 Detailed Documentation →](./researchAI/k8s/readme.md)**
+- **[ Detailed Documentation →](./researchAI/k8s/readme.md)**
 
 ## Contributing: Branching workflow
 
